@@ -1,0 +1,106 @@
+:root {
+  --bg: #090b10;
+  --surface: #121624;
+  --surface-border: #1f283a;
+  --text: #e7edf8;
+  --muted: #9ba9c7;
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-border: #e2e8f2;
+  --text: #162036;
+  --muted: #4b5b7c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app-shell {
+  min-height: calc(100vh - 56px);
+  display: grid;
+  grid-template-columns: 260px 360px 1fr;
+  gap: 12px;
+  padding: 12px;
+}
+
+.sidebar,
+.list-panel,
+.content-panel {
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 16px;
+}
+
+.sidebar.collapsed {
+  width: 72px;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.list-panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list-panel li {
+  padding: 10px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.ghost-button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    min-height: calc(100vh - 110px);
+  }
+
+  .bottom-nav {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    background: var(--surface);
+    border-top: 1px solid var(--surface-border);
+    padding: 8px;
+  }
+
+  .bottom-nav button {
+    border-radius: 10px;
+    border: 1px solid var(--surface-border);
+    padding: 10px;
+    background: transparent;
+    color: var(--text);
+  }
+}

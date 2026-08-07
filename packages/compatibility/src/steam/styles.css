@@ -1,0 +1,14 @@
+.sharedFilePreviewYouTubeVideo,
+.sharedFilePreviewImage,
+.bb_youtube {
+  max-width: 100%;
+  height: auto;
+}
+
+.bb_table,
+.bb_h1,
+.bb_h2,
+.bb_h3 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
