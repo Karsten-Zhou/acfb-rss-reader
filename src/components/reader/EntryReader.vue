@@ -14,6 +14,8 @@ import { queryKeys } from "@/lib/query-keys";
 import { useReaderStore } from "@/stores/reader";
 import type { EntryDetail } from "@/types";
 
+import EntrySummary from "./EntrySummary.vue";
+
 const props = defineProps<{ entryId: number }>();
 
 const { t } = useI18n();
@@ -173,6 +175,8 @@ function openOriginal(): void {
             <span>·</span><span>{{ new Date(entry.publishedAt).toLocaleString() }}</span>
           </template>
         </div>
+
+        <EntrySummary :entry-id="props.entryId" />
 
         <div
           v-if="sanitizedHtml"

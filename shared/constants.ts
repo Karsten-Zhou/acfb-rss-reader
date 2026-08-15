@@ -39,6 +39,9 @@ export const MAX_OPML_BYTES = 2 * 1024 * 1024;
 /** Number of entries kept in a single fetch before we stop ingesting. */
 export const MAX_ENTRIES_PER_FETCH = 500;
 
+/** How long generated AI summaries are kept in the KV cache (30 days). */
+export const KV_SUMMARY_TTL_SECONDS = 30 * 24 * 60 * 60;
+
 /** Public repository URL shown in the About screen. */
 export const APP_REPOSITORY_URL = "https://github.com/XiaoSong-CPE/cloudflare-based-rss-reader";
 

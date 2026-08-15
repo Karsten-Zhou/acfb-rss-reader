@@ -7,9 +7,21 @@ import {
 	type EntryFlags,
 	idSchema,
 	paginationQuerySchema,
+	sha256Hex,
+	summaryRequestSchema,
 	updateEntrySchema,
 } from "../../shared/index.ts";
-import { type Database, entries, feeds, readStatus, starred } from "../db/index.ts";
+import {
+	DEFAULT_SUMMARY_MODEL,
+	getAiSettings,
+	getCachedSummary,
+	normalizeSummaryLanguage,
+	SUMMARY_MODELS,
+	SummaryError,
+	summarizeEntry,
+	toPlainText,
+} from "../ai/index.ts";
+import { type Database, entries, entryContents, feeds, readStatus, starred } from "../db/index.ts";
 
 import { HttpError } from "../errors.ts";
 import { requireAuth } from "../middleware/auth.ts";
@@ -223,4 +235,75 @@ entryRoutes.post("/bulk", requireAuth(), async (c) => {
 	}
 
 	return c.json({ ok: true, updated: validIds.length });
+});
+
+/** Load an entry's title + plain text for summarization. */
+async function loadEntryContent(db: Database, id: number) {
+	const row = await db
+		.select({
+			title: entries.title,
+			content: entryContents.content,
+			contentText: entryContents.contentText,
+		})
+		.from(entries)
+		.leftJoin(entryContents, eq(entryContents.entryId, entries.id))
+		.where(eq(entries.id, id))
+		.get();
+	if (!row) return null;
+	const content = (row.contentText?.trim() || (row.content ? toPlainText(row.content) : "")).trim();
+	return { title: row.title, content };
+}
+
+/** GET /api/entries/:id/summary — cached AI summary, if any. */
+entryRoutes.get("/:id/summary", requireAuth(), async (c) => {
+	const id = idSchema.parse(c.req.param("id"));
+	const lang = normalizeSummaryLanguage(c.req.query("lang"));
+	const entry = await loadEntryContent(c.get("db"), id);
+	if (!entry) throw new HttpError(404, "NOT_FOUND", "Entry not found");
+
+	const ai = await getAiSettings(c.get("db"));
+	const model = SUMMARY_MODELS[ai.modelKey] ?? SUMMARY_MODELS[DEFAULT_SUMMARY_MODEL];
+	if (!entry.content || !model) {
+		return c.json({
+			enabled: ai.enabled,
+			summary: null,
+			model: null,
+			modelLabel: null,
+		});
+	}
+	const contentHash = await sha256Hex(entry.content);
+	const cached = await getCachedSummary(c.env.KV_STORE, contentHash, model.id, lang);
+	return c.json({
+		enabled: ai.enabled,
+		summary: cached,
+		model: cached ? model.id : null,
+		modelLabel: cached ? model.label : null,
+	});
+});
+
+/** POST /api/entries/:id/summary — generate (or regenerate) an AI summary. */
+entryRoutes.post("/:id/summary", requireAuth(), async (c) => {
+	const id = idSchema.parse(c.req.param("id"));
+	const body = summaryRequestSchema.parse(await c.req.json().catch(() => ({})));
+	const entry = await loadEntryContent(c.get("db"), id);
+	if (!entry) throw new HttpError(404, "NOT_FOUND", "Entry not found");
+
+	const ai = await getAiSettings(c.get("db"));
+	try {
+		const result = await summarizeEntry({
+			ai: c.env.AI,
+			kv: c.env.KV_STORE,
+			enabled: ai.enabled,
+			title: entry.title,
+			content: entry.content,
+			lang: body?.lang,
+			model: body?.model ?? ai.modelKey,
+		});
+		return c.json(result);
+	} catch (err) {
+		if (err instanceof SummaryError) {
+			throw new HttpError(err.code === "DISABLED" ? 403 : 502, err.code, err.message);
+		}
+		throw err;
+	}
 });

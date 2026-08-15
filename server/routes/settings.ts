@@ -1,6 +1,8 @@
 import type { BatchItem } from "drizzle-orm/batch";
 import { Hono } from "hono";
 import { z } from "zod";
+import { SUMMARY_MODELS } from "../ai/models.ts";
+import { getAiSettings } from "../ai/settings.ts";
 import { settings } from "../db/index.ts";
 
 import { requireAuth } from "../middleware/auth.ts";
@@ -22,6 +24,16 @@ settingsRoutes.get("/", requireAuth(), async (c) => {
 		}
 	}
 	return c.json({ settings: map });
+});
+
+/** GET /api/settings/ai — AI summary preferences + the available model list. */
+settingsRoutes.get("/ai", requireAuth(), async (c) => {
+	const ai = await getAiSettings(c.get("db"));
+	return c.json({
+		enabled: ai.enabled,
+		model: ai.modelKey,
+		models: Object.entries(SUMMARY_MODELS).map(([key, m]) => ({ key, label: m.label })),
+	});
 });
 
 /** PUT /api/settings — upsert settings (values are JSON-encoded). */

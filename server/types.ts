@@ -13,6 +13,8 @@ export interface Env {
 	KV_STORE: KVNamespace;
 	/** Feed refresh Workflow binding. */
 	REFRESH_WORKFLOW: Workflow<RefreshWorkflowParams>;
+	/** Workers AI binding (used for article summaries). */
+	AI: Ai;
 	/** GitHub OAuth App credentials. */
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;

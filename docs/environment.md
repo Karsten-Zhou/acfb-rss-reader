@@ -11,11 +11,31 @@
 | `DB`                      | binding  | D1 database binding (`rss-reader-db`)              |
 | `KV_STORE`                | binding  | KV namespace for cache + OAuth state               |
 | `REFRESH_WORKFLOW`        | binding  | Workflows binding for feed refreshes               |
+| `AI`                      | binding  | Workers AI binding (used for article summaries)    |
 
 > **Getting your numeric GitHub user ID** (for `ALLOWED_GITHUB_USER_ID`): the
 > app matches the numeric ID, not your username. No authentication is needed —
 > open `https://api.github.com/users/<your-username>` in a browser and read the
 > `"id"` field from the JSON.
+
+## AI summaries (Workers AI)
+
+AI article summaries are **disabled by default** and controlled from the
+**Settings** panel in the app (toggle + model picker), not from deployment
+configuration. The preference is stored per-user in the D1 `settings` table
+and synced to the backend when you toggle it.
+
+Notes:
+
+- The AI binding always runs against your Cloudflare account, **even in local
+  development**, and incurs Workers AI usage (free tier: 10,000 neurons/day).
+- The UI hides the summary box entirely while the toggle is off.
+- Summaries are cached in KV (keyed by content hash + model + prompt version
+  + language) for 30 days; the prompt template is versioned, so changing it
+  invalidates old cache entries.
+- The summary is generated in the UI's current language (English / German /
+  Chinese) and only ever runs server-side; the AI binding is never exposed to
+  the client.
 
 ## Local development
 

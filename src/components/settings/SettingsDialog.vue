@@ -11,7 +11,14 @@ import {
 } from "reka-ui";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { LANGUAGE_PREFERENCES, type LanguagePreference, LOCALE_LABELS } from "@/i18n";
 import { APP_BUILD_TIME, APP_VERSION } from "@/lib/build-meta";
 import { cn } from "@/lib/utils";
@@ -38,6 +45,12 @@ function setTheme(value: ThemePreference): void {
 }
 function setLanguage(value: LanguagePreference): void {
 	void settings.setLanguage(value);
+}
+function setAiEnabled(value: boolean): void {
+	void settings.setAiEnabled(value);
+}
+function setAiModel(value: string): void {
+	void settings.setAiModel(value);
 }
 function languageLabel(lang: LanguagePreference): string {
 	return lang === "auto" ? t("settings.languageAuto") : LOCALE_LABELS[lang];
@@ -115,6 +128,40 @@ function languageLabel(lang: LanguagePreference): string {
             >
               {{ t("settings.languageAutoHint", { locale: settings.locale }) }}
             </p>
+          </section>
+
+          <!-- AI summaries -->
+          <section>
+            <div class="flex items-center justify-between gap-4">
+              <p class="text-sm font-medium">{{ t("settings.aiSummary") }}</p>
+              <Switch
+                :model-value="settings.aiEnabled"
+                :aria-label="t('settings.aiSummary')"
+                @update:model-value="(value: unknown) => setAiEnabled(value === true)"
+              />
+            </div>
+            <p class="mt-1 text-xs text-muted-foreground">
+              {{ t("settings.aiSummaryHint") }}
+            </p>
+            <div v-if="settings.aiEnabled" class="mt-3">
+              <p class="text-xs font-medium text-muted-foreground">
+                {{ t("settings.aiModel") }}
+              </p>
+              <Select
+                :model-value="settings.aiModel"
+                class="mt-1"
+                @update:model-value="(value: unknown) => setAiModel(String(value))"
+              >
+                <SelectTrigger :aria-label="t('settings.aiModel')">
+                  <SelectValue :placeholder="t('settings.aiModel')" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="m in settings.aiModels" :key="m.key" :value="m.key">
+                    {{ m.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </section>
 
           <!-- About -->

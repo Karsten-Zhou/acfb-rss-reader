@@ -37,6 +37,18 @@ export const addTagSchema = z.object({
 	tag: z.string().trim().min(1).max(50),
 });
 
+/** Request an AI summary for an entry. */
+export const summaryRequestSchema = z
+	.object({
+		/** UI language for the summary (e.g. "en", "de", "zh"). */
+		lang: z.string().trim().min(2).max(16).optional(),
+		/** Optional model key from the summary model registry. */
+		model: z.string().trim().min(1).max(64).optional(),
+	})
+	.optional();
+
+export type SummaryRequestInput = z.infer<typeof summaryRequestSchema>;
+
 /** Remove a tag from an entry. */
 export const removeTagSchema = z.object({
 	entryId: idSchema,

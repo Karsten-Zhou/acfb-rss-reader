@@ -6,8 +6,15 @@ import { api } from "@/lib/api";
 
 export type ThemePreference = "light" | "dark" | "system";
 
+export interface AiModelOption {
+	key: string;
+	label: string;
+}
+
 const THEME_KEY = "rss.theme";
 const LOCALE_KEY = "rss.locale";
+const AI_ENABLED_KEY = "rss.aiEnabled";
+const AI_MODEL_KEY = "rss.aiModel";
 
 const THEMES: ThemePreference[] = ["light", "dark", "system"];
 
@@ -24,6 +31,12 @@ export const useSettingsStore = defineStore("settings", () => {
 	const theme = ref<ThemePreference>(readLocal(THEME_KEY, "system"));
 	/** User's language preference; "auto" follows the browser language. */
 	const language = ref<LanguagePreference>(readLocal<LanguagePreference>(LOCALE_KEY, "auto"));
+	/** Whether AI article summaries are enabled. */
+	const aiEnabled = ref<boolean>(localStorage.getItem(AI_ENABLED_KEY) === "true");
+	/** Key of the selected summary model (from the backend registry). */
+	const aiModel = ref<string>(localStorage.getItem(AI_MODEL_KEY) ?? "");
+	/** Available summary models, provided by the backend. */
+	const aiModels = ref<AiModelOption[]>([]);
 	const loaded = ref(false);
 
 	/** Effective locale after resolving the "auto" preference. */
@@ -70,6 +83,19 @@ export const useSettingsStore = defineStore("settings", () => {
 				language.value = settings.locale as LanguagePreference;
 				localStorage.setItem(LOCALE_KEY, settings.locale);
 			}
+
+			// AI summary preferences come from a dedicated endpoint that also
+			// carries the available model list.
+			const ai = await api.get<{
+				enabled: boolean;
+				model: string;
+				models: AiModelOption[];
+			}>("/api/settings/ai");
+			aiEnabled.value = ai.enabled;
+			aiModel.value = ai.model;
+			aiModels.value = ai.models;
+			localStorage.setItem(AI_ENABLED_KEY, String(ai.enabled));
+			localStorage.setItem(AI_MODEL_KEY, ai.model);
 		} catch {
 			// Not signed in or offline — keep the cached preference.
 		} finally {
@@ -97,5 +123,31 @@ export const useSettingsStore = defineStore("settings", () => {
 		await persist({ locale: value });
 	}
 
-	return { theme, language, locale, dark, loaded, load, setTheme, setLanguage };
+	async function setAiEnabled(value: boolean): Promise<void> {
+		aiEnabled.value = value;
+		localStorage.setItem(AI_ENABLED_KEY, String(value));
+		await persist({ aiEnabled: value });
+	}
+
+	async function setAiModel(value: string): Promise<void> {
+		aiModel.value = value;
+		localStorage.setItem(AI_MODEL_KEY, value);
+		await persist({ aiModel: value });
+	}
+
+	return {
+		theme,
+		language,
+		aiEnabled,
+		aiModel,
+		aiModels,
+		locale,
+		dark,
+		loaded,
+		load,
+		setTheme,
+		setLanguage,
+		setAiEnabled,
+		setAiModel,
+	};
 });

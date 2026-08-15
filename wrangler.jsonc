@@ -31,6 +31,10 @@
 			"class_name": "RefreshWorkflow"
 		}
 	],
+	"ai": {
+		"binding": "AI",
+		"remote": true
+	},
 	"triggers": {
 		"crons": ["*/30 * * * *"]
 	},
