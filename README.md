@@ -35,20 +35,17 @@ a single Vite project using the Cloudflare Vite plugin — one dev server, one
 build, one deploy. Same-origin cookies, no CORS.
 
 ```
-apps/
-  worker/     # Single Vite app (Cloudflare Vite plugin)
-    src/      # Vue 3 SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)
-    server/   # Cloudflare Worker: Hono API entry + refresh Workflow
-    public/   # SPA static assets (favicon, manifest)
-packages/
-  api/            # Hono application (routes, middleware, GitHub OAuth)
-  compatibility/  # Site compatibility modules (Steam first)
-  config/         # Shared tsconfig bases
-  database/       # Drizzle schema, migrations, D1 client, FTS5 search
-  feeds/          # Feed fetch, parse, normalize, ingest, refresh
-  shared/         # Zod schemas, shared types, constants, utilities
-  ui/             # Shared Vue components (empty until shared UI is extracted)
+src/     # Vue 3 SPA client (shadcn-vue, Tailwind, Pinia, TanStack Query)
+server/  # Cloudflare Worker: Hono API (routes, middleware, GitHub OAuth),
+         #   feed pipeline, Drizzle db + migrations, refresh Workflow
+shared/  # Zod schemas, shared types, constants, utilities + compatibility
+public/  # SPA static assets (favicon, manifest)
+test/    # bun test suite (db, feeds, api)
 ```
+
+A single flat project: one `package.json`, one Vite app (Cloudflare Vite
+plugin), one tsconfig pair (`tsconfig.json` server / `tsconfig.app.json`
+client), one wrangler config.
 
 ## Quick start
 
@@ -60,8 +57,8 @@ bun run lint
 bun run test
 ```
 
-You must configure local secrets first — copy `apps/worker/.dev.vars.example`
-to `apps/worker/.dev.vars` and fill in your GitHub OAuth credentials and
+You must configure local secrets first — copy `.dev.vars.example` to
+`.dev.vars` and fill in your GitHub OAuth credentials and
 `ALLOWED_GITHUB_USER_ID`. See `docs/environment.md` and `docs/deployment.md`.
 
 ## Deployment

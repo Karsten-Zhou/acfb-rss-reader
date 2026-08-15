@@ -8,31 +8,31 @@ A **personal, single-user RSS reader** that runs entirely on Cloudflare's
 serverless platform. Not a SaaS. One user. Cloudflare-native infra (Workers,
 D1, KV, Workflows, Cron Triggers, Workers Assets).
 
-## Repository layout (monorepo, Bun workspaces)
+## Repository layout (single flat project)
 
 ```
-apps/
-  worker/     # Single Vite app via @cloudflare/vite-plugin
-    src/      # Vue 3 SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)
-    server/   # Cloudflare Worker: Hono API entry + refresh Workflow
-    public/   # SPA static assets
-packages/
-  api/            # Hono application (routes, middleware, auth) — framework-agnostic
+src/     # Vue 3 SPA client (shadcn-vue, Tailwind, Pinia, TanStack Query)
+server/  # Cloudflare Worker (Hono API + refresh Workflow)
+  db/        # Drizzle schema, migrations, D1 client, FTS5 search, test mocks
+  feeds/     # Feed fetching, parsing, normalization, pipeline
+  routes/    # Hono API routes
+  middleware/# Hono middleware (context, auth)
+  test/      # bun tests live at the repo-root `test/` instead
+shared/  # Framework-agnostic code used by both client and server
   compatibility/  # Site compatibility modules (Steam first) — CSS + detection
-  config/         # Shared tsconfig bases
-  database/       # Drizzle schema, migrations, DB client factory
-  feeds/          # Feed fetching, parsing, normalization, pipeline
-  shared/         # Zod schemas, shared types, constants, small utils
-  ui/             # Shared Vue components (business logic stays out of UI)
+  schemas/        # Zod schemas
+  utils/          # Small pure utilities (hash, time, url)
+test/    # bun test suite (db, feeds, api)
+public/  # SPA static assets
 ```
 
 Dependency direction (no cycles):
 
 ```
-shared -> { database, feeds, compatibility }
-database + feeds + compatibility -> api
-api + database -> apps/worker (server)
-shared + compatibility + ui -> apps/worker (client)
+shared -> { server/db, server/feeds, src }
+server/db + server/feeds -> server/routes
+server -> shared (types, schemas)
+src -> shared/compatibility
 ```
 
 ## Runtime & tooling
@@ -46,16 +46,16 @@ shared + compatibility + ui -> apps/worker (client)
 ## Commands
 
 ```sh
-bun install            # install all workspace deps
+bun install            # install all deps
 bun run dev            # dev: SPA + Worker API on http://localhost:8787 (one server)
 bun run build          # build the worker (SPA assets + Worker script)
 bun run deploy         # build then deploy the Worker (which serves API + SPA)
-bun run typecheck      # typecheck all workspaces
+bun run typecheck      # typecheck server (tsc) + client (vue-tsc)
 bun run lint           # biome check
-bun run test           # run package tests
+bun run test           # run the full bun test suite
 ```
 
-Database (from `packages/database`):
+Database (config: `server/db/drizzle.config.ts`):
 
 ```sh
 bun run db:generate    # drizzle-kit generate (schema -> SQL migration)
@@ -81,8 +81,8 @@ bun run db:studio      # drizzle studio
 6. **Compatibility CSS** is the primary mechanism for site-specific rendering
    fixes; JS fixes are the exception. Each module contributes `detect.ts` +
    `styles.css`.
-7. Business logic lives in `packages/*`, never in UI components. Components are
-   thin and composed.
+7. Business logic lives in `server/` (API, feeds, db), never in UI components.
+   Components are thin and composed.
 
 ## Conventions
 

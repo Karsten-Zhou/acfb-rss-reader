@@ -39,21 +39,21 @@ One Worker serves both the API (`/api/*`) and the built Vue SPA (Workers
 Assets with `single_page_application` not-found handling). This keeps a single
 deploy target, keeps the session cookie same-origin, and avoids CORS.
 
-Local development is a single Vite project (`apps/worker`) using the
-Cloudflare Vite plugin: the Worker runtime runs on port 8787 and the Vue SPA
-is served as Workers Assets from the same dev server.
+Local development is a single flat Vite project using the Cloudflare Vite
+plugin: the Worker runtime runs on port 8787 and the Vue SPA is served as
+Workers Assets from the same dev server.
 
-## Packages
+## Layout
 
-| Package            | Responsibility                                                       |
-| ------------------ | -------------------------------------------------------------------- |
-| `packages/shared`  | Zod schemas, domain types, constants, pure utilities                 |
-| `packages/database`| Drizzle schema, client factory, SQL migrations                        |
-| `packages/feeds`   | Feed fetch (ETag/backoff/retry), parse, normalize, dedupe, pipeline  |
-| `packages/compatibility` | Site-specific CSS + detection (Steam first)                    |
-| `packages/api`     | Hono app: routes, middleware, GitHub OAuth, session handling         |
-| `packages/ui`      | Shared Vue components (composition over inheritance)                 |
-| `packages/config`  | Shared tsconfig bases                                                |
+| Directory | Responsibility                                                       |
+| --------- | -------------------------------------------------------------------- |
+| `shared/` | Zod schemas, domain types, constants, pure utilities, compatibility  |
+| `server/db/`  | Drizzle schema, client factory, SQL migrations, test mocks       |
+| `server/feeds/` | Feed fetch (ETag/backoff/retry), parse, normalize, dedupe, pipeline |
+| `server/routes/` | Hono API routes (auth, feeds, entries, search, opml, settings, favicon) |
+| `server/`  | Hono app, middleware, GitHub OAuth, session handling, Worker entry  |
+| `src/`     | Vue 3 SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)             |
+| `test/`    | bun test suite (db, feeds, api)                                     |
 
 ## Feed processing pipeline
 
@@ -62,7 +62,7 @@ Download -> Normalize -> Deduplicate -> Extract metadata -> Generate preview
 -> Store -> Index -> Cache
 ```
 
-Each step is a pure, testable module in `packages/feeds`.
+Each step is a pure, testable module in `server/feeds`.
 
 ## Background processing
 

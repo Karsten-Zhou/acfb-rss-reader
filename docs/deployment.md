@@ -20,11 +20,10 @@ the built Vue SPA (Workers Assets).
 # 1. Install dependencies
 bun install
 
-# 2. Create the D1 database (from apps/worker)
-cd apps/worker
+# 2. Create the D1 database
 bunx wrangler d1 create rss-reader-db
 
-# 3. Copy the returned database_id into apps/worker/wrangler.jsonc
+# 3. Copy the returned database_id into wrangler.jsonc
 #    and into .dev.vars for local development.
 
 # 4. Create the KV namespace
@@ -48,7 +47,7 @@ bun run dev
 # One dev server (Cloudflare Vite plugin): SPA + Worker API on http://localhost:8787
 ```
 
-For local OAuth, create `apps/worker/.dev.vars` (see `docs/environment.md`)
+For local OAuth, create `.dev.vars` (see `docs/environment.md`)
 and set `APP_ORIGIN=http://localhost:8787`. Add
 `http://localhost:8787/api/auth/callback` to your GitHub OAuth App's callback
 URLs (GitHub allows up to 10) or use a Cloudflare tunnel / temporary public
