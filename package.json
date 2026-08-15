@@ -1,0 +1,34 @@
+{
+	"name": "cloudflare-based-rss-reader",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"packageManager": "bun@1.3.7",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"dev": "concurrently -n web,worker -c cyan,magenta \"bun run dev:web\" \"bun run dev:worker\"",
+		"dev:web": "bun run --cwd apps/web dev",
+		"dev:worker": "bun run --cwd apps/worker dev",
+		"build": "bun run build:web && bun run build:worker",
+		"build:web": "bun run --cwd apps/web build",
+		"build:worker": "bun run --cwd apps/worker build",
+		"deploy": "bun run build && bun run --cwd apps/worker deploy",
+		"typecheck": "bun run typecheck:packages",
+		"typecheck:packages": "bun run --cwd packages/shared typecheck && bun run --cwd packages/compatibility typecheck && bun run --cwd packages/database typecheck && bun run --cwd packages/feeds typecheck && bun run --cwd packages/api typecheck && bun run --cwd packages/ui typecheck",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"test": "bun run --cwd packages/feeds test && bun run --cwd packages/api test"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.0.0",
+		"@commitlint/cli": "^19.0.0",
+		"@commitlint/config-conventional": "^19.0.0",
+		"concurrently": "^9.0.0",
+		"lefthook": "^1.11.0",
+		"typescript": "^7.0.2"
+	}
+}

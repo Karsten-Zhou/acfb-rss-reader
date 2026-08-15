@@ -128,6 +128,29 @@ dist
 # pnpm
 .pnpm-store
 
+# --- Project specific ---
+
+# Cloudflare Worker build output
+.wrangler/
+.vite/
+
+# Cloudflare local secrets (never commit)
+.dev.vars
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Misc
+.DS_Store
+Thumbs.db
+
 # yarn v3
 .pnp.*
 .yarn/*
