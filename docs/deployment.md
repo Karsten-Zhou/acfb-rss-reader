@@ -9,8 +9,10 @@ the built Vue SPA (Workers Assets).
 - A GitHub OAuth App (Settings -> Developer settings -> OAuth Apps) with:
   - Homepage URL: `https://<your-worker>.workers.dev`
   - Authorization callback URL: `https://<your-worker>.workers.dev/api/auth/callback`
-- Your GitHub user ID (Settings -> Account -> ... or via
-  `https://api.github.com/user` when authenticated).
+- Your GitHub user ID. The app matches the **numeric** GitHub user ID, so a
+  username won't work. The easiest way to get yours (no authentication
+  needed): open `https://api.github.com/users/<your-username>` in a browser —
+  the `"id"` field in the JSON is your numeric user ID.
 
 ## One-time setup
 

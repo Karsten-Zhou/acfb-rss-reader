@@ -12,6 +12,11 @@
 | `KV_STORE`                | binding  | KV namespace for cache + OAuth state               |
 | `REFRESH_WORKFLOW`        | binding  | Workflows binding for feed refreshes               |
 
+> **Getting your numeric GitHub user ID** (for `ALLOWED_GITHUB_USER_ID`): the
+> app matches the numeric ID, not your username. No authentication is needed —
+> open `https://api.github.com/users/<your-username>` in a browser and read the
+> `"id"` field from the JSON.
+
 ## Local development
 
 Copy `apps/worker/.dev.vars.example` to `apps/worker/.dev.vars` and fill in

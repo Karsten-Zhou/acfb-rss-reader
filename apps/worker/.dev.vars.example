@@ -5,7 +5,9 @@
 # - APP_ORIGIN should be the origin of the web dev server (the SPA).
 #   GitHub OAuth requires a publicly reachable redirect URL, so for local
 #   testing use a Cloudflare tunnel (see docs/deployment.md).
-# - ALLOWED_GITHUB_USER_ID is your numeric GitHub user id.
+# - ALLOWED_GITHUB_USER_ID is your numeric GitHub user id (a username won't
+#   match). Get it with no auth by opening
+#   https://api.github.com/users/<your-username> and reading the "id" field.
 
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
