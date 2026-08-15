@@ -45,14 +45,14 @@ bunx wrangler d1 migrations apply rss-reader-db --remote
 
 ```sh
 bun run dev
-# web: http://localhost:5173  (proxies /api -> 8787)
-# worker: http://localhost:8787
+# One dev server (Cloudflare Vite plugin): SPA + Worker API on http://localhost:8787
 ```
 
 For local OAuth, create `apps/worker/.dev.vars` (see `docs/environment.md`)
-and set `APP_ORIGIN=http://localhost:5173`. Note that GitHub OAuth requires a
-public redirect URL — for local testing use a Cloudflare tunnel or a
-temporary public URL.
+and set `APP_ORIGIN=http://localhost:8787`. Add
+`http://localhost:8787/api/auth/callback` to your GitHub OAuth App's callback
+URLs (GitHub allows up to 10) or use a Cloudflare tunnel / temporary public
+URL, since GitHub OAuth requires a reachable redirect URL.
 
 ## Deploy
 

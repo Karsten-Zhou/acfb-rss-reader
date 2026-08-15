@@ -39,10 +39,9 @@ One Worker serves both the API (`/api/*`) and the built Vue SPA (Workers
 Assets with `single_page_application` not-found handling). This keeps a single
 deploy target, keeps the session cookie same-origin, and avoids CORS.
 
-Local development runs two Vite dev servers:
-
-- `apps/worker` — Worker runtime via `@cloudflare/vite-plugin` on port 8787.
-- `apps/web` — Vue SPA on port 5173, proxying `/api` to the worker.
+Local development is a single Vite project (`apps/worker`) using the
+Cloudflare Vite plugin: the Worker runtime runs on port 8787 and the Vue SPA
+is served as Workers Assets from the same dev server.
 
 ## Packages
 

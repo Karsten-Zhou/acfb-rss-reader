@@ -98,7 +98,7 @@ async function login(ctx: ReturnType<typeof createTestContext>): Promise<string>
 		`oauth:${state}`,
 		JSON.stringify({
 			state,
-			redirectTo: "http://localhost:5173/",
+			redirectTo: "http://localhost:8787/",
 			expiresAt: Date.now() + 600_000,
 		}),
 	);

@@ -26,7 +26,7 @@ export function createTestContext(overrides: Partial<Env> = {}): TestContext {
 		GITHUB_CLIENT_ID: "test-client-id",
 		GITHUB_CLIENT_SECRET: "test-client-secret",
 		ALLOWED_GITHUB_USER_ID: "12345",
-		APP_ORIGIN: "http://localhost:5173",
+		APP_ORIGIN: "http://localhost:8787",
 		ENVIRONMENT: "development",
 		...overrides,
 	};

@@ -30,13 +30,16 @@ Browser (Vue 3 SPA) ──/api/*──► Cloudflare Worker (Hono)
                                                │ Cron Trigger (every 30 min)
 ```
 
-One Worker serves both the API and the built SPA (Workers Assets). One deploy,
-same-origin cookies, no CORS.
+One Worker serves both the API and the built SPA (Workers Assets). The app is
+a single Vite project using the Cloudflare Vite plugin — one dev server, one
+build, one deploy. Same-origin cookies, no CORS.
 
 ```
 apps/
-  web/        # Vue 3 + Vite SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)
-  worker/     # Cloudflare Worker: Hono API + bindings + serves web assets
+  worker/     # Single Vite app (Cloudflare Vite plugin)
+    src/      # Vue 3 SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)
+    server/   # Cloudflare Worker: Hono API entry + refresh Workflow
+    public/   # SPA static assets (favicon, manifest)
 packages/
   api/            # Hono application (routes, middleware, GitHub OAuth)
   compatibility/  # Site compatibility modules (Steam first)
@@ -51,7 +54,7 @@ packages/
 
 ```sh
 bun install
-bun run dev          # web on :5173, worker API on :8787 (proxied)
+bun run dev          # SPA + Worker API on http://localhost:8787 (one server)
 bun run typecheck
 bun run lint
 bun run test

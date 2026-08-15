@@ -9,14 +9,10 @@
 		"packages/*"
 	],
 	"scripts": {
-		"dev": "concurrently -n web,worker -c cyan,magenta \"bun run dev:web\" \"bun run dev:worker\"",
-		"dev:web": "bun run --cwd apps/web dev",
-		"dev:worker": "bun run --cwd apps/worker dev",
-		"build": "bun run build:web && bun run build:worker",
-		"build:web": "bun run --cwd apps/web build",
-		"build:worker": "bun run --cwd apps/worker build",
-		"deploy": "bun run build:web && bun run --cwd apps/worker deploy",
-		"typecheck": "bun run typecheck:packages",
+		"dev": "bun run --cwd apps/worker dev",
+		"build": "bun run --cwd apps/worker build",
+		"deploy": "bun run --cwd apps/worker deploy",
+		"typecheck": "bun run typecheck:packages && bun run --cwd apps/worker typecheck",
 		"typecheck:packages": "bun run --cwd packages/shared typecheck && bun run --cwd packages/compatibility typecheck && bun run --cwd packages/database typecheck && bun run --cwd packages/feeds typecheck && bun run --cwd packages/api typecheck && bun run --cwd packages/ui typecheck",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
@@ -27,7 +23,6 @@
 		"@biomejs/biome": "^2.0.0",
 		"@commitlint/cli": "^19.0.0",
 		"@commitlint/config-conventional": "^19.0.0",
-		"concurrently": "^9.0.0",
 		"lefthook": "^1.11.0",
 		"typescript": "^7.0.2"
 	}

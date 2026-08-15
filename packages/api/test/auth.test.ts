@@ -38,7 +38,7 @@ async function seedOAuthState(ctx: TestContext, state: string): Promise<void> {
 		`oauth:${state}`,
 		JSON.stringify({
 			state,
-			redirectTo: "http://localhost:5173/",
+			redirectTo: "http://localhost:8787/",
 			expiresAt: Date.now() + 600_000,
 		}),
 	);
@@ -129,7 +129,7 @@ describe("GET /api/auth/callback", () => {
 				ctx.env,
 			);
 			expect(res.status).toBe(302);
-			expect(res.headers.get("Location")).toBe("http://localhost:5173/");
+			expect(res.headers.get("Location")).toBe("http://localhost:8787/");
 
 			const setCookie = res.headers.get("set-cookie") ?? "";
 			expect(setCookie).toContain("rss_session=");

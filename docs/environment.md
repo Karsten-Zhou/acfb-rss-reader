@@ -7,7 +7,7 @@
 | `GITHUB_CLIENT_ID`        | secret   | GitHub OAuth App client ID                         |
 | `GITHUB_CLIENT_SECRET`    | secret   | GitHub OAuth App client secret                     |
 | `ALLOWED_GITHUB_USER_ID`  | secret   | Numeric GitHub user ID of the only allowed user    |
-| `APP_ORIGIN`              | secret   | Public origin of the app, e.g. `https://x.workers.dev` or `http://localhost:5173` |
+| `APP_ORIGIN`              | secret   | Public origin of the app, e.g. `https://x.workers.dev` or `http://localhost:8787` |
 | `DB`                      | binding  | D1 database binding (`rss-reader-db`)              |
 | `KV_STORE`                | binding  | KV namespace for cache + OAuth state               |
 | `REFRESH_WORKFLOW`        | binding  | Workflows binding for feed refreshes               |

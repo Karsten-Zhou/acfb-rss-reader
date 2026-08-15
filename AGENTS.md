@@ -12,8 +12,10 @@ D1, KV, Workflows, Cron Triggers, Workers Assets).
 
 ```
 apps/
-  web/        # Vue 3 + Vite SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)
-  worker/     # Cloudflare Worker: Hono API + bindings + serves web assets
+  worker/     # Single Vite app via @cloudflare/vite-plugin
+    src/      # Vue 3 SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)
+    server/   # Cloudflare Worker: Hono API entry + refresh Workflow
+    public/   # SPA static assets
 packages/
   api/            # Hono application (routes, middleware, auth) — framework-agnostic
   compatibility/  # Site compatibility modules (Steam first) — CSS + detection
@@ -29,8 +31,8 @@ Dependency direction (no cycles):
 ```
 shared -> { database, feeds, compatibility }
 database + feeds + compatibility -> api
-api + database -> apps/worker
-shared + ui -> apps/web
+api + database -> apps/worker (server)
+shared + compatibility + ui -> apps/worker (client)
 ```
 
 ## Runtime & tooling
@@ -45,10 +47,8 @@ shared + ui -> apps/web
 
 ```sh
 bun install            # install all workspace deps
-bun run dev            # dev: web (5173) + worker (8787) concurrently
-bun run dev:web        # Vue SPA only
-bun run dev:worker     # Worker API only
-bun run build          # build web + worker
+bun run dev            # dev: SPA + Worker API on http://localhost:8787 (one server)
+bun run build          # build the worker (SPA assets + Worker script)
 bun run deploy         # build then deploy the Worker (which serves API + SPA)
 bun run typecheck      # typecheck all workspaces
 bun run lint           # biome check

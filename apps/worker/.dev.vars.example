@@ -2,9 +2,11 @@
 # `.dev.vars` is git-ignored — never commit real secrets.
 #
 # Local dev notes:
-# - APP_ORIGIN should be the origin of the web dev server (the SPA).
-#   GitHub OAuth requires a publicly reachable redirect URL, so for local
-#   testing use a Cloudflare tunnel (see docs/deployment.md).
+# - The Cloudflare Vite plugin serves the SPA and the Worker API from ONE
+#   dev server on http://localhost:8787. APP_ORIGIN must match it.
+# - GitHub OAuth requires a publicly reachable redirect URL, so for local
+#   testing add http://localhost:8787/api/auth/callback to your GitHub
+#   OAuth App's callback URLs (GitHub allows up to 10) or use a tunnel.
 # - ALLOWED_GITHUB_USER_ID is your numeric GitHub user id (a username won't
 #   match). Get it with no auth by opening
 #   https://api.github.com/users/<your-username> and reading the "id" field.
@@ -12,4 +14,4 @@
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 ALLOWED_GITHUB_USER_ID=your_numeric_github_user_id
-APP_ORIGIN=http://localhost:5173
+APP_ORIGIN=http://localhost:8787
