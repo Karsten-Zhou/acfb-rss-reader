@@ -1,7 +1,11 @@
 /**
- * @rss/api — the Hono application (routes, middleware, GitHub OAuth,
- * session handling). Runtime-agnostic; the Worker shell supplies bindings.
- *
- * Implemented in the API milestone.
+ * @rss/api — the Hono application: routes, middleware, GitHub OAuth and
+ * session handling. Runtime-agnostic; the Worker shell supplies bindings.
  */
-export {};
+
+export * from "./app.ts";
+export * from "./errors.ts";
+export * from "./github.ts";
+export * from "./logging.ts";
+export * from "./middleware/auth.ts";
+export * from "./types.ts";

@@ -27,3 +27,13 @@ export type FeedStatus = "ok" | "broken" | "paused";
 
 /** Convenience alias: a value that can be awaited. */
 export type Awaitable<T> = T | Promise<T>;
+
+/**
+ * Parameters passed to the feed-refresh Workflow instance.
+ * An empty `feedIds` array means "refresh all due feeds".
+ */
+export interface RefreshWorkflowParams {
+	feedIds: number[];
+	/** Optional `refresh_jobs` row id for tracking. */
+	jobId?: number;
+}
