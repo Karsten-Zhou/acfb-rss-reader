@@ -18,6 +18,16 @@
 			"id": "REPLACE_WITH_KV_NAMESPACE_ID"
 		}
 	],
+	"workflows": [
+		{
+			"name": "refresh-workflow",
+			"binding": "REFRESH_WORKFLOW",
+			"class_name": "RefreshWorkflow"
+		}
+	],
+	"triggers": {
+		"crons": ["*/30 * * * *"]
+	},
 	"vars": {
 		"ENVIRONMENT": "development"
 	}

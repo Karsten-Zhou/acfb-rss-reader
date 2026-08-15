@@ -1,23 +1,10 @@
 import { Database as BunSqlite } from "bun:sqlite";
-import { readdirSync, readFileSync } from "node:fs";
 
 import { createDb, type Database } from "@rss/database";
+import { applyMigrations, createD1Mock, createKvMock } from "@rss/database/testing";
 
 import { createApp } from "../src/app.ts";
 import type { App, Env } from "../src/types.ts";
-import { createD1Mock } from "./d1-mock.ts";
-import { createKvMock } from "./kv-mock.ts";
-
-/** Apply all SQL migration files to a bun:sqlite database, in order. */
-export function applyMigrations(sqlite: BunSqlite): void {
-	const dir = new URL("../../database/migrations/", import.meta.url);
-	const files = readdirSync(dir)
-		.filter((f) => f.endsWith(".sql"))
-		.sort();
-	for (const file of files) {
-		sqlite.exec(readFileSync(new URL(file, dir), "utf8"));
-	}
-}
 
 export interface TestContext {
 	env: Env;

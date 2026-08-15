@@ -12,6 +12,7 @@
 	"dependencies": {
 		"@rss/api": "workspace:*",
 		"@rss/database": "workspace:*",
+		"@rss/feeds": "workspace:*",
 		"@rss/shared": "workspace:*"
 	},
 	"devDependencies": {

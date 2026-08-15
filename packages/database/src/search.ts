@@ -1,6 +1,7 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import type { Database } from "./client.ts";
+import { entriesFts } from "./schema/search.ts";
 
 /**
  * Full-text search over entries using SQLite FTS5 (Cloudflare-native, no
@@ -130,7 +131,11 @@ export async function searchEntries(db: Database, options: SearchOptions): Promi
 	return { items, nextCursor };
 }
 
-/** Upsert one entry into the FTS index. */
+/**
+ * Index (or re-index) one entry in the FTS table.
+ * FTS5 virtual tables have no unique constraint on `entry_id`, so we use a
+ * delete-then-insert to keep the index idempotent.
+ */
 export async function indexEntry(
 	db: Database,
 	params: {
@@ -143,19 +148,18 @@ export async function indexEntry(
 	},
 ): Promise<void> {
 	const { entryId, title, content, author, feedTitle, tags } = params;
-	await db.run(sql`
-    INSERT INTO entries_fts (entry_id, title, content, author, feed_title, tags)
-    VALUES (${entryId}, ${title}, ${content}, ${author ?? ""}, ${feedTitle}, ${tags.join(" ")})
-    ON CONFLICT(entry_id) DO UPDATE SET
-      title = excluded.title,
-      content = excluded.content,
-      author = excluded.author,
-      feed_title = excluded.feed_title,
-      tags = excluded.tags
-  `);
+	await db.delete(entriesFts).where(eq(entriesFts.entryId, entryId));
+	await db.insert(entriesFts).values({
+		entryId,
+		title,
+		content,
+		author: author ?? "",
+		feedTitle,
+		tags: tags.join(" "),
+	});
 }
 
 /** Remove an entry from the FTS index. */
 export async function unindexEntry(db: Database, entryId: number): Promise<void> {
-	await db.run(sql`DELETE FROM entries_fts WHERE entry_id = ${entryId}`);
+	await db.delete(entriesFts).where(eq(entriesFts.entryId, entryId));
 }

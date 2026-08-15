@@ -1,3 +1,4 @@
+import { FeedError } from "@rss/feeds";
 import type { ErrorHandler, NotFoundHandler } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
@@ -25,6 +26,10 @@ export const onError: ErrorHandler<AppEnv> = (err, c) => {
 			{ error: { code: err.code, message: err.message, details: err.details } },
 			err.status as ContentfulStatusCode,
 		);
+	}
+	// Feed fetch/parse/ingest errors surface as client errors.
+	if (err instanceof FeedError) {
+		return c.json({ error: { code: err.code, message: err.message } }, 400);
 	}
 	// Unexpected error: don't leak internals, but log everything.
 	console.error(

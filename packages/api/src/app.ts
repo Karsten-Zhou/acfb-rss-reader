@@ -6,7 +6,11 @@ import { secureHeaders } from "hono/secure-headers";
 import { notFound, onError } from "./errors.ts";
 import { dbMiddleware } from "./middleware/context.ts";
 import { authRoutes } from "./routes/auth.ts";
+import { entryRoutes } from "./routes/entries.ts";
+import { feedRoutes } from "./routes/feeds.ts";
+import { folderRoutes } from "./routes/folders.ts";
 import { healthRoutes } from "./routes/health.ts";
+import { searchRoutes } from "./routes/search.ts";
 import type { AppEnv, Env } from "./types.ts";
 
 /**
@@ -24,6 +28,10 @@ export function createApp(env: Env) {
 
 	app.route("/api/health", healthRoutes);
 	app.route("/api/auth", authRoutes);
+	app.route("/api/feeds", feedRoutes);
+	app.route("/api/folders", folderRoutes);
+	app.route("/api/entries", entryRoutes);
+	app.route("/api/search", searchRoutes);
 
 	app.notFound(notFound);
 	app.onError(onError);

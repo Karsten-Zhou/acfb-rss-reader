@@ -25,6 +25,12 @@ export type FeedType = "rss" | "atom" | "json";
 /** Health status of a feed subscription. */
 export type FeedStatus = "ok" | "broken" | "paused";
 
+/** Payload for the feed refresh Workflow. */
+export interface RefreshWorkflowParams {
+	/** Feed ids to refresh. */
+	feedIds: number[];
+}
+
 /** Convenience alias: a value that can be awaited. */
 export type Awaitable<T> = T | Promise<T>;
 

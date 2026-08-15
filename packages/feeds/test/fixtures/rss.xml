@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Example Feed</title>
+    <link>https://example.com</link>
+    <description>An example RSS feed for tests</description>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 15 Aug 2026 10:00:00 GMT</lastBuildDate>
+    <item>
+      <title>Hello World</title>
+      <link>https://example.com/articles/hello</link>
+      <guid isPermaLink="false">hello-world-001</guid>
+      <pubDate>Fri, 14 Aug 2026 09:30:00 GMT</pubDate>
+      <author>Jane Doe</author>
+      <description>Short summary of the hello article.</description>
+      <content:encoded><![CDATA[<p>Full article content</p><p><img src="https://example.com/img/hello.png" /></p>]]></content:encoded>
+      <enclosure url="https://example.com/img/hello.png" type="image/png" length="1234" />
+    </item>
+    <item>
+      <title>Second Post</title>
+      <link>https://example.com/articles/second</link>
+      <guid>second-post-002</guid>
+      <pubDate>Wed, 12 Aug 2026 08:00:00 GMT</pubDate>
+      <description>Just a summary, no full content.</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,26 @@
+{
+	"version": "https://jsonfeed.org/version/1.1",
+	"title": "JSON Example",
+	"home_page_url": "https://jsonexample.com",
+	"description": "An example JSON Feed",
+	"language": "en",
+	"items": [
+		{
+			"id": "json-entry-1",
+			"url": "https://jsonexample.com/posts/one",
+			"title": "JSON Entry One",
+			"content_html": "<p>JSON full content with <b>markup</b>.</p>",
+			"summary": "JSON summary text.",
+			"date_published": "2026-08-14T09:00:00Z",
+			"authors": [{ "name": "Carol" }],
+			"image": "https://jsonexample.com/img/one.png"
+		},
+		{
+			"id": "json-entry-2",
+			"url": "https://jsonexample.com/posts/two",
+			"title": "JSON Entry Two",
+			"content_text": "Plain text content.",
+			"date_published": "2026-08-13T07:00:00Z"
+		}
+	]
+}
