@@ -22,6 +22,8 @@
 	--border: oklch(0.92 0.004 286.32);
 	--input: oklch(0.92 0.004 286.32);
 	--ring: oklch(0.705 0.015 286.067);
+	--scrollbar-thumb: oklch(0.87 0.004 286.32);
+	--scrollbar-thumb-hover: oklch(0.78 0.004 286.32);
 	--radius: 0.625rem;
 }
 
@@ -45,6 +47,8 @@
 	--border: oklch(1 0 0 / 10%);
 	--input: oklch(1 0 0 / 15%);
 	--ring: oklch(0.552 0.016 285.938);
+	--scrollbar-thumb: oklch(0.32 0.006 286.033);
+	--scrollbar-thumb-hover: oklch(0.42 0.006 286.033);
 }
 
 @theme inline {
@@ -76,6 +80,30 @@
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
+	}
+	/* Consistent pointer cursor on all enabled interactive controls. */
+	button:not(:disabled),
+	[role="button"]:not(:disabled) {
+		cursor: pointer;
+	}
+	/* Theme-aware scrollbars (WebKit + Firefox). */
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: var(--scrollbar-thumb) transparent;
+	}
+	*::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+	*::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	*::-webkit-scrollbar-thumb {
+		background-color: var(--scrollbar-thumb);
+		border-radius: 8px;
+	}
+	*::-webkit-scrollbar-thumb:hover {
+		background-color: var(--scrollbar-thumb-hover);
 	}
 	html,
 	body,
@@ -142,6 +170,12 @@
 }
 .reader-content hr {
 	@apply my-6 border-border;
+}
+
+/* Dragged feed row ghost while reordering. */
+.feed-drag-ghost {
+	opacity: 0.5;
+	background-color: var(--accent);
 }
 .reader-content table {
 	@apply my-4 w-full border-collapse text-sm;

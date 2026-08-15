@@ -1,6 +1,11 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { createFeedSchema, idSchema, updateFeedSchema } from "../../shared/index.ts";
+import {
+	createFeedSchema,
+	idSchema,
+	reorderFeedsSchema,
+	updateFeedSchema,
+} from "../../shared/index.ts";
 import { feeds } from "../db/index.ts";
 import { HttpError } from "../errors.ts";
 import {
@@ -10,6 +15,7 @@ import {
 	getFeedDetail,
 	listFeeds,
 	refreshFeed,
+	reorderFeeds,
 	updateFeed,
 } from "../feeds/index.ts";
 import { requireAuth } from "../middleware/auth.ts";
@@ -33,6 +39,13 @@ feedRoutes.post("/", requireAuth(), async (c) => {
 		if (err instanceof FeedError) throw new HttpError(400, err.code, err.message);
 		throw err;
 	}
+});
+
+/** PUT /api/feeds/reorder — persist the sidebar order. */
+feedRoutes.put("/reorder", requireAuth(), async (c) => {
+	const { ids } = reorderFeedsSchema.parse(await c.req.json());
+	await reorderFeeds(c.get("db"), ids);
+	return c.json({ ok: true });
 });
 
 /** GET /api/feeds/:id — feed detail with counts. */

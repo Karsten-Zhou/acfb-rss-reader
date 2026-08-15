@@ -46,18 +46,12 @@ function toggleRead(): void {
 		setFlags.mutate({ entryId: selected.value.id, flags: { isRead: !selected.value.isRead } });
 	}
 }
-function archiveSelected(): void {
-	if (selected.value) {
-		setFlags.mutate({ entryId: selected.value.id, flags: { isArchived: true } });
-	}
-}
 
 useKeyboardShortcuts([
 	{ keys: ["j", "ArrowDown"], handler: () => moveSelection(1), preventDefault: true },
 	{ keys: ["k", "ArrowUp"], handler: () => moveSelection(-1), preventDefault: true },
 	{ keys: ["s"], handler: toggleStarred },
 	{ keys: ["m"], handler: toggleRead },
-	{ keys: ["a"], handler: archiveSelected },
 ]);
 </script>
 

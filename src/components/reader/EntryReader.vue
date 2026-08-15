@@ -2,11 +2,12 @@
 import { buildCompatibilityStyles } from "@shared/compatibility/index.ts";
 import { useQuery } from "@tanstack/vue-query";
 import DOMPurify from "dompurify";
-import { Archive, ArrowLeft, CheckCheck, ExternalLink, Star, Undo2 } from "lucide-vue-next";
+import { Archive, ArrowLeft, CheckCheck, ExternalLink, Star } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
 
+import { AsyncButton } from "@/components/ui/async-button";
 import { Button } from "@/components/ui/button";
-import { useEntryMutations } from "@/composables/useEntryMutations";
+import { type EntryFlagsInput, useEntryMutations } from "@/composables/useEntryMutations";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useReaderStore } from "@/stores/reader";
@@ -64,19 +65,28 @@ watch(entry, (value) => {
 	}
 });
 
-function toggleStarred(): void {
-	if (!entry.value) return;
-	setFlags.mutate({ entryId: entry.value.id, flags: { isStarred: !entry.value.isStarred } });
+// Track which header action is in flight so only that button shows a spinner.
+const pendingAction = ref<"star" | "unread" | null>(null);
+
+function runFlagAction(action: "star" | "unread", flags: EntryFlagsInput): void {
+	pendingAction.value = action;
+	setFlags.mutate(
+		{ entryId: props.entryId, flags },
+		{
+			onSettled: () => {
+				pendingAction.value = null;
+			},
+		},
+	);
 }
 
-function toggleArchive(): void {
+function toggleStarred(): void {
 	if (!entry.value) return;
-	setFlags.mutate({ entryId: entry.value.id, flags: { isArchived: !entry.value.isArchived } });
+	runFlagAction("star", { isStarred: !entry.value.isStarred });
 }
 
 function markUnread(): void {
-	if (!entry.value) return;
-	setFlags.mutate({ entryId: entry.value.id, flags: { isRead: false } });
+	runFlagAction("unread", { isRead: false });
 }
 
 function openOriginal(): void {
@@ -101,20 +111,32 @@ function openOriginal(): void {
       <div class="min-w-0 flex-1">
         <p class="truncate text-sm font-medium">{{ entry?.feed.title }}</p>
       </div>
-      <Button
+      <AsyncButton
         variant="ghost"
         size="icon"
         :title="entry?.isStarred ? 'Unstar' : 'Star'"
+        :loading="pendingAction === 'star'"
         @click="toggleStarred"
       >
         <Star class="size-4" :class="entry?.isStarred && 'fill-amber-400 text-amber-400'" />
-      </Button>
-      <Button variant="ghost" size="icon" title="Mark unread" @click="markUnread">
+      </AsyncButton>
+      <AsyncButton
+        variant="ghost"
+        size="icon"
+        title="Mark unread"
+        :loading="pendingAction === 'unread'"
+        @click="markUnread"
+      >
         <CheckCheck class="size-4" />
-      </Button>
-      <Button variant="ghost" size="icon" title="Archive" @click="toggleArchive">
-        <Archive class="size-4" :class="entry?.isArchived && 'text-primary'" />
-      </Button>
+      </AsyncButton>
+      <AsyncButton
+        variant="ghost"
+        size="icon"
+        title="Archive (coming soon)"
+        disabled
+      >
+        <Archive class="size-4" />
+      </AsyncButton>
       <Button
         variant="ghost"
         size="icon"
@@ -169,10 +191,10 @@ function openOriginal(): void {
             <ExternalLink class="size-3.5" />
             Open original article
           </Button>
-          <Button variant="outline" size="sm" @click="toggleStarred">
-            <Undo2 class="size-3.5" />
+          <AsyncButton variant="outline" size="sm" :loading="pendingAction === 'star'" @click="toggleStarred">
+            <Star class="size-3.5" :class="entry.isStarred && 'fill-amber-400 text-amber-400'" />
             {{ entry.isStarred ? "Unstar" : "Star" }}
-          </Button>
+          </AsyncButton>
         </div>
       </div>
     </div>

@@ -28,6 +28,8 @@ export const feeds = sqliteTable(
 		folderId: integer("folder_id").references(() => feedFolders.id, {
 			onDelete: "set null",
 		}),
+		/** Sidebar sort order. */
+		position: integer("position").notNull().default(0),
 		/** Conditional request headers from the last successful fetch. */
 		etag: text("etag"),
 		lastModified: text("last_modified"),

@@ -1,4 +1,5 @@
 import { count, eq, sql } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import type { FeedType } from "../../shared/index.ts";
 import { guessFaviconUrl, isLocalhost, normalizeUrl } from "../../shared/index.ts";
 import { type Database, entries, type Feed, feedFolders, feeds, readStatus } from "../db/index.ts";
@@ -64,6 +65,12 @@ export async function createFeed(
 		throw new FeedError("Feed contains no entries", "EMPTY_FEED");
 	}
 
+	// New feeds go to the end of the sidebar order.
+	const lastPosition = await db
+		.select({ position: sql<number>`COALESCE(MAX(${feeds.position}), -1)` })
+		.from(feeds)
+		.get();
+
 	const created = await db
 		.insert(feeds)
 		.values({
@@ -74,6 +81,7 @@ export async function createFeed(
 			type: parsed.feedType,
 			faviconUrl: guessFaviconUrl(url, parsed.siteUrl),
 			folderId: input.folderId ?? null,
+			position: (lastPosition?.position ?? -1) + 1,
 			etag: fetched.etag,
 			lastModified: fetched.lastModified,
 			lastFetchedAt: new Date(),
@@ -111,7 +119,7 @@ export async function listFeeds(db: Database): Promise<FeedWithCounts[]> {
 		.leftJoin(entries, eq(entries.feedId, feeds.id))
 		.leftJoin(readStatus, eq(readStatus.entryId, entries.id))
 		.groupBy(feeds.id)
-		.orderBy(sql`${feeds.title} COLLATE NOCASE`);
+		.orderBy(feeds.position, sql`${feeds.title} COLLATE NOCASE`);
 
 	return rows.map((row) => ({
 		...row,
@@ -119,6 +127,15 @@ export async function listFeeds(db: Database): Promise<FeedWithCounts[]> {
 		unreadCount: Number(row.unreadCount),
 		totalCount: Number(row.totalCount),
 	}));
+}
+
+/** Persist the sidebar order from an ordered list of feed ids. */
+export async function reorderFeeds(db: Database, ids: number[]): Promise<void> {
+	if (ids.length === 0) return;
+	const batch: BatchItem<"sqlite">[] = ids.map((id, index) =>
+		db.update(feeds).set({ position: index }).where(eq(feeds.id, id)),
+	);
+	await db.batch(batch as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
 }
 
 /** One feed with unread/total counts and its latest fetch log. */

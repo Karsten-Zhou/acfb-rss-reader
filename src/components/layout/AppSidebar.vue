@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { Loader2, LogOut, Plus, Radio, Rss, Star, X } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { GripVertical, LogOut, Plus, Radio, Rss, Star, X } from "lucide-vue-next";
+import { computed, ref, watch } from "vue";
+import { VueDraggable } from "vue-draggable-plus";
 
+import { AsyncButton } from "@/components/ui/async-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +58,35 @@ const totalUnread = computed(
 	() => feedsQuery.data.value?.reduce((sum, f) => sum + f.unreadCount, 0) ?? 0,
 );
 
+// --- Feed reordering (drag & drop) ---
+// Mirrors the server feed order; updated optimistically while dragging and
+// rolled back to the persisted order if the request fails.
+const draggableFeeds = ref<FeedWithCounts[]>([]);
+watch(
+	() => feedsQuery.data.value,
+	(feeds) => {
+		draggableFeeds.value = feeds ?? [];
+	},
+	{ immediate: true },
+);
+
+const reorderFeeds = useMutation({
+	mutationFn: (ids: number[]) => api.put<{ ok: boolean }>("/api/feeds/reorder", { ids }),
+	onSuccess: async () => {
+		await queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all });
+	},
+	onError: async () => {
+		// Roll back to the persisted order on failure.
+		await queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all });
+	},
+});
+
+function onFeedsReordered(): void {
+	const ids = draggableFeeds.value.map((feed) => feed.id);
+	if (ids.length === 0) return;
+	reorderFeeds.mutate(ids);
+}
+
 function isActive(view: ReaderView): boolean {
 	const current = reader.view;
 	return (
@@ -77,7 +108,7 @@ function onFaviconError(url: string): void {
 </script>
 
 <template>
-  <aside class="flex h-full w-64 shrink-0 flex-col border-r bg-card/40">
+  <aside class="flex h-full w-64 shrink-0 flex-col border-r bg-background shadow-2xl md:shadow-none">
     <div class="flex h-12 items-center gap-2 border-b px-4">
       <Radio class="size-4 text-primary" />
       <span class="flex-1 text-sm font-semibold tracking-tight">RSS Reader</span>
@@ -99,7 +130,9 @@ function onFaviconError(url: string): void {
         >
           <Rss class="size-4" />
           <span class="flex-1 text-left">All</span>
-          <Badge v-if="totalUnread > 0" variant="secondary">{{ totalUnread }}</Badge>
+          <Badge v-if="totalUnread > 0" class="bg-muted-foreground/20 text-muted-foreground">
+            {{ totalUnread }}
+          </Badge>
         </button>
         <button
           class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
@@ -120,7 +153,9 @@ function onFaviconError(url: string): void {
             @click="selectView({ kind: 'folder', folderId: folder.id })"
           >
             <span class="flex-1 truncate text-left">{{ folder.name }}</span>
-            <Badge v-if="folder.unreadCount > 0" variant="secondary">{{ folder.unreadCount }}</Badge>
+            <Badge v-if="folder.unreadCount > 0" class="bg-muted-foreground/20 text-muted-foreground">
+              {{ folder.unreadCount }}
+            </Badge>
           </button>
         </template>
 
@@ -129,24 +164,40 @@ function onFaviconError(url: string): void {
           <div class="px-2 py-1.5 text-sm text-muted-foreground">Loading…</div>
         </template>
         <template v-else>
-          <button
-            v-for="feed in feedsQuery.data.value"
-            :key="feed.id"
-            class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-            :class="isActive({ kind: 'feed', feedId: feed.id }) && 'bg-accent'"
-            @click="selectView({ kind: 'feed', feedId: feed.id })"
+          <VueDraggable
+            v-model="draggableFeeds"
+            class="flex flex-col gap-0.5"
+            :animation="150"
+            handle=".feed-drag-handle"
+            ghost-class="feed-drag-ghost"
+            :force-fallback="true"
+            @update:model-value="onFeedsReordered"
           >
-            <img
-              v-if="feed.faviconUrl && !failedFavicons.has(feed.faviconUrl)"
-              :src="`/api/favicon?url=${encodeURIComponent(feed.faviconUrl)}`"
-              class="size-4 shrink-0 rounded-sm"
-              alt=""
-              @error="onFaviconError(feed.faviconUrl!)"
-            />
-            <Rss v-else class="size-4 shrink-0 text-muted-foreground" />
-            <span class="flex-1 truncate text-left">{{ feed.title }}</span>
-            <Badge v-if="feed.unreadCount > 0" variant="secondary">{{ feed.unreadCount }}</Badge>
-          </button>
+            <button
+              v-for="feed in draggableFeeds"
+              :key="feed.id"
+              class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+              :class="isActive({ kind: 'feed', feedId: feed.id }) && 'bg-accent'"
+              @click="selectView({ kind: 'feed', feedId: feed.id })"
+            >
+              <img
+                v-if="feed.faviconUrl && !failedFavicons.has(feed.faviconUrl)"
+                :src="`/api/favicon?url=${encodeURIComponent(feed.faviconUrl)}`"
+                class="size-4 shrink-0 rounded-sm"
+                alt=""
+                @error="onFaviconError(feed.faviconUrl!)"
+              />
+              <Rss v-else class="size-4 shrink-0 text-muted-foreground" />
+              <span class="flex-1 truncate text-left">{{ feed.title }}</span>
+              <Badge v-if="feed.unreadCount > 0" class="bg-muted-foreground/20 text-muted-foreground">
+                {{ feed.unreadCount }}
+              </Badge>
+              <GripVertical
+                class="feed-drag-handle size-4 shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing"
+                aria-label="Drag to reorder"
+              />
+            </button>
+          </VueDraggable>
           <div v-if="!feedsQuery.data.value?.length" class="px-2 py-1.5 text-sm text-muted-foreground">
             No feeds yet. Add one below.
           </div>
@@ -161,10 +212,9 @@ function onFaviconError(url: string): void {
         @submit.prevent="newFeedUrl.trim() && addFeed.mutate(newFeedUrl.trim())"
       >
         <Input v-model="newFeedUrl" placeholder="https://feed-url…" class="h-8 text-sm" />
-        <Button type="submit" size="icon" class="size-8 shrink-0" :disabled="addFeed.isPending.value">
-          <Loader2 v-if="addFeed.isPending.value" class="animate-spin" />
-          <Plus v-else />
-        </Button>
+        <AsyncButton type="submit" size="icon" class="size-8 shrink-0" :loading="addFeed.isPending.value">
+          <Plus />
+        </AsyncButton>
       </form>
       <div class="flex items-center gap-2">
         <Button

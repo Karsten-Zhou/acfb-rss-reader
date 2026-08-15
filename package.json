@@ -10,8 +10,8 @@
 		"preview": "vite preview",
 		"deploy": "vite build && wrangler deploy",
 		"db:migrate": "wrangler d1 migrations apply rss-reader-db --local",
-		"db:generate": "drizzle-kit generate --config server/db/drizzle.config.ts",
-		"db:studio": "drizzle-kit studio --config server/db/drizzle.config.ts",
+		"db:generate": "cd server/db && drizzle-kit generate",
+		"db:studio": "cd server/db && drizzle-kit studio",
 		"cf-typegen": "wrangler types",
 		"typecheck": "tsc --noEmit && vue-tsc --noEmit -p tsconfig.app.json",
 		"lint": "biome check .",
@@ -36,6 +36,7 @@
 		"striptags": "^3.2.0",
 		"tailwind-merge": "^3.0.0",
 		"vue": "^3.5.0",
+		"vue-draggable-plus": "^0.6.1",
 		"vue-router": "^4.5.0",
 		"vue-virtual-scroller": "^2.0.0",
 		"zod": "^4.0.0"

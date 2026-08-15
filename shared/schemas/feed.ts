@@ -22,6 +22,13 @@ export const updateFeedSchema = z
 
 export type UpdateFeedInput = z.infer<typeof updateFeedSchema>;
 
+/** Reorder feeds — ordered array of feed ids for the sidebar. */
+export const reorderFeedsSchema = z.object({
+	ids: z.array(idSchema).min(1).max(1000),
+});
+
+export type ReorderFeedsInput = z.infer<typeof reorderFeedsSchema>;
+
 /** Create a new folder. */
 export const createFolderSchema = z.object({
 	name: z.string().trim().min(1).max(100),
