@@ -68,6 +68,12 @@ function isActive(view: ReaderView): boolean {
 function selectView(view: ReaderView): void {
 	reader.setView(view);
 }
+
+// Track favicons that failed to load so we can fall back to the RSS icon.
+const failedFavicons = ref(new Set<string>());
+function onFaviconError(url: string): void {
+	failedFavicons.value = new Set(failedFavicons.value).add(url);
+}
 </script>
 
 <template>
@@ -130,6 +136,14 @@ function selectView(view: ReaderView): void {
             :class="isActive({ kind: 'feed', feedId: feed.id }) && 'bg-accent'"
             @click="selectView({ kind: 'feed', feedId: feed.id })"
           >
+            <img
+              v-if="feed.faviconUrl && !failedFavicons.has(feed.faviconUrl)"
+              :src="`/api/favicon?url=${encodeURIComponent(feed.faviconUrl)}`"
+              class="size-4 shrink-0 rounded-sm"
+              alt=""
+              @error="onFaviconError(feed.faviconUrl!)"
+            />
+            <Rss v-else class="size-4 shrink-0 text-muted-foreground" />
             <span class="flex-1 truncate text-left">{{ feed.title }}</span>
             <Badge v-if="feed.unreadCount > 0" variant="secondary">{{ feed.unreadCount }}</Badge>
           </button>

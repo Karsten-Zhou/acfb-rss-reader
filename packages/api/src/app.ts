@@ -7,6 +7,7 @@ import { notFound, onError } from "./errors.ts";
 import { dbMiddleware } from "./middleware/context.ts";
 import { authRoutes } from "./routes/auth.ts";
 import { entryRoutes } from "./routes/entries.ts";
+import { faviconRoutes } from "./routes/favicon.ts";
 import { feedRoutes } from "./routes/feeds.ts";
 import { folderRoutes } from "./routes/folders.ts";
 import { healthRoutes } from "./routes/health.ts";
@@ -36,6 +37,7 @@ export function createApp(env: Env) {
 	app.route("/api/search", searchRoutes);
 	app.route("/api/opml", opmlRoutes);
 	app.route("/api/settings", settingsRoutes);
+	app.route("/api/favicon", faviconRoutes);
 
 	app.notFound(notFound);
 	app.onError(onError);
