@@ -10,7 +10,9 @@ import { entryRoutes } from "./routes/entries.ts";
 import { feedRoutes } from "./routes/feeds.ts";
 import { folderRoutes } from "./routes/folders.ts";
 import { healthRoutes } from "./routes/health.ts";
+import { opmlRoutes } from "./routes/opml.ts";
 import { searchRoutes } from "./routes/search.ts";
+import { settingsRoutes } from "./routes/settings.ts";
 import type { AppEnv, Env } from "./types.ts";
 
 /**
@@ -32,6 +34,8 @@ export function createApp(env: Env) {
 	app.route("/api/folders", folderRoutes);
 	app.route("/api/entries", entryRoutes);
 	app.route("/api/search", searchRoutes);
+	app.route("/api/opml", opmlRoutes);
+	app.route("/api/settings", settingsRoutes);
 
 	app.notFound(notFound);
 	app.onError(onError);

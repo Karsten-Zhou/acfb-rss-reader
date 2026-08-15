@@ -6,6 +6,7 @@
 export * from "./errors.ts";
 export * from "./fetch-document.ts";
 export * from "./ingest.ts";
+export * from "./opml.ts";
 export * from "./parse.ts";
 export * from "./refresh.ts";
 export * from "./service.ts";

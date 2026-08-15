@@ -65,6 +65,29 @@ Download -> Normalize -> Deduplicate -> Extract metadata -> Generate preview
 
 Each step is a pure, testable module in `packages/feeds`.
 
+## Background processing
+
+- **Cron Trigger** (`*/30 * * * *`): the Worker's `scheduled` handler selects
+  due feeds (`next_fetch_at <= now`) and starts one `RefreshWorkflow` instance.
+- **RefreshWorkflow** (Workers): chunks the feed ids and refreshes each chunk
+  in a `step.do` with platform retries + a timeout. `refreshFeeds` is
+  idempotent (guids + conditional requests), so retries are safe.
+- **OPML import** creates feed rows immediately and delegates fetching to the
+  same workflow.
+- Each feed fetch writes a `fetch_logs` row (success/not_modified/error) for
+  the diagnostics view; feeds are marked `broken` after 3 consecutive errors.
+
+## API surface (REST + Hono + Zod)
+
+- `/api/auth/*` — GitHub OAuth login, callback, me, logout
+- `/api/feeds` — CRUD + refresh, list with unread counts
+- `/api/folders` — folder CRUD with counts
+- `/api/entries` — paginated list (feed/folder/starred/archived/unread
+  filters), detail, flag updates (read/starred/archive), bulk updates
+- `/api/search` — FTS5 full-text search
+- `/api/opml` — OPML export/import
+- `/api/health` — liveness + DB probe
+
 ## Data model
 
 - `feeds` — feed URL, metadata, ETag/Last-Modified, health, folder ref

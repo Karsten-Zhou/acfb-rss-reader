@@ -6,6 +6,7 @@ import { count, eq, sql } from "drizzle-orm";
 import { FeedError } from "./errors.ts";
 import { fetchFeedDocument } from "./fetch-document.ts";
 import { ingestFeed } from "./ingest.ts";
+import { parseOpml } from "./opml.ts";
 import { parseFeedDocument } from "./parse.ts";
 import { feedBodyCacheKey } from "./refresh.ts";
 import type { FeedWithCounts, ParsedFeed } from "./types.ts";
@@ -239,4 +240,80 @@ export async function deleteFolder(db: Database, id: number): Promise<boolean> {
 		.returning({ id: feedFolders.id })
 		.get();
 	return result !== undefined;
+}
+// --- OPML ---
+
+export interface OpmlImportResult {
+	created: number;
+	duplicates: number;
+	invalid: number;
+	/** Ids of newly created feeds (ready for a refresh workflow). */
+	feedIds: number[];
+}
+
+/**
+ * Import subscriptions from an OPML document: creates folders and feed rows
+ * (without fetching — the caller triggers a refresh workflow to fetch+ingest).
+ */
+export async function importOpml(db: Database, xml: string): Promise<OpmlImportResult> {
+	const doc = parseOpml(xml);
+	const folderIdByName = new Map<string, number>();
+
+	// Ensure folders exist (in document order).
+	for (const name of Object.keys(doc.folders)) {
+		if (!name) continue;
+		const existing = await db.query.feedFolders.findFirst({
+			where: eq(feedFolders.name, name),
+		});
+		if (existing) {
+			folderIdByName.set(name, existing.id);
+			continue;
+		}
+		const maxPos = await db
+			.select({ p: sql<number>`COALESCE(MAX(${feedFolders.position}), 0)` })
+			.from(feedFolders)
+			.get();
+		const folder = await db
+			.insert(feedFolders)
+			.values({ name, position: Number(maxPos?.p ?? 0) + 1 })
+			.returning({ id: feedFolders.id })
+			.get();
+		if (folder) folderIdByName.set(name, folder.id);
+	}
+
+	const existingUrls = new Set(
+		(await db.select({ url: feeds.url }).from(feeds).all()).map((row) => row.url),
+	);
+	const feedIds: number[] = [];
+	let duplicates = 0;
+	let invalid = 0;
+
+	for (const [folderName, outlines] of Object.entries(doc.folders)) {
+		for (const outline of outlines) {
+			const url = normalizeUrl(outline.xmlUrl ?? "");
+			if (!url || isLocalhost(url)) {
+				invalid++;
+				continue;
+			}
+			if (existingUrls.has(url)) {
+				duplicates++;
+				continue;
+			}
+			existingUrls.add(url);
+			const created = await db
+				.insert(feeds)
+				.values({
+					url,
+					title: outline.title?.trim() || new URL(url).hostname,
+					type: "rss",
+					folderId: folderName ? (folderIdByName.get(folderName) ?? null) : null,
+					status: "ok",
+				})
+				.returning({ id: feeds.id })
+				.get();
+			if (created) feedIds.push(created.id);
+		}
+	}
+
+	return { created: feedIds.length, duplicates, invalid, feedIds };
 }
