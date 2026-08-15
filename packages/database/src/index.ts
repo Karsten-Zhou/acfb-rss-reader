@@ -1,7 +1,8 @@
 /**
- * @rss/database — Drizzle schema, client factory and SQL migrations.
- *
- * Schema definition and client factory are implemented in the database
- * milestone (drizzle-orm is declared as a dependency already).
+ * @rss/database — Drizzle schema, D1 client factory, migrations and the
+ * FTS5 full-text search helpers.
  */
-export {};
+
+export * from "./client.ts";
+export * from "./schema/index.ts";
+export * from "./search.ts";

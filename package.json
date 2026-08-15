@@ -21,7 +21,7 @@
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
-		"test": "bun run --cwd packages/feeds test && bun run --cwd packages/api test"
+		"test": "bun run --cwd packages/database test && bun run --cwd packages/feeds test && bun run --cwd packages/api test"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.0.0",
