@@ -86,6 +86,8 @@ Each step is a pure, testable module in `packages/feeds`.
   filters), detail, flag updates (read/starred/archive), bulk updates
 - `/api/search` — FTS5 full-text search
 - `/api/opml` — OPML export/import
+- `/api/settings` — key/value app settings (GET/PUT)
+- `/api/favicon` — proxy + KV-cache site favicons (avoids hotlinking/CORS)
 - `/api/health` — liveness + DB probe
 
 ## Data model
