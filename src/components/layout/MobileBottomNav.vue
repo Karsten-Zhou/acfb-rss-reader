@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Menu, Rss, Star } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
 
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
 
 defineProps<{ onOpenSidebar: () => void }>();
 
+const { t } = useI18n();
 const reader = useReaderStore();
 </script>
 
@@ -21,7 +23,7 @@ const reader = useReaderStore();
       @click="reader.setView({ kind: 'all' })"
     >
       <Rss class="size-5" />
-      All
+      {{ t("sidebar.all") }}
     </button>
     <button
       type="button"
@@ -30,7 +32,7 @@ const reader = useReaderStore();
       @click="reader.setView({ kind: 'starred' })"
     >
       <Star class="size-5" />
-      Starred
+      {{ t("sidebar.starred") }}
     </button>
     <button
       type="button"
@@ -38,7 +40,7 @@ const reader = useReaderStore();
       @click="onOpenSidebar"
     >
       <Menu class="size-5" />
-      Feeds
+      {{ t("sidebar.feeds") }}
     </button>
   </nav>
 </template>

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/vue-query";
 import DOMPurify from "dompurify";
 import { Archive, ArrowLeft, CheckCheck, ExternalLink, Star } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 
 import { AsyncButton } from "@/components/ui/async-button";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import type { EntryDetail } from "@/types";
 
 const props = defineProps<{ entryId: number }>();
 
+const { t } = useI18n();
 const reader = useReaderStore();
 const { setFlags } = useEntryMutations();
 
@@ -103,7 +105,7 @@ function openOriginal(): void {
         variant="ghost"
         size="icon"
         class="md:hidden"
-        title="Back"
+        :title="t('reader.back')"
         @click="reader.selectEntry(null)"
       >
         <ArrowLeft class="size-4" />
@@ -114,7 +116,7 @@ function openOriginal(): void {
       <AsyncButton
         variant="ghost"
         size="icon"
-        :title="entry?.isStarred ? 'Unstar' : 'Star'"
+        :title="entry?.isStarred ? t('reader.unstar') : t('reader.star')"
         :loading="pendingAction === 'star'"
         @click="toggleStarred"
       >
@@ -123,7 +125,7 @@ function openOriginal(): void {
       <AsyncButton
         variant="ghost"
         size="icon"
-        title="Mark unread"
+        :title="t('reader.markUnread')"
         :loading="pendingAction === 'unread'"
         @click="markUnread"
       >
@@ -132,7 +134,7 @@ function openOriginal(): void {
       <AsyncButton
         variant="ghost"
         size="icon"
-        title="Archive (coming soon)"
+        :title="t('reader.archiveComingSoon')"
         disabled
       >
         <Archive class="size-4" />
@@ -140,7 +142,7 @@ function openOriginal(): void {
       <Button
         variant="ghost"
         size="icon"
-        title="Open original"
+        :title="t('reader.openOriginal')"
         :disabled="!entry?.url"
         @click="openOriginal"
       >
@@ -150,7 +152,7 @@ function openOriginal(): void {
 
     <div class="min-h-0 flex-1 overflow-y-auto">
       <div v-if="isPending" class="flex h-full items-center justify-center">
-        <p class="text-sm text-muted-foreground">Loading…</p>
+        <p class="text-sm text-muted-foreground">{{ t("reader.loading") }}</p>
       </div>
       <div v-else-if="entry" class="mx-auto max-w-3xl px-6 py-8">
         <h1 class="text-2xl font-semibold leading-snug tracking-tight">{{ entry.title }}</h1>
@@ -178,7 +180,7 @@ function openOriginal(): void {
           v-html="sanitizedHtml"
         />
         <p v-else class="mt-6 text-sm text-muted-foreground">
-          {{ entry.summary || "This entry has no content." }}
+          {{ entry.summary || t("reader.noContent") }}
         </p>
 
         <div class="mt-8 flex items-center gap-2 border-t pt-4 text-sm">
@@ -189,11 +191,16 @@ function openOriginal(): void {
             @click="openOriginal"
           >
             <ExternalLink class="size-3.5" />
-            Open original article
+            {{ t("reader.openOriginalArticle") }}
           </Button>
-          <AsyncButton variant="outline" size="sm" :loading="pendingAction === 'star'" @click="toggleStarred">
+          <AsyncButton
+            variant="outline"
+            size="sm"
+            :loading="pendingAction === 'star'"
+            @click="toggleStarred"
+          >
             <Star class="size-3.5" :class="entry.isStarred && 'fill-amber-400 text-amber-400'" />
-            {{ entry.isStarred ? "Unstar" : "Star" }}
+            {{ entry.isStarred ? t("reader.unstar") : t("reader.star") }}
           </AsyncButton>
         </div>
       </div>

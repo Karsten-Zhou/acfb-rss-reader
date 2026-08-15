@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Menu } from "lucide-vue-next";
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import AppSidebar from "@/components/layout/AppSidebar.vue";
 import EntryListPane from "@/components/layout/EntryListPane.vue";
@@ -9,6 +10,7 @@ import ReaderPane from "@/components/layout/ReaderPane.vue";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
 
+const { t } = useI18n();
 const reader = useReaderStore();
 const sidebarOpen = ref(false);
 </script>
@@ -37,12 +39,12 @@ const sidebarOpen = ref(false);
         <button
           type="button"
           class="rounded p-1 hover:bg-accent"
-          title="Menu"
+          :title="t('sidebar.menu')"
           @click="sidebarOpen = true"
         >
           <Menu class="size-5" />
         </button>
-        <span class="text-sm font-semibold tracking-tight">RSS Reader</span>
+        <span class="text-sm font-semibold tracking-tight">{{ t("app.name") }}</span>
       </header>
 
       <div class="flex min-h-0 flex-1 pb-14 md:pb-0">

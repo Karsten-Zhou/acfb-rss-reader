@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -7,6 +7,24 @@
     <meta name="theme-color" content="#09090b" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>RSS Reader</title>
+    <script>
+      // Apply the persisted theme before first paint to avoid a flash of the
+      // wrong theme. Mirrors the preference cached in localStorage by the app.
+      (() => {
+        try {
+          const theme = localStorage.getItem("rss.theme");
+          const dark =
+            theme === "dark" ||
+            (theme !== "light" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+          const locale = localStorage.getItem("rss.locale");
+          if (locale && locale !== "auto") document.documentElement.lang = locale;
+        } catch {
+          /* ignore */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

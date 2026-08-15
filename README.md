@@ -17,6 +17,9 @@ serverless platform. Not a SaaS — one user, self-hosted on Cloudflare
   exponential-backoff retries, stale-cache fallback, redirect detection.
 - **UX**: dark-first Vue 3 SPA with a three-column layout, keyboard-friendly
   navigation, mobile responsive, virtualized lists.
+- **Settings**: theme (light / dark / system) and interface language
+  (English / Deutsch / 中文), both persisted to the backend; an About screen
+  with version, build time, and a link to the repository.
 
 ## Architecture
 

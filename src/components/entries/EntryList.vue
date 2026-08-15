@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Loader2, RefreshCw } from "lucide-vue-next";
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { RecycleScroller } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 
 import { useEntryListQuery } from "@/composables/useEntryListQuery";
 import EntryListItem from "./EntryListItem.vue";
 
+const { t } = useI18n();
 const { data, isFetching, hasNextPage, fetchNextPage, isPending, refetch } = useEntryListQuery();
 
 const items = computed(() => data.value?.pages.flatMap((page) => page.items) ?? []);
@@ -43,14 +45,14 @@ async function refreshView(): Promise<void> {
     </RecycleScroller>
 
     <div v-else class="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-      <p class="text-sm text-muted-foreground">No articles in this view.</p>
+      <p class="text-sm text-muted-foreground">{{ t("list.noArticles") }}</p>
       <button
         v-if="!isFetching"
         class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
         @click="refreshView"
       >
         <RefreshCw class="size-3.5" />
-        Refresh
+        {{ t("list.refresh") }}
       </button>
     </div>
 

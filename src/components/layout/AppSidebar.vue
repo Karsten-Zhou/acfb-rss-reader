@@ -1,9 +1,20 @@
 <script setup lang="ts">
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { GripVertical, LogOut, Plus, Radio, Rss, Star, X } from "lucide-vue-next";
+import {
+	GripVertical,
+	LogOut,
+	Plus,
+	Radio,
+	Rss,
+	Settings as SettingsIcon,
+	Star,
+	X,
+} from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
 import { VueDraggable } from "vue-draggable-plus";
+import { useI18n } from "vue-i18n";
 
+import SettingsDialog from "@/components/settings/SettingsDialog.vue";
 import { AsyncButton } from "@/components/ui/async-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,9 +28,12 @@ import type { FeedWithCounts, Folder } from "@/types";
 
 const emit = defineEmits<{ close: [] }>();
 
+const { t } = useI18n();
 const auth = useAuthStore();
 const reader = useReaderStore();
 const queryClient = useQueryClient();
+
+const settingsOpen = ref(false);
 
 const feedsQuery = useQuery({
 	queryKey: queryKeys.feeds.all,
@@ -111,10 +125,10 @@ function onFaviconError(url: string): void {
   <aside class="flex h-full w-64 shrink-0 flex-col border-r bg-background shadow-2xl md:shadow-none">
     <div class="flex h-12 items-center gap-2 border-b px-4">
       <Radio class="size-4 text-primary" />
-      <span class="flex-1 text-sm font-semibold tracking-tight">RSS Reader</span>
+      <span class="flex-1 text-sm font-semibold tracking-tight">{{ t("app.name") }}</span>
       <button
         class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
-        title="Close"
+        :title="t('sidebar.close')"
         @click="emit('close')"
       >
         <X class="size-4" />
@@ -129,7 +143,7 @@ function onFaviconError(url: string): void {
           @click="selectView({ kind: 'all' })"
         >
           <Rss class="size-4" />
-          <span class="flex-1 text-left">All</span>
+          <span class="flex-1 text-left">{{ t("sidebar.all") }}</span>
           <Badge v-if="totalUnread > 0" class="bg-muted-foreground/20 text-muted-foreground">
             {{ totalUnread }}
           </Badge>
@@ -140,11 +154,13 @@ function onFaviconError(url: string): void {
           @click="selectView({ kind: 'starred' })"
         >
           <Star class="size-4" />
-          <span class="flex-1 text-left">Starred</span>
+          <span class="flex-1 text-left">{{ t("sidebar.starred") }}</span>
         </button>
 
         <template v-if="foldersQuery.data.value?.length">
-          <div class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground">Folders</div>
+          <div class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground">
+            {{ t("sidebar.folders") }}
+          </div>
           <button
             v-for="folder in foldersQuery.data.value"
             :key="folder.id"
@@ -159,9 +175,11 @@ function onFaviconError(url: string): void {
           </button>
         </template>
 
-        <div class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground">Feeds</div>
+        <div class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground">
+          {{ t("sidebar.feeds") }}
+        </div>
         <template v-if="feedsQuery.isPending.value">
-          <div class="px-2 py-1.5 text-sm text-muted-foreground">Loading…</div>
+          <div class="px-2 py-1.5 text-sm text-muted-foreground">{{ t("sidebar.loading") }}</div>
         </template>
         <template v-else>
           <VueDraggable
@@ -194,12 +212,12 @@ function onFaviconError(url: string): void {
               </Badge>
               <GripVertical
                 class="feed-drag-handle size-4 shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing"
-                aria-label="Drag to reorder"
+                :aria-label="t('sidebar.dragToReorder')"
               />
             </button>
           </VueDraggable>
           <div v-if="!feedsQuery.data.value?.length" class="px-2 py-1.5 text-sm text-muted-foreground">
-            No feeds yet. Add one below.
+            {{ t("sidebar.noFeeds") }}
           </div>
         </template>
       </div>
@@ -211,7 +229,7 @@ function onFaviconError(url: string): void {
         class="flex gap-1.5"
         @submit.prevent="newFeedUrl.trim() && addFeed.mutate(newFeedUrl.trim())"
       >
-        <Input v-model="newFeedUrl" placeholder="https://feed-url…" class="h-8 text-sm" />
+        <Input v-model="newFeedUrl" :placeholder="t('sidebar.addFeedPlaceholder')" class="h-8 text-sm" />
         <AsyncButton type="submit" size="icon" class="size-8 shrink-0" :loading="addFeed.isPending.value">
           <Plus />
         </AsyncButton>
@@ -225,7 +243,7 @@ function onFaviconError(url: string): void {
           @click="addingFeed = true"
         >
           <Plus class="size-4" />
-          Add feed
+          {{ t("sidebar.addFeed") }}
         </Button>
         <Button
           v-else
@@ -234,12 +252,29 @@ function onFaviconError(url: string): void {
           class="flex-1 justify-start"
           @click="addingFeed = false"
         >
-          Cancel
+          {{ t("sidebar.cancel") }}
         </Button>
-        <Button variant="ghost" size="icon" class="size-8" title="Sign out" @click="auth.logout()">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="size-8"
+          :title="t('sidebar.settings')"
+          @click="settingsOpen = true"
+        >
+          <SettingsIcon class="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="size-8"
+          :title="t('sidebar.signOut')"
+          @click="auth.logout()"
+        >
           <LogOut class="size-4" />
         </Button>
       </div>
     </div>
   </aside>
+
+  <SettingsDialog v-model:open="settingsOpen" />
 </template>

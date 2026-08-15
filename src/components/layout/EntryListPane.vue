@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Search } from "lucide-vue-next";
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 import EntryList from "@/components/entries/EntryList.vue";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { useKeyboardShortcuts } from "@/composables/useKeyboardShortcuts";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
 
+const { t } = useI18n();
 const reader = useReaderStore();
 const { data } = useEntryListQuery();
 const { setFlags } = useEntryMutations();
@@ -69,16 +71,20 @@ useKeyboardShortcuts([
         <Search
           class="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
         />
-        <Input v-model="reader.searchQuery" placeholder="Search articles…" class="h-8 pl-8 text-sm" />
+        <Input
+          v-model="reader.searchQuery"
+          :placeholder="t('list.searchPlaceholder')"
+          class="h-8 pl-8 text-sm"
+        />
       </div>
       <button
         type="button"
         class="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
         :class="reader.showUnreadOnly && 'bg-accent text-foreground'"
-        title="Only unread"
+        :title="t('list.onlyUnread')"
         @click="reader.showUnreadOnly = !reader.showUnreadOnly"
       >
-        Unread
+        {{ t("list.unread") }}
       </button>
     </div>
 

@@ -39,6 +39,9 @@ export const MAX_OPML_BYTES = 2 * 1024 * 1024;
 /** Number of entries kept in a single fetch before we stop ingesting. */
 export const MAX_ENTRIES_PER_FETCH = 500;
 
+/** Public repository URL shown in the About screen. */
+export const APP_REPOSITORY_URL = "https://github.com/XiaoSong-CPE/cloudflare-based-rss-reader";
+
 /** How many recent fetch logs we retain per feed before pruning. */
 export const FETCH_LOG_RETENTION = 50;
 

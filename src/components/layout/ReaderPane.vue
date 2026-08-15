@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { BookOpen } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
 
 import EntryReader from "@/components/reader/EntryReader.vue";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
 
+const { t } = useI18n();
 const reader = useReaderStore();
 </script>
 
@@ -23,7 +25,7 @@ const reader = useReaderStore();
     />
     <div v-else class="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
       <BookOpen class="size-8 text-muted-foreground/50" />
-      <p class="text-sm text-muted-foreground">Select an article to read it here.</p>
+      <p class="text-sm text-muted-foreground">{{ t("reader.selectArticle") }}</p>
     </div>
   </section>
 </template>
