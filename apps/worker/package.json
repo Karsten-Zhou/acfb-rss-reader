@@ -7,7 +7,8 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"typecheck": "tsc --noEmit",
-		"deploy": "vite build && wrangler deploy"
+		"deploy": "vite build && wrangler deploy",
+		"db:migrate": "wrangler d1 migrations apply rss-reader-db --local"
 	},
 	"dependencies": {
 		"@rss/api": "workspace:*",
