@@ -1,31 +1,20 @@
 import { expect, test } from "bun:test";
 
-import { normalizeUrl, resolveRsshubUrl } from "../shared/index.ts";
+import { normalizeUrl } from "../shared/index.ts";
 
-test("resolveRsshubUrl maps a route to the default public instance", () => {
-	expect(resolveRsshubUrl("rsshub://zhihu/daily")).toBe("https://rsshub.app/zhihu/daily");
-	expect(resolveRsshubUrl("rsshub:///zhihu/daily")).toBe("https://rsshub.app/zhihu/daily");
-	expect(resolveRsshubUrl("rsshub://rsshub.app/zhihu/daily")).toBe(
-		"https://rsshub.app/zhihu/daily",
-	);
+test("normalizeUrl adds https and strips the hash", () => {
+	expect(normalizeUrl("example.com/feed.xml")).toBe("https://example.com/feed.xml");
+	expect(normalizeUrl("https://example.com/feed.xml#frag")).toBe("https://example.com/feed.xml");
+	expect(normalizeUrl("https://example.com/feed.xml?q=1")).toBe("https://example.com/feed.xml?q=1");
 });
 
-test("resolveRsshubUrl maps a host with a dot or localhost to a custom instance", () => {
-	expect(resolveRsshubUrl("rsshub://rsshub.feed.fans/zhihu/daily")).toBe(
-		"https://rsshub.feed.fans/zhihu/daily",
-	);
-	expect(resolveRsshubUrl("rsshub://localhost:1200/zhihu/daily")).toBe(
-		"https://localhost:1200/zhihu/daily",
-	);
+test("normalizeUrl rejects non-http(s) protocols and invalid input", () => {
+	expect(normalizeUrl("rsshub://zhihu/daily")).toBeNull();
+	expect(normalizeUrl("ftp://example.com/x")).toBeNull();
+	expect(normalizeUrl("")).toBeNull();
+	expect(normalizeUrl("not a url")).toBeNull();
 });
 
-test("resolveRsshubUrl leaves ordinary URLs untouched", () => {
-	expect(resolveRsshubUrl("https://example.com/feed.xml")).toBe("https://example.com/feed.xml");
-	expect(resolveRsshubUrl("  http://a.b/x  ")).toBe("http://a.b/x");
-	expect(resolveRsshubUrl("example.com/feed.xml")).toBe("example.com/feed.xml");
-});
-
-test("resolveRsshubUrl feeds a valid URL into normalizeUrl", () => {
-	const resolved = resolveRsshubUrl("rsshub://zhihu/daily");
-	expect(normalizeUrl(resolved)).toBe("https://rsshub.app/zhihu/daily");
+test("normalizeUrl trims surrounding whitespace", () => {
+	expect(normalizeUrl("  https://example.com/a  ")).toBe("https://example.com/a");
 });
