@@ -53,11 +53,12 @@ const canSave = computed(() => trimmedUrl.value.length > 0);
 const save = useMutation({
 	mutationFn: async () => {
 		if (props.mode === "edit") {
+			// Only the name is editable for an existing feed — the URL is locked
+			// so a change can't silently mix in a different feed's content.
 			const patch: Record<string, string> = {};
 			if (trimmedTitle.value && trimmedTitle.value !== props.feed?.title) {
 				patch.title = trimmedTitle.value;
 			}
-			if (trimmedUrl.value !== props.feed?.url) patch.url = trimmedUrl.value;
 			if (Object.keys(patch).length === 0) return; // nothing changed
 			await api.patch<{ ok: boolean }>(`/api/feeds/${props.feed?.id}`, patch);
 		} else {
@@ -125,6 +126,7 @@ const errorMessage = computed(() =>
               v-model="url"
               class="mt-1"
               :placeholder="t('sidebar.addFeedPlaceholder')"
+              :disabled="!isAdd"
             />
           </div>
           <p v-if="save.isError.value" class="text-sm text-destructive">

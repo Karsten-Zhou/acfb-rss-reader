@@ -189,7 +189,6 @@ export async function updateFeed(
 	db: Database,
 	id: number,
 	input: UpdateFeedInput,
-	kv: KVNamespace,
 ): Promise<Feed | null> {
 	if (input.folderId !== undefined && input.folderId !== null) {
 		const folder = await db.query.feedFolders.findFirst({
@@ -224,47 +223,8 @@ export async function updateFeed(
 	> = {};
 	if (input.folderId !== undefined) patch.folderId = input.folderId;
 
-	// Changing the URL re-fetches and re-parses the new feed, refreshing the
-	// metadata and ingesting any new entries.
-	if (input.url !== undefined) {
-		const fetched = await fetchFeedDocument({
-			url: input.url,
-			kv,
-			cacheKey: feedBodyCacheKey(input.url),
-		});
-		if (fetched.kind === "error") {
-			throw new FeedError(`Could not fetch feed: ${fetched.error}`, "FETCH_FAILED");
-		}
-		if (fetched.kind === "not_modified") {
-			throw new FeedError("Feed returned no content", "FETCH_FAILED");
-		}
-
-		let parsed: ParsedFeed;
-		try {
-			parsed = parseFeedDocument(fetched.body, fetched.finalUrl || input.url);
-		} catch (err) {
-			throw new FeedError(err instanceof Error ? err.message : String(err), "PARSE_FAILED");
-		}
-
-		Object.assign(patch, {
-			url: input.url,
-			siteUrl: parsed.siteUrl,
-			title: parsed.title,
-			description: parsed.description,
-			type: parsed.feedType,
-			faviconUrl: guessFaviconUrl(input.url, parsed.siteUrl),
-			etag: fetched.etag,
-			lastModified: fetched.lastModified,
-			lastFetchedAt: new Date(),
-			status: "ok" as const,
-			errorCount: 0,
-			lastError: null,
-		});
-		await ingestFeed(db, id, parsed);
-	}
-
-	// An explicit title from the user always wins over the parsed one, so a
-	// custom label survives a URL change.
+	// An existing feed's URL cannot be changed (locked in the UI and the
+	// update schema), so its metadata/content never mix with another source.
 	if (input.title !== undefined) patch.title = input.title;
 
 	const updated = await db.update(feeds).set(patch).where(eq(feeds.id, id)).returning().get();

@@ -151,7 +151,7 @@ test("renaming a feed updates the FTS search index", async () => {
 		const token = await login(ctx);
 
 		// Rename the feed.
-		await updateFeed(ctx.db, feed.id, { title: "Renamed Feed" }, ctx.env.KV_STORE);
+		await updateFeed(ctx.db, feed.id, { title: "Renamed Feed" });
 
 		// Search by the NEW name via the API (feed_title in FTS is fresh).
 		const byNewName = await getEntries(ctx, token, "q=Renamed");
