@@ -77,9 +77,9 @@ function isDefault(action: ShortcutAction): boolean {
 }
 
 const themes = computed(() => [
+	{ value: "system" as const, label: t("settings.themeSystem"), icon: Laptop },
 	{ value: "light" as const, label: t("settings.themeLight"), icon: Sun },
 	{ value: "dark" as const, label: t("settings.themeDark"), icon: Moon },
-	{ value: "system" as const, label: t("settings.themeSystem"), icon: Laptop },
 ]);
 
 const languages = LANGUAGE_PREFERENCES;
@@ -99,7 +99,17 @@ function setAiModel(value: string): void {
 	void settings.setAiModel(value);
 }
 function languageLabel(lang: LanguagePreference): string {
-	return lang === "auto" ? t("settings.languageAuto") : LOCALE_LABELS[lang];
+	if (lang !== "auto") {
+		return LOCALE_LABELS[lang];
+	}
+
+	const browserLocale = new Intl.Locale(navigator.language);
+
+	const languageName =
+		new Intl.DisplayNames([browserLocale], { type: "language" }).of(browserLocale.language) ??
+		navigator.language;
+
+	return t("settings.languageAuto", [languageName]);
 }
 </script>
 
@@ -168,12 +178,6 @@ function languageLabel(lang: LanguagePreference): string {
                 {{ languageLabel(lang) }}
               </button>
             </div>
-            <p
-              v-if="settings.language === 'auto'"
-              class="mt-1.5 text-xs text-muted-foreground"
-            >
-              {{ t("settings.languageAutoHint", { locale: settings.locale }) }}
-            </p>
           </section>
 
           <!-- AI summaries -->
