@@ -133,7 +133,12 @@ export function useEntryMutations() {
 		onError: (_error, _variables, snapshot) => {
 			restoreEntryCaches(queryClient, snapshot);
 		},
-		onSuccess: () => refreshCounts(),
+		// Fire-and-forget the count/cache refresh: the flag PATCH has already
+		// succeeded, so the pending state and header spinner should clear now,
+		// not wait for the (possibly slow remote-D1) invalidation to finish.
+		onSuccess: () => {
+			void refreshCounts();
+		},
 	});
 
 	const bulk = useMutation({
@@ -149,20 +154,28 @@ export function useEntryMutations() {
 		onError: (_error, _variables, snapshot) => {
 			restoreEntryCaches(queryClient, snapshot);
 		},
-		onSuccess: () => refreshCounts(),
+		onSuccess: () => {
+			void refreshCounts();
+		},
 	});
 
 	return {
 		setFlags,
 		bulk,
 		/** Run a flag action while marking the matching header button as loading. */
-		runFlagAction(action: ReaderPendingAction, entryId: number, flags: EntryFlagsInput): void {
+		runFlagAction(
+			action: ReaderPendingAction,
+			entryId: number,
+			flags: EntryFlagsInput,
+			onSettled?: () => void,
+		): void {
 			reader.pendingAction = action;
 			setFlags.mutate(
 				{ entryId, flags },
 				{
 					onSettled: () => {
 						reader.pendingAction = null;
+						onSettled?.();
 					},
 				},
 			);

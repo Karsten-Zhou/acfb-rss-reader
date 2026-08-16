@@ -8,6 +8,7 @@ import { useI18n } from "vue-i18n";
 
 import AsyncButton from "@/components/AsyncButton.vue";
 import UiButton from "@/components/UiButton.vue";
+import { useColumnResize } from "@/composables/useColumnResize";
 import { useEntryMutations } from "@/composables/useEntryMutations";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
@@ -23,6 +24,7 @@ const props = defineProps<{ entryId: number }>();
 const { t } = useI18n();
 const reader = useReaderStore();
 const settings = useSettingsStore();
+const { isWide } = useColumnResize();
 const { setFlags, runFlagAction } = useEntryMutations();
 
 const { data: entry, isPending } = useQuery({
@@ -88,7 +90,11 @@ function toggleStarred(): void {
 }
 
 function markUnread(): void {
-	runFlagAction("unread", props.entryId, { isRead: false });
+	// After marking an article unread, leave the reader so the user lands back
+	// on the list (mobile) / the no-article state (desktop), per spec.
+	runFlagAction("unread", props.entryId, { isRead: false }, () => {
+		reader.selectEntry(null);
+	});
 }
 
 function toggleArchive(): void {
@@ -109,7 +115,7 @@ function openOriginal(): void {
       <UiButton
         variant="ghost"
         size="icon"
-        class="md:hidden"
+        :class="isWide && 'hidden'"
         :title="t('reader.back')"
         @click="reader.selectEntry(null)"
       >
