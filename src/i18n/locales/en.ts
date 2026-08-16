@@ -28,6 +28,7 @@ export default {
 		searchPlaceholder: "Search articles…",
 		unread: "Unread",
 		onlyUnread: "Only unread",
+		now: "now",
 		noArticles: "No articles in this view.",
 		refresh: "Refresh",
 	},

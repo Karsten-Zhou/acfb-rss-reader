@@ -4,12 +4,14 @@ import { useI18n } from "vue-i18n";
 import { formatRelativeTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
+import { useSettingsStore } from "@/stores/settings";
 import type { EntryListItem as Entry } from "@/types";
 
 const props = defineProps<{ entry: Entry }>();
 
 const { t } = useI18n();
 const reader = useReaderStore();
+const settings = useSettingsStore();
 const isSelected = computed(() => reader.selectedEntryId === props.entry.id);
 </script>
 
@@ -44,7 +46,7 @@ const isSelected = computed(() => reader.selectedEntryId === props.entry.id);
       </template>
       <template v-if="entry.publishedAt">
         <span>·</span>
-        <span class="shrink-0">{{ formatRelativeTime(entry.publishedAt) }}</span>
+        <span class="shrink-0">{{ formatRelativeTime(entry.publishedAt, settings.locale, t("list.now")) }}</span>
       </template>
     </div>
   </button>

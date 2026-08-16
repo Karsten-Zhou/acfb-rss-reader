@@ -180,7 +180,7 @@ function openOriginal(): void {
             <span>·</span><span>{{ entry.author }}</span>
           </template>
           <template v-if="entry.publishedAt">
-            <span>·</span><span>{{ new Date(entry.publishedAt).toLocaleString() }}</span>
+            <span>·</span><span>{{ new Date(entry.publishedAt).toLocaleString(settings.locale) }}</span>
           </template>
         </div>
 

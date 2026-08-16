@@ -104,11 +104,11 @@ function languageLabel(lang: LanguagePreference): string {
 		return LOCALE_LABELS[lang];
 	}
 
-	const browserLocale = new Intl.Locale(navigator.language);
-
+	// The configured locale is the single source of truth: it resolves the
+	// browser language and also determines the display language of the name.
+	const resolved = settings.locale;
 	const languageName =
-		new Intl.DisplayNames([browserLocale], { type: "language" }).of(browserLocale.language) ??
-		navigator.language;
+		new Intl.DisplayNames([settings.locale], { type: "language" }).of(resolved) ?? resolved;
 
 	return t("settings.languageAuto", [languageName]);
 }
