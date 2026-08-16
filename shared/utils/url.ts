@@ -37,6 +37,28 @@ export function normalizeUrl(raw: string): string | null {
 	}
 }
 
+/** Default RSSHub instance used when a rsshub:// URL has no custom host. */
+export const RSSHUB_DEFAULT_INSTANCE = "https://rsshub.app";
+
+/**
+ * Resolve an RSSHub shorthand (`rsshub://…`) to a real https URL.
+ *
+ * - `rsshub://<route>/<…>` -> `https://rsshub.app/<route>/<…>` (public instance)
+ * - `rsshub://<host>/<…>`   -> `https://<host>/<…>` (custom instance — the
+ *   first segment contains a dot or is `localhost`)
+ *
+ * Non-rsshub URLs pass through unchanged.
+ */
+export function resolveRsshubUrl(raw: string): string {
+	const trimmed = raw.trim();
+	if (!/^rsshub:\/\//i.test(trimmed)) return trimmed;
+	const rest = trimmed.slice("rsshub://".length).replace(/^\/+/, "");
+	const slash = rest.indexOf("/");
+	const first = slash === -1 ? rest : rest.slice(0, slash);
+	const customHost = first === "localhost" || first.startsWith("localhost:") || first.includes(".");
+	return customHost ? `https://${rest}` : `${RSSHUB_DEFAULT_INSTANCE}/${rest}`;
+}
+
 /** True when the URL points at a localhost / loopback address. */
 export function isLocalhost(url: string): boolean {
 	try {

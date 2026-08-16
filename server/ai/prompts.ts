@@ -4,7 +4,7 @@
  * template transparently invalidates stale cached summaries.
  */
 
-export const SUMMARY_PROMPT_VERSION = "v1";
+export const SUMMARY_PROMPT_VERSION = "v2";
 
 export type SummaryLanguage = "en" | "de" | "zh";
 
@@ -22,21 +22,35 @@ export function normalizeSummaryLanguage(lang: string | undefined | null): Summa
 	}
 }
 
-const SYSTEM_PROMPTS: Record<SummaryLanguage, string> = {
-	en: "You are a helpful reading assistant. Write a concise, neutral summary of the article in English: 3-5 short bullet points or sentences that capture the key points and conclusions. Do not add opinions, advice, or commentary beyond the article.",
-	de: "Du bist ein hilfreicher Lese-Assistent. Fasse den Artikel knapp und sachlich auf Deutsch in 3-5 Stichpunkten oder kurzen Sätzen zusammen und erfasse die Kernaussagen und Schlussfolgerungen. Füge keine Meinungen, Ratschläge oder Kommentare hinzu, die über den Artikel hinausgehen.",
-	zh: "你是一位有用的阅读助手。请用中文以 3-5 条要点或短句简洁、客观地总结这篇文章，抓住关键观点和结论。不要添加文章之外的看法、建议或评论。",
+const LANGUAGE_LABELS: Record<SummaryLanguage, string> = {
+	en: "English",
+	de: "German",
+	zh: "Simplified Chinese",
 };
 
-/** Build a scoped (chat-style) prompt for the given article. */
+/**
+ * Build a scoped (chat-style) prompt for the given article. A single template
+ * is used for every language — only the requested output language changes,
+ * which the models follow reliably without full per-language prompts. The
+ * model is told to output nothing but the summary: no preamble, no chatting,
+ * and to keep it short.
+ */
 export function buildSummaryPrompt(
 	lang: SummaryLanguage,
 	title: string,
 	content: string,
 ): { messages: Array<{ role: "system" | "user"; content: string }> } {
+	const system = [
+		"You write concise article summaries.",
+		`Write the summary in ${LANGUAGE_LABELS[lang]}.`,
+		'Output only the summary itself: no preamble, no labels, no "here is a summary",',
+		"no commentary, no questions, and do not address the reader.",
+		"Use 3-5 short sentences or bullet points that capture the key points and conclusions.",
+		"Keep it under 100 words.",
+	].join(" ");
 	return {
 		messages: [
-			{ role: "system", content: SYSTEM_PROMPTS[lang] },
+			{ role: "system", content: system },
 			{ role: "user", content: `Title: ${title}\n\n${content}` },
 		],
 	};

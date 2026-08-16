@@ -4,6 +4,7 @@ import {
 	createFeedSchema,
 	idSchema,
 	reorderFeedsSchema,
+	resolveRsshubUrl,
 	updateFeedSchema,
 } from "../../shared/index.ts";
 import { feeds } from "../db/index.ts";
@@ -31,7 +32,11 @@ feedRoutes.get("/", requireAuth(), async (c) => {
 
 /** POST /api/feeds — validate, subscribe, and ingest a feed. */
 feedRoutes.post("/", requireAuth(), async (c) => {
-	const input = createFeedSchema.parse(await c.req.json());
+	const body = (await c.req.json()) as { url?: unknown; folderId?: unknown };
+	const input = createFeedSchema.parse({
+		...body,
+		url: typeof body.url === "string" ? resolveRsshubUrl(body.url) : body.url,
+	});
 	try {
 		const feed = await createFeed(c.get("db"), c.env.KV_STORE, input);
 		return c.json({ feed }, 201);
@@ -59,7 +64,11 @@ feedRoutes.get("/:id", requireAuth(), async (c) => {
 /** PATCH /api/feeds/:id — update title/url/folder. */
 feedRoutes.patch("/:id", requireAuth(), async (c) => {
 	const id = idSchema.parse(c.req.param("id"));
-	const input = updateFeedSchema.parse(await c.req.json());
+	const body = (await c.req.json()) as { title?: unknown; url?: unknown; folderId?: unknown };
+	const input = updateFeedSchema.parse({
+		...body,
+		url: typeof body.url === "string" ? resolveRsshubUrl(body.url) : body.url,
+	});
 	try {
 		const feed = await updateFeed(c.get("db"), id, input, c.env.KV_STORE);
 		if (!feed) throw new HttpError(404, "NOT_FOUND", "Feed not found");

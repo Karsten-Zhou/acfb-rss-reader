@@ -163,8 +163,22 @@ export async function summarizeEntry(options: SummarizeOptions): Promise<Summary
 	if (typeof response !== "string" || response.trim().length === 0) {
 		throw new SummaryError("MALFORMED", "The model returned an empty response");
 	}
-	const summary = response.trim();
+	const summary = stripSummaryPreamble(response);
 
 	await cacheSummary(options.kv, contentHash, model.id, lang, summary);
 	return { summary, model: model.id, modelLabel: model.label, cached: false };
+}
+
+/**
+ * Drop a leading "Here is a summary of the article: …" preamble if a model
+ * adds one despite the prompt, so the cached result is only the summary.
+ */
+export function stripSummaryPreamble(text: string): string {
+	const cleaned = text
+		.replace(
+			/^(here['’]?s |here is |here are )?(a |an |the )?(brief |short |concise |quick )?summary[^:\n]*:\s*/i,
+			"",
+		)
+		.trim();
+	return cleaned.length > 0 ? cleaned : text.trim();
 }
