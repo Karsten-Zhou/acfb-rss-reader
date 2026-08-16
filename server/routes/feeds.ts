@@ -56,12 +56,12 @@ feedRoutes.get("/:id", requireAuth(), async (c) => {
 	return c.json({ feed });
 });
 
-/** PATCH /api/feeds/:id — update title/folder. */
+/** PATCH /api/feeds/:id — update title/url/folder. */
 feedRoutes.patch("/:id", requireAuth(), async (c) => {
 	const id = idSchema.parse(c.req.param("id"));
 	const input = updateFeedSchema.parse(await c.req.json());
 	try {
-		const feed = await updateFeed(c.get("db"), id, input);
+		const feed = await updateFeed(c.get("db"), id, input, c.env.KV_STORE);
 		if (!feed) throw new HttpError(404, "NOT_FOUND", "Feed not found");
 		return c.json({ feed });
 	} catch (err) {

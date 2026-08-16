@@ -2,6 +2,7 @@ import { type InfiniteData, type QueryKey, useMutation, useQueryClient } from "@
 
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
+import { type ReaderPendingAction, useReaderStore } from "@/stores/reader";
 import type { EntryDetail, EntryListItem, Paginated } from "@/types";
 
 export interface EntryFlagsInput {
@@ -10,21 +11,40 @@ export interface EntryFlagsInput {
 	isArchived?: boolean;
 }
 
+/** List query filters live at index 2 of the `["entries","list",filters]` key. */
+type EntryListFilters = Record<string, unknown>;
+
+/** Whether an item still belongs in a list given its view filters. */
+function itemMatchesView(filters: EntryListFilters, item: EntryListItem): boolean {
+	if (filters.archived === "true" && !item.isArchived) return false;
+	if (filters.archived === "false" && item.isArchived) return false;
+	if (filters.starred === "true" && !item.isStarred) return false;
+	if (filters.unread === "true" && item.isRead) return false;
+	if (typeof filters.feedId === "number" && item.feedId !== filters.feedId) return false;
+	return true;
+}
+
 function patchCachedLists(
 	queryClient: ReturnType<typeof useQueryClient>,
 	entryIds: Set<number>,
 	flags: EntryFlagsInput,
 ): void {
-	queryClient.setQueriesData<InfiniteData<Paginated<EntryListItem>>>(
-		{ queryKey: ["entries", "list"], type: "active" },
-		(old) => {
-			// Only patch paginated list caches; ignore other "entries" queries.
-			if (!old || !("pages" in old)) return old;
-			return {
-				...old,
-				pages: old.pages.map((page) => ({
-					...page,
-					items: page.items.map((item) =>
+	// Iterate the active list queries so we can read each view's filters and
+	// drop items that no longer belong (e.g. an archived entry leaves "All").
+	for (const [queryKey, data] of queryClient.getQueriesData({
+		queryKey: ["entries", "list"],
+		type: "active",
+	})) {
+		const old = data as InfiniteData<Paginated<EntryListItem>> | undefined;
+		if (!old || !("pages" in old)) continue;
+		const filters = (queryKey[2] ?? {}) as EntryListFilters;
+
+		queryClient.setQueryData(queryKey, {
+			...old,
+			pages: old.pages.map((page) => ({
+				...page,
+				items: page.items
+					.map((item) =>
 						entryIds.has(item.id)
 							? {
 									...item,
@@ -33,11 +53,11 @@ function patchCachedLists(
 									isArchived: flags.isArchived ?? item.isArchived,
 								}
 							: item,
-					),
-				})),
-			};
-		},
-	);
+					)
+					.filter((item) => itemMatchesView(filters, item)),
+			})),
+		});
+	}
 }
 
 /** Patch the entry detail query cache so open articles update immediately. */
@@ -90,6 +110,7 @@ function restoreEntryCaches(
 /** Mutations for entry flags with optimistic list + detail updates. */
 export function useEntryMutations() {
 	const queryClient = useQueryClient();
+	const reader = useReaderStore();
 
 	async function refreshCounts(): Promise<void> {
 		await Promise.all([
@@ -131,5 +152,20 @@ export function useEntryMutations() {
 		onSuccess: () => refreshCounts(),
 	});
 
-	return { setFlags, bulk };
+	return {
+		setFlags,
+		bulk,
+		/** Run a flag action while marking the matching header button as loading. */
+		runFlagAction(action: ReaderPendingAction, entryId: number, flags: EntryFlagsInput): void {
+			reader.pendingAction = action;
+			setFlags.mutate(
+				{ entryId, flags },
+				{
+					onSettled: () => {
+						reader.pendingAction = null;
+					},
+				},
+			);
+		},
+	};
 }

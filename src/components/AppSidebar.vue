@@ -1,19 +1,24 @@
 <script setup lang="ts">
-import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useEventListener } from "@vueuse/core";
 import {
+	Archive,
 	GripVertical,
 	LogOut,
+	Pencil,
 	Plus,
 	Radio,
 	Rss,
 	Settings as SettingsIcon,
 	Star,
+	Trash2,
 	X,
 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
 import { VueDraggable } from "vue-draggable-plus";
 import { useI18n } from "vue-i18n";
 import AsyncButton from "@/components/AsyncButton.vue";
+import FeedEditDialog from "@/components/FeedEditDialog.vue";
 import SettingsDialog from "@/components/SettingsDialog.vue";
 import ScrollArea from "@/components/scroll-area/ScrollArea.vue";
 import UiBadge from "@/components/UiBadge.vue";
@@ -23,7 +28,7 @@ import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth";
 import { type ReaderView, useReaderStore } from "@/stores/reader";
-import type { FeedWithCounts, Folder } from "@/types";
+import type { EntryDetail, EntryListItem, FeedWithCounts, Folder, Paginated } from "@/types";
 
 const emit = defineEmits<{ close: [] }>();
 
@@ -113,6 +118,133 @@ function selectView(view: ReaderView): void {
 	reader.setView(view);
 }
 
+// --- Feed context menu (right-click / long-press) ---
+interface FeedContextMenu {
+	feed: FeedWithCounts;
+	x: number;
+	y: number;
+}
+const contextMenu = ref<FeedContextMenu | null>(null);
+const menuEl = ref<HTMLElement | null>(null);
+
+const MENU_WIDTH = 176;
+const MENU_HEIGHT = 96;
+
+function openContextMenu(feed: FeedWithCounts, event: MouseEvent): void {
+	contextMenu.value = {
+		feed,
+		x: Math.max(4, Math.min(event.clientX, window.innerWidth - MENU_WIDTH - 4)),
+		y: Math.max(4, Math.min(event.clientY, window.innerHeight - MENU_HEIGHT - 4)),
+	};
+}
+
+function closeContextMenu(): void {
+	contextMenu.value = null;
+	deletingFeedId.value = null;
+}
+
+// Close on outside pointer-down or Escape.
+useEventListener(
+	window,
+	"pointerdown",
+	(event) => {
+		const target = event.target as Node | null;
+		if (menuEl.value?.contains(target)) return;
+		closeContextMenu();
+	},
+	true,
+);
+useEventListener(window, "keydown", (event) => {
+	if (event.key === "Escape") closeContextMenu();
+});
+
+// --- Delete feed (two-step confirm: click once to arm, again to confirm) ---
+const deletingFeedId = ref<number | null>(null);
+
+const deleteFeed = useMutation({
+	mutationFn: (id: number) => api.delete<{ ok: boolean }>(`/api/feeds/${id}`),
+	onSuccess: async (_data, feedId) => {
+		deletingFeedId.value = null;
+		closeContextMenu();
+
+		// If the open article belonged to the deleted feed, close the reader.
+		const selectedId = reader.selectedEntryId;
+		if (selectedId !== null) {
+			const detail = queryClient.getQueryData<EntryDetail>(queryKeys.entries.detail(selectedId));
+			if (detail?.feed.id === feedId) reader.selectEntry(null);
+		}
+
+		if (reader.view.kind === "feed" && reader.view.feedId === feedId) {
+			reader.setView({ kind: "all" });
+		}
+
+		// Drop the deleted feed's entries from every list view immediately, so
+		// the UI updates without waiting on the refetch (slow network).
+		queryClient.setQueriesData<InfiniteData<Paginated<EntryListItem>>>(
+			{ queryKey: ["entries", "list"], type: "active" },
+			(old) => {
+				if (!old || !("pages" in old)) return old;
+				return {
+					...old,
+					pages: old.pages.map((page) => ({
+						...page,
+						items: page.items.filter((item) => item.feedId !== feedId),
+					})),
+				};
+			},
+		);
+
+		// Refresh feeds, folders, entry lists and any active search results.
+		await Promise.all([
+			queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+			queryClient.invalidateQueries({ queryKey: queryKeys.folders.all }),
+			queryClient.invalidateQueries({ queryKey: ["entries"] }),
+			queryClient.invalidateQueries({ queryKey: ["search"] }),
+		]);
+	},
+	onError: () => {
+		deletingFeedId.value = null;
+	},
+});
+
+function onDeleteFeed(feedId: number): void {
+	if (deletingFeedId.value === feedId) {
+		deleteFeed.mutate(feedId);
+		return;
+	}
+	deletingFeedId.value = feedId;
+	// Auto-cancel the pending confirmation if the user moves on.
+	window.setTimeout(() => {
+		if (deletingFeedId.value === feedId) deletingFeedId.value = null;
+	}, 3000);
+}
+
+// --- Edit feed ---
+const editFeedId = ref<number | null>(null);
+const editingFeed = computed(
+	() => feedsQuery.data.value?.find((feed) => feed.id === editFeedId.value) ?? null,
+);
+
+function editFeed(feed: FeedWithCounts): void {
+	editFeedId.value = feed.id;
+	closeContextMenu();
+}
+
+// --- Long-press (touch) to open the context menu ---
+let longPressTimer: number | null = null;
+function onFeedPointerDown(feed: FeedWithCounts, event: PointerEvent): void {
+	if (event.pointerType !== "touch") return;
+	longPressTimer = window.setTimeout(() => {
+		openContextMenu(feed, event);
+	}, 500);
+}
+function cancelLongPress(): void {
+	if (longPressTimer !== null) {
+		window.clearTimeout(longPressTimer);
+		longPressTimer = null;
+	}
+}
+
 // Track favicons that failed to load so we can fall back to the RSS icon.
 const failedFavicons = ref(new Set<string>());
 function onFaviconError(url: string): void {
@@ -155,6 +287,14 @@ function onFaviconError(url: string): void {
           <Star class="size-4" />
           <span class="flex-1 text-left">{{ t("sidebar.starred") }}</span>
         </button>
+        <button
+          class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+          :class="isActive({ kind: 'archived' }) && 'bg-accent'"
+          @click="selectView({ kind: 'archived' })"
+        >
+          <Archive class="size-4" />
+          <span class="flex-1 text-left">{{ t("sidebar.archive") }}</span>
+        </button>
 
         <template v-if="foldersQuery.data.value?.length">
           <div class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground">
@@ -196,6 +336,10 @@ function onFaviconError(url: string): void {
               class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
               :class="isActive({ kind: 'feed', feedId: feed.id }) && 'bg-accent'"
               @click="selectView({ kind: 'feed', feedId: feed.id })"
+              @contextmenu.prevent="openContextMenu(feed, $event)"
+              @pointerdown="onFeedPointerDown(feed, $event)"
+              @pointerup="cancelLongPress"
+              @pointerleave="cancelLongPress"
             >
               <img
                 v-if="feed.faviconUrl && !failedFavicons.has(feed.faviconUrl)"
@@ -276,4 +420,42 @@ function onFaviconError(url: string): void {
   </aside>
 
   <SettingsDialog v-model:open="settingsOpen" />
+  <FeedEditDialog
+    :open="editFeedId !== null"
+    :feed="editingFeed"
+    @update:open="editFeedId = null"
+  />
+
+  <!-- Feed context menu (right-click / long-press) -->
+  <Teleport to="body">
+    <div
+      v-if="contextMenu"
+      ref="menuEl"
+      class="fixed z-50 min-w-44 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+      :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+      @contextmenu.prevent
+    >
+      <button
+        type="button"
+        class="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+        @click="editFeed(contextMenu.feed)"
+      >
+        <Pencil class="size-3.5" />
+        {{ t("sidebar.editFeed") }}
+      </button>
+      <button
+        type="button"
+        class="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+        :class="deletingFeedId === contextMenu.feed.id && 'text-destructive'"
+        @click="onDeleteFeed(contextMenu.feed.id)"
+      >
+        <Trash2 class="size-3.5" />
+        {{
+          deletingFeedId === contextMenu.feed.id
+            ? t('sidebar.confirmDeleteFeed')
+            : t('sidebar.deleteFeed')
+        }}
+      </button>
+    </div>
+  </Teleport>
 </template>

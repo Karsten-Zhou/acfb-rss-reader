@@ -16,12 +16,16 @@ export interface KeyboardShortcut {
 	preventDefault?: boolean;
 }
 
-/** Register Gmail/Inoreader-style keyboard shortcuts. */
-export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]): void {
+/**
+ * Register Gmail/Inoreader-style keyboard shortcuts. Accepts a function so the
+ * bindings stay reactive (e.g. when the user remaps them in Settings) — the
+ * handler reads the current list on every keydown.
+ */
+export function useKeyboardShortcuts(shortcuts: () => KeyboardShortcut[]): void {
 	useEventListener(window, "keydown", (event) => {
 		if (isTypingTarget(event.target)) return;
 
-		const shortcut = shortcuts.find((s) => {
+		const shortcut = shortcuts().find((s) => {
 			if (!s.keys.includes(event.key)) return false;
 			if (s.withModifier) return event.ctrlKey || event.metaKey;
 			return !event.ctrlKey && !event.metaKey && !event.altKey;

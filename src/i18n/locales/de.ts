@@ -5,6 +5,7 @@ export default {
 	sidebar: {
 		all: "Alle",
 		starred: "Markiert",
+		archive: "Archiv",
 		folders: "Ordner",
 		feeds: "Feeds",
 		loading: "Lädt…",
@@ -17,8 +18,9 @@ export default {
 		dragToReorder: "Zum Sortieren ziehen",
 		settings: "Einstellungen",
 		menu: "Menü",
-		starShortcut: "Markieren (s)",
-		unstarShortcut: "Markierung aufheben (s)",
+		deleteFeed: "Feed löschen",
+		confirmDeleteFeed: "Löschen?",
+		editFeed: "Feed bearbeiten…",
 	},
 	list: {
 		searchPlaceholder: "Artikel durchsuchen…",
@@ -30,7 +32,8 @@ export default {
 	reader: {
 		back: "Zurück",
 		markUnread: "Als ungelesen markieren",
-		archiveComingSoon: "Archivieren (bald verfügbar)",
+		archive: "Archivieren",
+		unarchive: "Aus Archiv holen",
 		openOriginal: "Original öffnen",
 		openOriginalArticle: "Originalartikel öffnen",
 		loading: "Lädt…",
@@ -42,6 +45,13 @@ export default {
 	login: {
 		subtitle: "Dein persönlicher Feed-Reader. Melde dich mit GitHub an, um fortzufahren.",
 		continue: "Mit GitHub fortfahren",
+	},
+	feedEdit: {
+		title: "Feed bearbeiten",
+		url: "Feed-URL",
+		save: "Speichern",
+		cancel: "Abbrechen",
+		error: "Feed konnte nicht aktualisiert werden. URL prüfen und erneut versuchen.",
 	},
 	summary: {
 		title: "KI-Zusammenfassung",
@@ -64,6 +74,14 @@ export default {
 		aiSummary: "KI-Zusammenfassungen",
 		aiSummaryHint: "Erstellt eine KI-Zusammenfassung für jeden Artikel (nutzt Workers AI).",
 		aiModel: "Zusammenfassungsmodell",
+		shortcuts: "Tastaturkürzel",
+		pressKey: "Taste drücken…",
+		resetShortcut: "Zurücksetzen",
+		shortcut_moveDown: "Nächster Artikel",
+		shortcut_moveUp: "Vorheriger Artikel",
+		shortcut_toggleStar: "Markieren / aufheben",
+		shortcut_toggleRead: "Gelesen / ungelesen",
+		shortcut_toggleArchive: "Archivieren / wiederherstellen",
 		about: "Über",
 		version: "Version",
 		builtAt: "Erstellt am",

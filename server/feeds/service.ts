@@ -19,6 +19,7 @@ export interface CreateFeedInput {
 
 export interface UpdateFeedInput {
 	title?: string;
+	url?: string;
 	folderId?: number | null;
 }
 
@@ -178,6 +179,7 @@ export async function updateFeed(
 	db: Database,
 	id: number,
 	input: UpdateFeedInput,
+	kv: KVNamespace,
 ): Promise<Feed | null> {
 	if (input.folderId !== undefined && input.folderId !== null) {
 		const folder = await db.query.feedFolders.findFirst({
@@ -185,9 +187,72 @@ export async function updateFeed(
 		});
 		if (!folder) throw new FeedError("Folder not found", "NOT_FOUND");
 	}
-	const patch: Partial<Pick<Feed, "title" | "folderId">> = {};
+
+	const existing = await db.query.feeds.findFirst({
+		where: eq(feeds.id, id),
+		columns: { id: true },
+	});
+	if (!existing) return null;
+
+	const patch: Partial<
+		Pick<
+			Feed,
+			| "title"
+			| "folderId"
+			| "url"
+			| "siteUrl"
+			| "description"
+			| "type"
+			| "faviconUrl"
+			| "etag"
+			| "lastModified"
+			| "lastFetchedAt"
+			| "status"
+			| "errorCount"
+			| "lastError"
+		>
+	> = {};
 	if (input.title !== undefined) patch.title = input.title;
 	if (input.folderId !== undefined) patch.folderId = input.folderId;
+
+	// Changing the URL re-fetches and re-parses the new feed, refreshing the
+	// metadata and ingesting any new entries.
+	if (input.url !== undefined) {
+		const fetched = await fetchFeedDocument({
+			url: input.url,
+			kv,
+			cacheKey: feedBodyCacheKey(input.url),
+		});
+		if (fetched.kind === "error") {
+			throw new FeedError(`Could not fetch feed: ${fetched.error}`, "FETCH_FAILED");
+		}
+		if (fetched.kind === "not_modified") {
+			throw new FeedError("Feed returned no content", "FETCH_FAILED");
+		}
+
+		let parsed: ParsedFeed;
+		try {
+			parsed = parseFeedDocument(fetched.body, fetched.finalUrl || input.url);
+		} catch (err) {
+			throw new FeedError(err instanceof Error ? err.message : String(err), "PARSE_FAILED");
+		}
+
+		Object.assign(patch, {
+			url: input.url,
+			siteUrl: parsed.siteUrl,
+			title: parsed.title,
+			description: parsed.description,
+			type: parsed.feedType,
+			faviconUrl: guessFaviconUrl(input.url, parsed.siteUrl),
+			etag: fetched.etag,
+			lastModified: fetched.lastModified,
+			lastFetchedAt: new Date(),
+			status: "ok" as const,
+			errorCount: 0,
+			lastError: null,
+		});
+		await ingestFeed(db, id, parsed);
+	}
 
 	const updated = await db.update(feeds).set(patch).where(eq(feeds.id, id)).returning().get();
 	return updated ?? null;

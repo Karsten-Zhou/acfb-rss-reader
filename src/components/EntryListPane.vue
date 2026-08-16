@@ -10,11 +10,13 @@ import { useEntryMutations } from "@/composables/useEntryMutations";
 import { useKeyboardShortcuts } from "@/composables/useKeyboardShortcuts";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
+import { useSettingsStore } from "@/stores/settings";
 
 const { t } = useI18n();
 const reader = useReaderStore();
+const settings = useSettingsStore();
 const { data } = useEntryListQuery();
-const { setFlags } = useEntryMutations();
+const { runFlagAction } = useEntryMutations();
 
 const items = computed(() => data.value?.pages.flatMap((page) => page.items) ?? []);
 const selected = computed(() => items.value.find((item) => item.id === reader.selectedEntryId));
@@ -36,24 +38,29 @@ function moveSelection(delta: number): void {
 }
 
 function toggleStarred(): void {
-	if (selected.value) {
-		setFlags.mutate({
-			entryId: selected.value.id,
-			flags: { isStarred: !selected.value.isStarred },
-		});
-	}
+	if (!selected.value) return;
+	runFlagAction("star", selected.value.id, { isStarred: !selected.value.isStarred });
 }
 function toggleRead(): void {
-	if (selected.value) {
-		setFlags.mutate({ entryId: selected.value.id, flags: { isRead: !selected.value.isRead } });
-	}
+	if (!selected.value) return;
+	runFlagAction("unread", selected.value.id, { isRead: !selected.value.isRead });
+}
+function toggleArchive(): void {
+	if (!selected.value) return;
+	runFlagAction("archive", selected.value.id, { isArchived: !selected.value.isArchived });
 }
 
-useKeyboardShortcuts([
-	{ keys: ["j", "ArrowDown"], handler: () => moveSelection(1), preventDefault: true },
-	{ keys: ["k", "ArrowUp"], handler: () => moveSelection(-1), preventDefault: true },
-	{ keys: ["s"], handler: toggleStarred },
-	{ keys: ["m"], handler: toggleRead },
+// Bindings are read reactively so remapping in Settings takes effect live.
+useKeyboardShortcuts(() => [
+	{
+		keys: settings.shortcuts.moveDown,
+		handler: () => moveSelection(1),
+		preventDefault: true,
+	},
+	{ keys: settings.shortcuts.moveUp, handler: () => moveSelection(-1), preventDefault: true },
+	{ keys: settings.shortcuts.toggleStar, handler: toggleStarred },
+	{ keys: settings.shortcuts.toggleRead, handler: toggleRead },
+	{ keys: settings.shortcuts.toggleArchive, handler: toggleArchive },
 ]);
 </script>
 

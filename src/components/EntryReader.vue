@@ -8,10 +8,11 @@ import { useI18n } from "vue-i18n";
 
 import AsyncButton from "@/components/AsyncButton.vue";
 import UiButton from "@/components/UiButton.vue";
-import { type EntryFlagsInput, useEntryMutations } from "@/composables/useEntryMutations";
+import { useEntryMutations } from "@/composables/useEntryMutations";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useReaderStore } from "@/stores/reader";
+import { useSettingsStore } from "@/stores/settings";
 import type { EntryDetail } from "@/types";
 
 import EntrySummary from "./EntrySummary.vue";
@@ -20,7 +21,8 @@ const props = defineProps<{ entryId: number }>();
 
 const { t } = useI18n();
 const reader = useReaderStore();
-const { setFlags } = useEntryMutations();
+const settings = useSettingsStore();
+const { setFlags, runFlagAction } = useEntryMutations();
 
 const { data: entry, isPending } = useQuery({
 	queryKey: computed(() => queryKeys.entries.detail(props.entryId)),
@@ -70,27 +72,21 @@ watch(entry, (value) => {
 });
 
 // Track which header action is in flight so only that button shows a spinner.
-const pendingAction = ref<"star" | "unread" | null>(null);
-
-function runFlagAction(action: "star" | "unread", flags: EntryFlagsInput): void {
-	pendingAction.value = action;
-	setFlags.mutate(
-		{ entryId: props.entryId, flags },
-		{
-			onSettled: () => {
-				pendingAction.value = null;
-			},
-		},
-	);
-}
+// Stored on the reader store so keyboard-triggered actions (in EntryListPane)
+// also light up the matching button.
 
 function toggleStarred(): void {
 	if (!entry.value) return;
-	runFlagAction("star", { isStarred: !entry.value.isStarred });
+	runFlagAction("star", props.entryId, { isStarred: !entry.value.isStarred });
 }
 
 function markUnread(): void {
-	runFlagAction("unread", { isRead: false });
+	runFlagAction("unread", props.entryId, { isRead: false });
+}
+
+function toggleArchive(): void {
+	if (!entry.value) return;
+	runFlagAction("archive", props.entryId, { isArchived: !entry.value.isArchived });
 }
 
 function openOriginal(): void {
@@ -118,8 +114,10 @@ function openOriginal(): void {
       <AsyncButton
         variant="ghost"
         size="icon"
-        :title="entry?.isStarred ? t('reader.unstar') : t('reader.star')"
-        :loading="pendingAction === 'star'"
+        :title="
+          `${entry?.isStarred ? t('reader.unstar') : t('reader.star')} (${settings.shortcutLabel('toggleStar')})`
+        "
+        :loading="reader.pendingAction === 'star'"
         @click="toggleStarred"
       >
         <Star class="size-4" :class="entry?.isStarred && 'fill-amber-400 text-amber-400'" />
@@ -127,8 +125,8 @@ function openOriginal(): void {
       <AsyncButton
         variant="ghost"
         size="icon"
-        :title="t('reader.markUnread')"
-        :loading="pendingAction === 'unread'"
+        :title="`${t('reader.markUnread')} (${settings.shortcutLabel('toggleRead')})`"
+        :loading="reader.pendingAction === 'unread'"
         @click="markUnread"
       >
         <CheckCheck class="size-4" />
@@ -136,8 +134,11 @@ function openOriginal(): void {
       <AsyncButton
         variant="ghost"
         size="icon"
-        :title="t('reader.archiveComingSoon')"
-        disabled
+        :title="
+          `${reader.isArchivedView ? t('reader.unarchive') : t('reader.archive')} (${settings.shortcutLabel('toggleArchive')})`
+        "
+        :loading="reader.pendingAction === 'archive'"
+        @click="toggleArchive"
       >
         <Archive class="size-4" />
       </AsyncButton>
@@ -200,7 +201,7 @@ function openOriginal(): void {
           <AsyncButton
             variant="outline"
             size="sm"
-            :loading="pendingAction === 'star'"
+            :loading="reader.pendingAction === 'star'"
             @click="toggleStarred"
           >
             <Star class="size-3.5" :class="entry.isStarred && 'fill-amber-400 text-amber-400'" />

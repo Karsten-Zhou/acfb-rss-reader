@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { Star } from "lucide-vue-next";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { useEntryMutations } from "@/composables/useEntryMutations";
 import { formatRelativeTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
@@ -12,12 +10,7 @@ const props = defineProps<{ entry: Entry }>();
 
 const { t } = useI18n();
 const reader = useReaderStore();
-const { setFlags } = useEntryMutations();
 const isSelected = computed(() => reader.selectedEntryId === props.entry.id);
-
-function toggleStarred(): void {
-	setFlags.mutate({ entryId: props.entry.id, flags: { isStarred: !props.entry.isStarred } });
-}
 </script>
 
 <template>
@@ -33,20 +26,6 @@ function toggleStarred(): void {
         :class="entry.isRead ? 'font-normal text-muted-foreground' : 'font-semibold'"
       >
         {{ entry.title }}
-      </span>
-      <span
-        class="inline-flex cursor-pointer"
-        :title="entry.isStarred ? t('sidebar.unstarShortcut') : t('sidebar.starShortcut')"
-        @click.stop="toggleStarred"
-      >
-        <Star
-          class="size-3.5 shrink-0"
-          :class="
-            entry.isStarred
-              ? 'fill-amber-400 text-amber-400'
-              : 'text-muted-foreground/40 hover:text-muted-foreground'
-          "
-        />
       </span>
       <span
         v-if="!entry.isRead"

@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 
 import { i18n, LANGUAGE_PREFERENCES, type LanguagePreference, resolveAutoLocale } from "@/i18n";
 import { api } from "@/lib/api";
+import { DEFAULT_SHORTCUTS, type ShortcutAction, shortcutDisplay } from "@/lib/shortcuts";
 
 export type ThemePreference = "light" | "dark" | "system";
 
@@ -11,10 +12,13 @@ export interface AiModelOption {
 	label: string;
 }
 
+export type ShortcutBindings = Record<ShortcutAction, string[]>;
+
 const THEME_KEY = "rss.theme";
 const LOCALE_KEY = "rss.locale";
 const AI_ENABLED_KEY = "rss.aiEnabled";
 const AI_MODEL_KEY = "rss.aiModel";
+const SHORTCUTS_KEY = "rss.shortcuts";
 
 const THEMES: ThemePreference[] = ["light", "dark", "system"];
 
@@ -27,6 +31,23 @@ function readLocal<T extends string>(key: string, fallback: T): T {
 	return raw !== null && raw.length > 0 ? (raw as T) : fallback;
 }
 
+function readLocalShortcuts(): ShortcutBindings {
+	try {
+		const raw = localStorage.getItem(SHORTCUTS_KEY);
+		if (!raw) return structuredClone(DEFAULT_SHORTCUTS);
+		const parsed = JSON.parse(raw) as Partial<ShortcutBindings>;
+		const merged = structuredClone(DEFAULT_SHORTCUTS);
+		for (const [action, keys] of Object.entries(parsed)) {
+			if (action in merged && Array.isArray(keys) && keys.length > 0) {
+				merged[action as ShortcutAction] = keys as string[];
+			}
+		}
+		return merged;
+	} catch {
+		return structuredClone(DEFAULT_SHORTCUTS);
+	}
+}
+
 export const useSettingsStore = defineStore("settings", () => {
 	const theme = ref<ThemePreference>(readLocal(THEME_KEY, "system"));
 	/** User's language preference; "auto" follows the browser language. */
@@ -37,6 +58,8 @@ export const useSettingsStore = defineStore("settings", () => {
 	const aiModel = ref<string>(localStorage.getItem(AI_MODEL_KEY) ?? "");
 	/** Available summary models, provided by the backend. */
 	const aiModels = ref<AiModelOption[]>([]);
+	/** Keyboard shortcut bindings (remappable in Settings). */
+	const shortcuts = ref<ShortcutBindings>(readLocalShortcuts());
 	const loaded = ref(false);
 
 	/** Effective locale after resolving the "auto" preference. */
@@ -82,6 +105,10 @@ export const useSettingsStore = defineStore("settings", () => {
 			) {
 				language.value = settings.locale as LanguagePreference;
 				localStorage.setItem(LOCALE_KEY, settings.locale);
+			}
+			if (settings.shortcuts && typeof settings.shortcuts === "object") {
+				shortcuts.value = mergeShortcuts(settings.shortcuts as Partial<ShortcutBindings>);
+				localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(shortcuts.value));
 			}
 
 			// AI summary preferences come from a dedicated endpoint that also
@@ -135,12 +162,24 @@ export const useSettingsStore = defineStore("settings", () => {
 		await persist({ aiModel: value });
 	}
 
+	async function setShortcut(action: ShortcutAction, keys: string[]): Promise<void> {
+		shortcuts.value = { ...shortcuts.value, [action]: keys };
+		localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(shortcuts.value));
+		await persist({ shortcuts: shortcuts.value });
+	}
+
+	function shortcutLabel(action: ShortcutAction): string {
+		return shortcutDisplay(shortcuts.value[action] ?? []);
+	}
+
 	return {
 		theme,
 		language,
 		aiEnabled,
 		aiModel,
 		aiModels,
+		shortcuts,
+		shortcutLabel,
 		locale,
 		dark,
 		loaded,
@@ -149,5 +188,17 @@ export const useSettingsStore = defineStore("settings", () => {
 		setLanguage,
 		setAiEnabled,
 		setAiModel,
+		setShortcut,
 	};
 });
+
+/** Merge partial persisted bindings over the defaults (validates each key). */
+function mergeShortcuts(partial: Partial<ShortcutBindings>): ShortcutBindings {
+	const merged = structuredClone(DEFAULT_SHORTCUTS);
+	for (const [action, keys] of Object.entries(partial)) {
+		if (action in merged && Array.isArray(keys) && keys.length > 0) {
+			merged[action as ShortcutAction] = keys as string[];
+		}
+	}
+	return merged;
+}

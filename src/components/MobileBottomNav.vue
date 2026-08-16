@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu, Rss, Star } from "lucide-vue-next";
+import { Archive, Menu, Rss, Star } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 
 import { cn } from "@/lib/utils";
@@ -33,6 +33,15 @@ const reader = useReaderStore();
     >
       <Star class="size-5" />
       {{ t("sidebar.starred") }}
+    </button>
+    <button
+      type="button"
+      class="flex flex-col items-center gap-0.5 px-6 text-xs"
+      :class="cn(reader.view.kind === 'archived' && 'text-primary')"
+      @click="reader.setView({ kind: 'archived' })"
+    >
+      <Archive class="size-5" />
+      {{ t("sidebar.archive") }}
     </button>
     <button
       type="button"

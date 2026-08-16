@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { APP_REPOSITORY_URL } from "@shared/constants.ts";
-import { Github, Laptop, Moon, Sun, X } from "lucide-vue-next";
+import { useEventListener } from "@vueuse/core";
+import { Github, Laptop, Moon, RotateCcw, Sun, X } from "lucide-vue-next";
 import {
 	DialogClose,
 	DialogContent,
@@ -9,24 +10,71 @@ import {
 	DialogRoot,
 	DialogTitle,
 } from "reka-ui";
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import UiSelect from "@/components/select/UiSelect.vue";
 import UiSelectContent from "@/components/select/UiSelectContent.vue";
 import UiSelectItem from "@/components/select/UiSelectItem.vue";
 import UiSelectTrigger from "@/components/select/UiSelectTrigger.vue";
 import UiSelectValue from "@/components/select/UiSelectValue.vue";
+import UiButton from "@/components/UiButton.vue";
 import UiSwitch from "@/components/UiSwitch.vue";
 import { LANGUAGE_PREFERENCES, type LanguagePreference, LOCALE_LABELS } from "@/i18n";
 import { APP_BUILD_TIME, APP_VERSION } from "@/lib/build-meta";
+import {
+	DEFAULT_SHORTCUTS,
+	isModifierKey,
+	SHORTCUT_ACTIONS,
+	type ShortcutAction,
+} from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 import { type ThemePreference, useSettingsStore } from "@/stores/settings";
 
-defineProps<{ open: boolean }>();
+const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();
 
 const { t } = useI18n();
 const settings = useSettingsStore();
+
+// --- Keyboard shortcut remapping ---
+const capturing = ref<ShortcutAction | null>(null);
+
+// Capture the next keypress (capture phase so the app's shortcut handler
+// doesn't also fire for the same key).
+useEventListener(
+	window,
+	"keydown",
+	(event) => {
+		if (!capturing.value) return;
+		event.preventDefault();
+		event.stopImmediatePropagation();
+		if (isModifierKey(event.key)) return;
+		void settings.setShortcut(capturing.value, [event.key]);
+		capturing.value = null;
+	},
+	{ capture: true },
+);
+
+watch(
+	() => props.open,
+	(open) => {
+		if (!open) capturing.value = null;
+	},
+);
+
+function startCapture(action: ShortcutAction): void {
+	capturing.value = action;
+}
+
+function resetShortcut(action: ShortcutAction): void {
+	void settings.setShortcut(action, DEFAULT_SHORTCUTS[action]);
+}
+
+function isDefault(action: ShortcutAction): boolean {
+	const current = settings.shortcuts[action];
+	const def = DEFAULT_SHORTCUTS[action];
+	return current.length === def.length && current.every((key, i) => key === def[i]);
+}
 
 const themes = computed(() => [
 	{ value: "light" as const, label: t("settings.themeLight"), icon: Sun },
@@ -60,7 +108,7 @@ function languageLabel(lang: LanguagePreference): string {
     <DialogPortal>
       <DialogOverlay class="fixed inset-0 z-50 bg-black/50" />
       <DialogContent
-        class="fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-background p-6 shadow-2xl"
+        class="fixed top-1/2 left-1/2 z-50 max-h-[min(85vh,42rem)] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border bg-background p-6 shadow-2xl"
       >
         <div class="flex items-center justify-between">
           <DialogTitle class="text-lg font-semibold tracking-tight">
@@ -159,6 +207,42 @@ function languageLabel(lang: LanguagePreference): string {
                   </UiSelectItem>
                 </UiSelectContent>
               </UiSelect>
+            </div>
+          </section>
+
+          <!-- Keyboard shortcuts -->
+          <section>
+            <p class="text-sm font-medium">{{ t("settings.shortcuts") }}</p>
+            <div class="mt-2 space-y-1.5">
+              <div
+                v-for="action in SHORTCUT_ACTIONS"
+                :key="action"
+                class="flex items-center justify-between gap-3"
+              >
+                <span class="text-sm text-muted-foreground">
+                  {{ t(`settings.shortcut_${action}`) }}
+                </span>
+                <div class="flex items-center gap-1.5">
+                  <UiButton
+                    variant="outline"
+                    size="sm"
+                    class="min-w-16 justify-center tabular-nums"
+                    @click="startCapture(action)"
+                  >
+                    {{ capturing === action ? t("settings.pressKey") : settings.shortcutLabel(action) }}
+                  </UiButton>
+                  <UiButton
+                    variant="ghost"
+                    size="icon"
+                    class="size-7"
+                    :title="t('settings.resetShortcut')"
+                    :disabled="isDefault(action)"
+                    @click="resetShortcut(action)"
+                  >
+                    <RotateCcw class="size-3.5" />
+                  </UiButton>
+                </div>
+              </div>
             </div>
           </section>
 

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNotNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -32,7 +32,7 @@ const entriesQuerySchema = z.object({
 	folderId: z.coerce.number().int().positive().optional(),
 	unread: z.enum(["true", "1"]).optional(),
 	starred: z.enum(["true", "1"]).optional(),
-	archived: z.enum(["true", "1"]).optional(),
+	archived: z.enum(["true", "1", "false", "0"]).optional(),
 	...paginationQuerySchema.shape,
 });
 
@@ -118,7 +118,13 @@ entryRoutes.get("/", requireAuth(), async (c) => {
 	if (query.feedId) conditions.push(eq(entries.feedId, query.feedId));
 	if (query.folderId) conditions.push(eq(feeds.folderId, query.folderId));
 	if (query.unread) conditions.push(eq(readStatus.isRead, false));
-	if (query.archived) conditions.push(eq(readStatus.archived, true));
+	if (query.archived) {
+		if (query.archived === "true" || query.archived === "1") {
+			conditions.push(eq(readStatus.archived, true));
+		} else {
+			conditions.push(or(isNull(readStatus.archived), eq(readStatus.archived, false)));
+		}
+	}
 	if (query.starred) conditions.push(isNotNull(starred.entryId));
 
 	const cursor = decodeCursor(query.cursor);
@@ -139,8 +145,8 @@ entryRoutes.get("/", requireAuth(), async (c) => {
 			publishedAt: entries.publishedAt,
 			feedId: entries.feedId,
 			feedTitle: feeds.title,
-			isRead: readStatus.isRead,
-			isArchived: readStatus.archived,
+			isRead: sql<boolean>`COALESCE(${readStatus.isRead}, 0)`,
+			isArchived: sql<boolean>`COALESCE(${readStatus.archived}, 0)`,
 			isStarred: sql<boolean>`${starred.entryId} IS NOT NULL`,
 		})
 		.from(entries)
@@ -155,8 +161,17 @@ entryRoutes.get("/", requireAuth(), async (c) => {
 	const pageRows = hasMore ? rows.slice(0, limit) : rows;
 	const last = pageRows.at(-1);
 
+	// COALESCE keeps NULL (no read_status row) as 0, but returns raw 0/1 from
+	// SQL — normalize to real booleans for the API.
+	const items = pageRows.map((row) => ({
+		...row,
+		isRead: Boolean(row.isRead),
+		isArchived: Boolean(row.isArchived),
+		isStarred: Boolean(row.isStarred),
+	}));
+
 	return c.json({
-		items: pageRows,
+		items,
 		nextCursor: last ? encodeCursor(last.publishedAt, last.id) : null,
 	});
 });

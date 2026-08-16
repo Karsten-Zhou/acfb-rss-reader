@@ -28,6 +28,8 @@ export function useEntryListQuery() {
 		feedId: reader.feedId ?? undefined,
 		folderId: reader.folderId ?? undefined,
 		starred: reader.view.kind === "starred" ? "true" : undefined,
+		// Non-archive views hide archived entries; the Archive view shows only them.
+		archived: reader.view.kind === "archived" ? "true" : "false",
 		unread: reader.showUnreadOnly ? "true" : undefined,
 		q: reader.searchQuery || undefined,
 	}));

@@ -5,6 +5,7 @@ export default {
 	sidebar: {
 		all: "All",
 		starred: "Starred",
+		archive: "Archive",
 		folders: "Folders",
 		feeds: "Feeds",
 		loading: "Loading…",
@@ -17,8 +18,9 @@ export default {
 		dragToReorder: "Drag to reorder",
 		settings: "Settings",
 		menu: "Menu",
-		starShortcut: "Star (s)",
-		unstarShortcut: "Unstar (s)",
+		deleteFeed: "Delete feed",
+		confirmDeleteFeed: "Delete?",
+		editFeed: "Edit feed…",
 	},
 	list: {
 		searchPlaceholder: "Search articles…",
@@ -30,7 +32,8 @@ export default {
 	reader: {
 		back: "Back",
 		markUnread: "Mark unread",
-		archiveComingSoon: "Archive (coming soon)",
+		archive: "Archive",
+		unarchive: "Unarchive",
 		openOriginal: "Open original",
 		openOriginalArticle: "Open original article",
 		loading: "Loading…",
@@ -42,6 +45,13 @@ export default {
 	login: {
 		subtitle: "Your personal feed reader. Sign in with GitHub to continue.",
 		continue: "Continue with GitHub",
+	},
+	feedEdit: {
+		title: "Edit feed",
+		url: "Feed URL",
+		save: "Save",
+		cancel: "Cancel",
+		error: "Could not update the feed. Check the URL and try again.",
 	},
 	summary: {
 		title: "AI Summary",
@@ -64,6 +74,14 @@ export default {
 		aiSummary: "AI summaries",
 		aiSummaryHint: "Generate an AI summary for each article (uses Workers AI).",
 		aiModel: "Summary model",
+		shortcuts: "Keyboard shortcuts",
+		pressKey: "Press a key…",
+		resetShortcut: "Reset to default",
+		shortcut_moveDown: "Next article",
+		shortcut_moveUp: "Previous article",
+		shortcut_toggleStar: "Star / unstar",
+		shortcut_toggleRead: "Mark read / unread",
+		shortcut_toggleArchive: "Archive / unarchive",
 		about: "About",
 		version: "Version",
 		builtAt: "Built at",

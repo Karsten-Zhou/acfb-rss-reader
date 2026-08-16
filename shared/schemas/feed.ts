@@ -14,9 +14,10 @@ export type CreateFeedInput = z.infer<typeof createFeedSchema>;
 export const updateFeedSchema = z
 	.object({
 		title: z.string().trim().min(1).max(200).optional(),
+		url: z.string().url().optional(),
 		folderId: idSchema.nullable().optional(),
 	})
-	.refine((v) => v.title !== undefined || v.folderId !== undefined, {
+	.refine((v) => v.title !== undefined || v.url !== undefined || v.folderId !== undefined, {
 		message: "At least one field must be provided",
 	});
 
