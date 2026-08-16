@@ -169,6 +169,9 @@ export function useEntryMutations() {
 			flags: EntryFlagsInput,
 			onSettled?: () => void,
 		): void {
+			// The user has asserted control over this entry's state, so the
+			// auto-mark-read watcher won't fire a conflicting second PATCH.
+			reader.markReadControlled(entryId);
 			reader.pendingAction = action;
 			setFlags.mutate(
 				{ entryId, flags },

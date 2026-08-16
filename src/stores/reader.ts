@@ -17,6 +17,13 @@ export const useReaderStore = defineStore("reader", () => {
 	const showUnreadOnly = ref(false);
 	const searchQuery = ref("");
 	const pendingAction = ref<ReaderPendingAction | null>(null);
+	/**
+	 * Entry ids whose read state the user has taken control of (via a manual
+	 * star/unread/archive action). The auto-mark-read-on-open watcher in the
+	 * reader skips these, so an optimistic read-state change can't re-trigger
+	 * a second read PATCH on the same entry.
+	 */
+	const readControlledIds = ref<Set<number>>(new Set());
 
 	function setView(next: ReaderView): void {
 		view.value = next;
@@ -26,6 +33,10 @@ export const useReaderStore = defineStore("reader", () => {
 
 	function selectEntry(id: number | null): void {
 		selectedEntryId.value = id;
+	}
+
+	function markReadControlled(id: number): void {
+		readControlledIds.value = new Set(readControlledIds.value).add(id);
 	}
 
 	const feedId = computed(() => (view.value.kind === "feed" ? view.value.feedId : null));
@@ -38,8 +49,10 @@ export const useReaderStore = defineStore("reader", () => {
 		showUnreadOnly,
 		searchQuery,
 		pendingAction,
+		readControlledIds,
 		setView,
 		selectEntry,
+		markReadControlled,
 		feedId,
 		folderId,
 		isArchivedView,

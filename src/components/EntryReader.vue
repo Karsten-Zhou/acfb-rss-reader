@@ -74,15 +74,20 @@ watch(
 	},
 );
 watch(entry, (value) => {
-	if (value && !value.isRead && !markedRead.value) {
-		markedRead.value = true;
-		setFlags.mutate({ entryId: value.id, flags: { isRead: true } });
-	}
+	if (!value || value.isRead) return;
+	// Only auto-mark an article read when the user hasn't taken control of its
+	// read state (e.g. via Mark unread), to avoid a conflicting second PATCH.
+	if (reader.readControlledIds.has(value.id)) return;
+	if (markedRead.value) return;
+	markedRead.value = true;
+	setFlags.mutate({ entryId: value.id, flags: { isRead: true } });
 });
 
 // Track which header action is in flight so only that button shows a spinner.
 // Stored on the reader store so keyboard-triggered actions (in EntryListPane)
 // also light up the matching button.
+// runFlagAction marks the entry as read-controlled so the auto-mark-read
+// watcher won't fire a conflicting second PATCH after an optimistic change.
 
 function toggleStarred(): void {
 	if (!entry.value) return;
