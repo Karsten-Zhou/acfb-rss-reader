@@ -5,6 +5,8 @@ import { idSchema } from "./common.ts";
 /** Create a new feed subscription. */
 export const createFeedSchema = z.object({
 	url: z.string().url(),
+	/** Optional custom label; falls back to the feed's parsed title. */
+	title: z.string().trim().min(1).max(200).optional(),
 	folderId: idSchema.nullable().optional(),
 });
 

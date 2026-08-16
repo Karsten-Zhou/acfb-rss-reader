@@ -14,6 +14,8 @@ import type { FeedWithCounts, ParsedFeed } from "./types.ts";
 
 export interface CreateFeedInput {
 	url: string;
+	/** Optional custom label; falls back to the feed's parsed title. */
+	title?: string;
 	folderId?: number | null;
 }
 
@@ -77,7 +79,7 @@ export async function createFeed(
 		.values({
 			url,
 			siteUrl: parsed.siteUrl,
-			title: parsed.title,
+			title: input.title?.trim() || parsed.title,
 			description: parsed.description,
 			type: parsed.feedType,
 			faviconUrl: guessFaviconUrl(url, parsed.siteUrl),
@@ -212,7 +214,6 @@ export async function updateFeed(
 			| "lastError"
 		>
 	> = {};
-	if (input.title !== undefined) patch.title = input.title;
 	if (input.folderId !== undefined) patch.folderId = input.folderId;
 
 	// Changing the URL re-fetches and re-parses the new feed, refreshing the
@@ -253,6 +254,10 @@ export async function updateFeed(
 		});
 		await ingestFeed(db, id, parsed);
 	}
+
+	// An explicit title from the user always wins over the parsed one, so a
+	// custom label survives a URL change.
+	if (input.title !== undefined) patch.title = input.title;
 
 	const updated = await db.update(feeds).set(patch).where(eq(feeds.id, id)).returning().get();
 	return updated ?? null;

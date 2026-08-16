@@ -19,33 +19,65 @@ import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import type { FeedWithCounts } from "@/types";
 
-const props = defineProps<{ open: boolean; feed: FeedWithCounts | null }>();
+const props = defineProps<{
+	open: boolean;
+	mode: "add" | "edit";
+	/** The feed being edited; only used in edit mode. */
+	feed: FeedWithCounts | null;
+}>();
 const emit = defineEmits<{ "update:open": [value: boolean] }>();
 
 const { t } = useI18n();
 const queryClient = useQueryClient();
 
+const title = ref("");
 const url = ref("");
 watch(
-	() => props.feed,
-	(feed) => {
-		url.value = feed?.url ?? "";
+	() => [props.open, props.feed, props.mode] as const,
+	() => {
+		if (props.mode === "edit") {
+			title.value = props.feed?.title ?? "";
+			url.value = props.feed?.url ?? "";
+		} else {
+			title.value = "";
+			url.value = "";
+		}
 	},
 	{ immediate: true },
 );
 
-const trimmed = computed(() => url.value.trim());
+const trimmedTitle = computed(() => title.value.trim());
+const trimmedUrl = computed(() => url.value.trim());
+const canSave = computed(() => trimmedUrl.value.length > 0);
+
 const save = useMutation({
-	mutationFn: () =>
-		api.patch<{ ok: boolean }>(`/api/feeds/${props.feed?.id}`, { url: trimmed.value }),
+	mutationFn: async () => {
+		if (props.mode === "edit") {
+			const patch: Record<string, string> = {};
+			if (trimmedTitle.value && trimmedTitle.value !== props.feed?.title) {
+				patch.title = trimmedTitle.value;
+			}
+			if (trimmedUrl.value !== props.feed?.url) patch.url = trimmedUrl.value;
+			if (Object.keys(patch).length === 0) return; // nothing changed
+			await api.patch<{ ok: boolean }>(`/api/feeds/${props.feed?.id}`, patch);
+		} else {
+			await api.post<{ feed: FeedWithCounts }>("/api/feeds", {
+				url: trimmedUrl.value,
+				...(trimmedTitle.value ? { title: trimmedTitle.value } : {}),
+			});
+		}
+	},
 	onSuccess: async () => {
 		emit("update:open", false);
 		await Promise.all([
 			queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+			queryClient.invalidateQueries({ queryKey: queryKeys.folders.all }),
 			queryClient.invalidateQueries({ queryKey: ["entries"] }),
 		]);
 	},
 });
+
+const isAdd = computed(() => props.mode === "add");
 </script>
 
 <template>
@@ -57,7 +89,7 @@ const save = useMutation({
       >
         <div class="flex items-center justify-between">
           <DialogTitle class="text-lg font-semibold tracking-tight">
-            {{ t("feedEdit.title") }}
+            {{ isAdd ? t("feedEdit.addTitle") : t("feedEdit.editTitle") }}
           </DialogTitle>
           <DialogClose
             class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -69,11 +101,22 @@ const save = useMutation({
 
         <form class="mt-4 space-y-4" @submit.prevent="save.mutate()">
           <div>
-            <label for="feed-edit-url" class="text-xs font-medium text-muted-foreground">
+            <label for="feed-dialog-title" class="text-xs font-medium text-muted-foreground">
+              {{ t("feedEdit.name") }}
+            </label>
+            <UiInput
+              id="feed-dialog-title"
+              v-model="title"
+              class="mt-1"
+              :placeholder="t('feedEdit.namePlaceholder')"
+            />
+          </div>
+          <div>
+            <label for="feed-dialog-url" class="text-xs font-medium text-muted-foreground">
               {{ t("feedEdit.url") }}
             </label>
             <UiInput
-              id="feed-edit-url"
+              id="feed-dialog-url"
               v-model="url"
               class="mt-1"
               :placeholder="t('sidebar.addFeedPlaceholder')"
@@ -86,7 +129,7 @@ const save = useMutation({
             <UiButton variant="ghost" size="sm" @click="emit('update:open', false)">
               {{ t("feedEdit.cancel") }}
             </UiButton>
-            <AsyncButton type="submit" size="sm" :loading="save.isPending.value" :disabled="!trimmed">
+            <AsyncButton type="submit" size="sm" :loading="save.isPending.value" :disabled="!canSave">
               {{ t("feedEdit.save") }}
             </AsyncButton>
           </div>

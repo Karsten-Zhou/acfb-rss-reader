@@ -17,13 +17,11 @@ import { useEventListener } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 import { VueDraggable } from "vue-draggable-plus";
 import { useI18n } from "vue-i18n";
-import AsyncButton from "@/components/AsyncButton.vue";
-import FeedEditDialog from "@/components/FeedEditDialog.vue";
+import FeedDialog from "@/components/FeedDialog.vue";
 import SettingsDialog from "@/components/SettingsDialog.vue";
 import ScrollArea from "@/components/scroll-area/ScrollArea.vue";
 import UiBadge from "@/components/UiBadge.vue";
 import UiButton from "@/components/UiButton.vue";
-import UiInput from "@/components/UiInput.vue";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth";
@@ -56,21 +54,7 @@ const foldersQuery = useQuery({
 });
 
 // --- Add feed ---
-const addingFeed = ref(false);
-const newFeedUrl = ref("");
-const addFeed = useMutation({
-	mutationFn: async (url: string) => {
-		await api.post<{ feed: FeedWithCounts }>("/api/feeds", { url });
-	},
-	onSuccess: async () => {
-		newFeedUrl.value = "";
-		addingFeed.value = false;
-		await Promise.all([
-			queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
-			queryClient.invalidateQueries({ queryKey: queryKeys.folders.all }),
-		]);
-	},
-});
+const addFeedOpen = ref(false);
 
 const totalUnread = computed(
 	() => feedsQuery.data.value?.reduce((sum, f) => sum + f.unreadCount, 0) ?? 0,
@@ -367,35 +351,10 @@ function onFaviconError(url: string): void {
     </ScrollArea>
 
     <div class="border-t p-2">
-      <form
-        v-if="addingFeed"
-        class="flex gap-1.5"
-        @submit.prevent="newFeedUrl.trim() && addFeed.mutate(newFeedUrl.trim())"
-      >
-        <UiInput v-model="newFeedUrl" :placeholder="t('sidebar.addFeedPlaceholder')" class="h-8 text-sm" />
-        <AsyncButton type="submit" size="icon" class="size-8 shrink-0" :loading="addFeed.isPending.value">
-          <Plus />
-        </AsyncButton>
-      </form>
       <div class="flex items-center gap-2">
-        <UiButton
-          v-if="!addingFeed"
-          variant="ghost"
-          size="sm"
-          class="flex-1 justify-start"
-          @click="addingFeed = true"
-        >
+        <UiButton variant="ghost" size="sm" class="flex-1 justify-start" @click="addFeedOpen = true">
           <Plus class="size-4" />
           {{ t("sidebar.addFeed") }}
-        </UiButton>
-        <UiButton
-          v-else
-          variant="ghost"
-          size="sm"
-          class="flex-1 justify-start"
-          @click="addingFeed = false"
-        >
-          {{ t("sidebar.cancel") }}
         </UiButton>
         <UiButton
           variant="ghost"
@@ -420,8 +379,10 @@ function onFaviconError(url: string): void {
   </aside>
 
   <SettingsDialog v-model:open="settingsOpen" />
-  <FeedEditDialog
+  <FeedDialog v-model:open="addFeedOpen" mode="add" :feed="null" />
+  <FeedDialog
     :open="editFeedId !== null"
+    mode="edit"
     :feed="editingFeed"
     @update:open="editFeedId = null"
   />
