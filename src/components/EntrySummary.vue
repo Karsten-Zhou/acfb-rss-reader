@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { RefreshCw, Sparkles } from "@lucide/vue";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { RefreshCw, Sparkles } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 

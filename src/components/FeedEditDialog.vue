@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { X } from "@lucide/vue";
 import { useMutation, useQueryClient } from "@tanstack/vue-query";
-import { X } from "lucide-vue-next";
 import {
 	DialogClose,
 	DialogContent,

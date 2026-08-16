@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { useEventListener } from "@vueuse/core";
 import {
 	Archive,
 	GripVertical,
@@ -13,7 +11,9 @@ import {
 	Star,
 	Trash2,
 	X,
-} from "lucide-vue-next";
+} from "@lucide/vue";
+import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useEventListener } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 import { VueDraggable } from "vue-draggable-plus";
 import { useI18n } from "vue-i18n";

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Github } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 
+import GithubMarkIcon from "@/components/GithubMarkIcon.vue";
 import UiButton from "@/components/UiButton.vue";
 import { useAuthStore } from "@/stores/auth";
 
@@ -17,7 +17,7 @@ const auth = useAuthStore();
         <p class="text-sm text-muted-foreground">{{ t("login.subtitle") }}</p>
       </div>
       <UiButton class="w-full" size="lg" @click="auth.login()">
-        <Github class="size-4" />
+        <GithubMarkIcon class="size-4" />
         {{ t("login.continue") }}
       </UiButton>
     </div>

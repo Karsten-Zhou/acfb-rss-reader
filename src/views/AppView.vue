@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu } from "lucide-vue-next";
+import { Menu } from "@lucide/vue";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 

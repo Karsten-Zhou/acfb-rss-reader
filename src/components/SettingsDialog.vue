@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { Laptop, Moon, RotateCcw, Sun, X } from "@lucide/vue";
 import { APP_REPOSITORY_URL } from "@shared/constants.ts";
 import { useEventListener } from "@vueuse/core";
-import { Github, Laptop, Moon, RotateCcw, Sun, X } from "lucide-vue-next";
 import {
 	DialogClose,
 	DialogContent,
@@ -12,6 +12,7 @@ import {
 } from "reka-ui";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import GithubMarkIcon from "@/components/GithubMarkIcon.vue";
 import UiSelect from "@/components/select/UiSelect.vue";
 import UiSelectContent from "@/components/select/UiSelectContent.vue";
 import UiSelectItem from "@/components/select/UiSelectItem.vue";
@@ -269,7 +270,7 @@ function languageLabel(lang: LanguagePreference): string {
               rel="noopener noreferrer"
               class="mt-3 inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
             >
-              <Github class="size-4" />
+              <GithubMarkIcon class="size-4" />
               {{ t("settings.github") }}
             </a>
           </section>

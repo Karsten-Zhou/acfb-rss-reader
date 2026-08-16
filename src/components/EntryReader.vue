@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { Archive, ArrowLeft, CheckCheck, ExternalLink, Star } from "@lucide/vue";
 import { buildCompatibilityStyles } from "@shared/compatibility/index.ts";
 import { useQuery } from "@tanstack/vue-query";
 import DOMPurify from "dompurify";
-import { Archive, ArrowLeft, CheckCheck, ExternalLink, Star } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 

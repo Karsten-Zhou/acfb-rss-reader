@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Loader2, RefreshCw } from "lucide-vue-next";
+import { Loader2, RefreshCw } from "@lucide/vue";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { RecycleScroller } from "vue-virtual-scroller";
-import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
+import "vue-virtual-scroller/index.css";
 
 import { useEntryListQuery } from "@/composables/useEntryListQuery";
 import EntryListItem from "./EntryListItem.vue";
@@ -37,6 +37,7 @@ async function refreshView(): Promise<void> {
       :item-size="96"
       key-field="id"
       :buffer="200"
+      :emit-update="true"
       @update="onScrollerUpdate"
     >
       <template #default="{ item }">

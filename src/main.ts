@@ -1,5 +1,4 @@
 import { VueQueryPlugin } from "@tanstack/vue-query";
-import { MotionPlugin } from "@vueuse/motion";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 
@@ -16,7 +15,6 @@ app.use(createPinia());
 app.use(i18n);
 app.use(router);
 app.use(VueQueryPlugin);
-app.use(MotionPlugin);
 
 // Apply persisted theme/locale before the first render, then hydrate from
 // the backend once the user is authenticated.
