@@ -14,14 +14,14 @@
 			"database_name": "rss-reader-db",
 			"database_id": "921a9db9-d8f6-4976-8715-71fd28248885",
 			"migrations_dir": "./server/db/migrations",
-			"remote": true
+			"remote": false
 		}
 	],
 	"kv_namespaces": [
 		{
 			"binding": "KV_STORE",
 			"id": "b4cb2b7122dd4da1b7ef84580f276544",
-			"remote": true
+			"remote": false
 		}
 	],
 	"workflows": [
