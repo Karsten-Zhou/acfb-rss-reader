@@ -155,7 +155,7 @@ function languageLabel(lang: LanguagePreference): string {
                 <SelectTrigger :aria-label="t('settings.aiModel')">
                   <SelectValue :placeholder="t('settings.aiModel')" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem v-for="m in settings.aiModels" :key="m.key" :value="m.key">
                     {{ m.label }}
                   </SelectItem>
