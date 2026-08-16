@@ -8,25 +8,30 @@ export const SUMMARY_PROMPT_VERSION = "v2";
 
 export type SummaryLanguage = "en" | "de" | "zh";
 
+const SUPPORTED_LANGUAGES: ReadonlySet<string> = new Set(["en", "de", "zh"]);
+
+/**
+ * Resolve an arbitrary locale string (e.g. "zh-CN", "zh-Hans", "en-US") to one
+ * of the supported summary languages using the platform's locale parser,
+ * falling back to "en" for unsupported or unparseable input.
+ */
 export function normalizeSummaryLanguage(lang: string | undefined | null): SummaryLanguage {
-	switch (lang?.toLowerCase()) {
-		case "de":
-			return "de";
-		case "zh":
-		case "zh-cn":
-		case "zh-hans":
-		case "zh-hans-cn":
-			return "zh";
-		default:
-			return "en";
+	if (!lang) return "en";
+	let code: string;
+	try {
+		code = new Intl.Locale(lang).language;
+	} catch {
+		return "en";
 	}
+	return SUPPORTED_LANGUAGES.has(code) ? (code as SummaryLanguage) : "en";
 }
 
-const LANGUAGE_LABELS: Record<SummaryLanguage, string> = {
-	en: "English",
-	de: "German",
-	zh: "Simplified Chinese",
-};
+const languageNames = new Intl.DisplayNames(["en"], { type: "language" });
+
+/** Human-readable language name (e.g. "German"), for embedding in the prompt. */
+function languageLabel(lang: SummaryLanguage): string {
+	return languageNames.of(lang) ?? lang;
+}
 
 /**
  * Build a scoped (chat-style) prompt for the given article. A single template
@@ -42,7 +47,7 @@ export function buildSummaryPrompt(
 ): { messages: Array<{ role: "system" | "user"; content: string }> } {
 	const system = [
 		"You write concise article summaries.",
-		`Write the summary in ${LANGUAGE_LABELS[lang]}.`,
+		`Write the summary in ${languageLabel(lang)}.`,
 		'Output only the summary itself: no preamble, no labels, no "here is a summary",',
 		"no commentary, no questions, and do not address the reader.",
 		"Use 3-5 short sentences or bullet points that capture the key points and conclusions.",
