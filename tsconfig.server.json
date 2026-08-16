@@ -3,9 +3,8 @@
 		"target": "ES2022",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"lib": ["ES2022", "DOM", "DOM.Iterable"],
-		"jsx": "preserve",
-		"types": ["vite/client"],
+		"lib": ["ES2022"],
+		"types": ["@cloudflare/workers-types"],
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"noFallthroughCasesInSwitch": true,
@@ -22,9 +21,10 @@
 		"noEmit": true,
 		"useDefineForClassFields": true,
 		"paths": {
-			"@/*": ["./src/*"],
-			"@shared/*": ["./shared/*"]
+			"@shared/*": ["./shared/*"],
+			"@server/*": ["./server/*"]
 		}
 	},
-	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "shared", "vite.config.ts"]
+	"include": ["server", "shared"],
+	"exclude": ["server/db/testing"]
 }

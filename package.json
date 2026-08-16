@@ -13,7 +13,7 @@
 		"db:generate": "cd server/db && drizzle-kit generate",
 		"db:studio": "cd server/db && drizzle-kit studio",
 		"cf-typegen": "wrangler types",
-		"typecheck": "tsc --noEmit && vue-tsc --noEmit -p tsconfig.app.json",
+		"typecheck": "tsc -p tsconfig.server.json --noEmit && vue-tsc --noEmit -p tsconfig.app.json",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
