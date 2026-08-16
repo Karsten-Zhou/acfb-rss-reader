@@ -6,8 +6,8 @@ import { Archive, ArrowLeft, CheckCheck, ExternalLink, Star } from "lucide-vue-n
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-import { AsyncButton } from "@/components/ui/async-button";
-import { Button } from "@/components/ui/button";
+import AsyncButton from "@/components/AsyncButton.vue";
+import UiButton from "@/components/UiButton.vue";
 import { type EntryFlagsInput, useEntryMutations } from "@/composables/useEntryMutations";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
@@ -103,7 +103,7 @@ function openOriginal(): void {
 <template>
   <article class="flex h-full min-w-0 flex-col">
     <header class="flex h-12 shrink-0 items-center gap-1 border-b px-3">
-      <Button
+      <UiButton
         variant="ghost"
         size="icon"
         class="md:hidden"
@@ -111,7 +111,7 @@ function openOriginal(): void {
         @click="reader.selectEntry(null)"
       >
         <ArrowLeft class="size-4" />
-      </Button>
+      </UiButton>
       <div class="min-w-0 flex-1">
         <p class="truncate text-sm font-medium">{{ entry?.feed.title }}</p>
       </div>
@@ -141,7 +141,7 @@ function openOriginal(): void {
       >
         <Archive class="size-4" />
       </AsyncButton>
-      <Button
+      <UiButton
         variant="ghost"
         size="icon"
         :title="t('reader.openOriginal')"
@@ -149,7 +149,7 @@ function openOriginal(): void {
         @click="openOriginal"
       >
         <ExternalLink class="size-4" />
-      </Button>
+      </UiButton>
     </header>
 
     <div class="min-h-0 flex-1 overflow-y-auto">
@@ -188,7 +188,7 @@ function openOriginal(): void {
         </p>
 
         <div class="mt-8 flex items-center gap-2 border-t pt-4 text-sm">
-          <Button
+          <UiButton
             v-if="entry.url"
             variant="outline"
             size="sm"
@@ -196,7 +196,7 @@ function openOriginal(): void {
           >
             <ExternalLink class="size-3.5" />
             {{ t("reader.openOriginalArticle") }}
-          </Button>
+          </UiButton>
           <AsyncButton
             variant="outline"
             size="sm"

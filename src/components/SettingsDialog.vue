@@ -11,14 +11,12 @@ import {
 } from "reka-ui";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import UiSelect from "@/components/select/UiSelect.vue";
+import UiSelectContent from "@/components/select/UiSelectContent.vue";
+import UiSelectItem from "@/components/select/UiSelectItem.vue";
+import UiSelectTrigger from "@/components/select/UiSelectTrigger.vue";
+import UiSelectValue from "@/components/select/UiSelectValue.vue";
+import UiSwitch from "@/components/UiSwitch.vue";
 import { LANGUAGE_PREFERENCES, type LanguagePreference, LOCALE_LABELS } from "@/i18n";
 import { APP_BUILD_TIME, APP_VERSION } from "@/lib/build-meta";
 import { cn } from "@/lib/utils";
@@ -134,7 +132,7 @@ function languageLabel(lang: LanguagePreference): string {
           <section>
             <div class="flex items-center justify-between gap-4">
               <p class="text-sm font-medium">{{ t("settings.aiSummary") }}</p>
-              <Switch
+              <UiSwitch
                 :model-value="settings.aiEnabled"
                 :aria-label="t('settings.aiSummary')"
                 @update:model-value="(value: unknown) => setAiEnabled(value === true)"
@@ -147,20 +145,20 @@ function languageLabel(lang: LanguagePreference): string {
               <p class="text-xs font-medium text-muted-foreground">
                 {{ t("settings.aiModel") }}
               </p>
-              <Select
+              <UiSelect
                 :model-value="settings.aiModel"
                 class="mt-1"
                 @update:model-value="(value: unknown) => setAiModel(String(value))"
               >
-                <SelectTrigger :aria-label="t('settings.aiModel')">
-                  <SelectValue :placeholder="t('settings.aiModel')" />
-                </SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem v-for="m in settings.aiModels" :key="m.key" :value="m.key">
+                <UiSelectTrigger :aria-label="t('settings.aiModel')">
+                  <UiSelectValue :placeholder="t('settings.aiModel')" />
+                </UiSelectTrigger>
+                <UiSelectContent position="popper">
+                  <UiSelectItem v-for="m in settings.aiModels" :key="m.key" :value="m.key">
                     {{ m.label }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                  </UiSelectItem>
+                </UiSelectContent>
+              </UiSelect>
             </div>
           </section>
 

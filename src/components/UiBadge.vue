@@ -1,3 +1,4 @@
+<script lang="ts">
 import { cva, type VariantProps } from "class-variance-authority";
 
 export const badgeVariants = cva(
@@ -18,5 +19,21 @@ export const badgeVariants = cva(
 );
 
 export type BadgeVariants = VariantProps<typeof badgeVariants>;
+</script>
 
-export { default as Badge } from "./Badge.vue";
+<script setup lang="ts">
+import type { HTMLAttributes } from "vue";
+
+import { cn } from "@/lib/utils";
+
+const props = defineProps<{
+	variant?: BadgeVariants["variant"];
+	class?: HTMLAttributes["class"];
+}>();
+</script>
+
+<template>
+  <div :class="cn(badgeVariants({ variant }), props.class)">
+    <slot />
+  </div>
+</template>

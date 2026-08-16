@@ -9,8 +9,8 @@ import {
 } from "reka-ui";
 import type { HTMLAttributes } from "vue";
 import { cn } from "@/lib/utils";
-import SelectScrollDownButton from "./SelectScrollDownButton.vue";
-import SelectScrollUpButton from "./SelectScrollUpButton.vue";
+import UiSelectScrollDownButton from "./UiSelectScrollDownButton.vue";
+import UiSelectScrollUpButton from "./UiSelectScrollUpButton.vue";
 
 const props = defineProps<SelectContentProps & { class?: HTMLAttributes["class"] }>();
 const emits = defineEmits<SelectContentEmits>();
@@ -31,11 +31,11 @@ const forwarded = useForwardPropsEmits(props, emits);
         )
       "
     >
-      <SelectScrollUpButton />
+      <UiSelectScrollUpButton />
       <SelectViewport class="p-1">
         <slot />
       </SelectViewport>
-      <SelectScrollDownButton />
+      <UiSelectScrollDownButton />
     </SelectContent>
   </SelectPortal>
 </template>

@@ -3,10 +3,10 @@ import { Menu } from "lucide-vue-next";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-import AppSidebar from "@/components/layout/AppSidebar.vue";
-import EntryListPane from "@/components/layout/EntryListPane.vue";
-import MobileBottomNav from "@/components/layout/MobileBottomNav.vue";
-import ReaderPane from "@/components/layout/ReaderPane.vue";
+import AppSidebar from "@/components/AppSidebar.vue";
+import EntryListPane from "@/components/EntryListPane.vue";
+import MobileBottomNav from "@/components/MobileBottomNav.vue";
+import ReaderPane from "@/components/ReaderPane.vue";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
 

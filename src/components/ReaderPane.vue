@@ -2,7 +2,7 @@
 import { BookOpen } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 
-import EntryReader from "@/components/reader/EntryReader.vue";
+import EntryReader from "@/components/EntryReader.vue";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
 

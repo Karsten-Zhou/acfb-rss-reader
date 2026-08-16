@@ -3,8 +3,8 @@ import { Search } from "lucide-vue-next";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
-import EntryList from "@/components/entries/EntryList.vue";
-import { Input } from "@/components/ui/input";
+import EntryList from "@/components/EntryList.vue";
+import UiInput from "@/components/UiInput.vue";
 import { useEntryListQuery } from "@/composables/useEntryListQuery";
 import { useEntryMutations } from "@/composables/useEntryMutations";
 import { useKeyboardShortcuts } from "@/composables/useKeyboardShortcuts";
@@ -71,7 +71,7 @@ useKeyboardShortcuts([
         <Search
           class="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
         />
-        <Input
+        <UiInput
           v-model="reader.searchQuery"
           :placeholder="t('list.searchPlaceholder')"
           class="h-8 pl-8 text-sm"

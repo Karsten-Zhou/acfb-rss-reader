@@ -13,13 +13,12 @@ import {
 import { computed, ref, watch } from "vue";
 import { VueDraggable } from "vue-draggable-plus";
 import { useI18n } from "vue-i18n";
-
-import SettingsDialog from "@/components/settings/SettingsDialog.vue";
-import { AsyncButton } from "@/components/ui/async-button";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import AsyncButton from "@/components/AsyncButton.vue";
+import SettingsDialog from "@/components/SettingsDialog.vue";
+import ScrollArea from "@/components/scroll-area/ScrollArea.vue";
+import UiBadge from "@/components/UiBadge.vue";
+import UiButton from "@/components/UiButton.vue";
+import UiInput from "@/components/UiInput.vue";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { useAuthStore } from "@/stores/auth";
@@ -144,9 +143,9 @@ function onFaviconError(url: string): void {
         >
           <Rss class="size-4" />
           <span class="flex-1 text-left">{{ t("sidebar.all") }}</span>
-          <Badge v-if="totalUnread > 0" class="bg-muted-foreground/20 text-muted-foreground">
+          <UiBadge v-if="totalUnread > 0" class="bg-muted-foreground/20 text-muted-foreground">
             {{ totalUnread }}
-          </Badge>
+          </UiBadge>
         </button>
         <button
           class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
@@ -169,9 +168,9 @@ function onFaviconError(url: string): void {
             @click="selectView({ kind: 'folder', folderId: folder.id })"
           >
             <span class="flex-1 truncate text-left">{{ folder.name }}</span>
-            <Badge v-if="folder.unreadCount > 0" class="bg-muted-foreground/20 text-muted-foreground">
+            <UiBadge v-if="folder.unreadCount > 0" class="bg-muted-foreground/20 text-muted-foreground">
               {{ folder.unreadCount }}
-            </Badge>
+            </UiBadge>
           </button>
         </template>
 
@@ -207,9 +206,9 @@ function onFaviconError(url: string): void {
               />
               <Rss v-else class="size-4 shrink-0 text-muted-foreground" />
               <span class="flex-1 truncate text-left">{{ feed.title }}</span>
-              <Badge v-if="feed.unreadCount > 0" class="bg-muted-foreground/20 text-muted-foreground">
+              <UiBadge v-if="feed.unreadCount > 0" class="bg-muted-foreground/20 text-muted-foreground">
                 {{ feed.unreadCount }}
-              </Badge>
+              </UiBadge>
               <GripVertical
                 class="feed-drag-handle size-4 shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing"
                 :aria-label="t('sidebar.dragToReorder')"
@@ -229,13 +228,13 @@ function onFaviconError(url: string): void {
         class="flex gap-1.5"
         @submit.prevent="newFeedUrl.trim() && addFeed.mutate(newFeedUrl.trim())"
       >
-        <Input v-model="newFeedUrl" :placeholder="t('sidebar.addFeedPlaceholder')" class="h-8 text-sm" />
+        <UiInput v-model="newFeedUrl" :placeholder="t('sidebar.addFeedPlaceholder')" class="h-8 text-sm" />
         <AsyncButton type="submit" size="icon" class="size-8 shrink-0" :loading="addFeed.isPending.value">
           <Plus />
         </AsyncButton>
       </form>
       <div class="flex items-center gap-2">
-        <Button
+        <UiButton
           v-if="!addingFeed"
           variant="ghost"
           size="sm"
@@ -244,8 +243,8 @@ function onFaviconError(url: string): void {
         >
           <Plus class="size-4" />
           {{ t("sidebar.addFeed") }}
-        </Button>
-        <Button
+        </UiButton>
+        <UiButton
           v-else
           variant="ghost"
           size="sm"
@@ -253,8 +252,8 @@ function onFaviconError(url: string): void {
           @click="addingFeed = false"
         >
           {{ t("sidebar.cancel") }}
-        </Button>
-        <Button
+        </UiButton>
+        <UiButton
           variant="ghost"
           size="icon"
           class="size-8"
@@ -262,8 +261,8 @@ function onFaviconError(url: string): void {
           @click="settingsOpen = true"
         >
           <SettingsIcon class="size-4" />
-        </Button>
-        <Button
+        </UiButton>
+        <UiButton
           variant="ghost"
           size="icon"
           class="size-8"
@@ -271,7 +270,7 @@ function onFaviconError(url: string): void {
           @click="auth.logout()"
         >
           <LogOut class="size-4" />
-        </Button>
+        </UiButton>
       </div>
     </div>
   </aside>
