@@ -103,7 +103,7 @@ export async function searchEntries(db: Database, options: SearchOptions): Promi
       WHERE entries_fts MATCH ${match}
         AND (
           ${cursorRank == null} OR
-          f.rank < ${cursorRank} OR
+          f.rank > ${cursorRank} OR
           (f.rank = ${cursorRank} AND f.entry_id < ${cursorEntryId})
         )
       ORDER BY f.rank, f.entry_id DESC
@@ -162,4 +162,157 @@ export async function indexEntry(
 /** Remove an entry from the FTS index. */
 export async function unindexEntry(db: Database, entryId: number): Promise<void> {
 	await db.delete(entriesFts).where(eq(entriesFts.entryId, entryId));
+}
+
+/**
+ * Row shape for FTS search combined with the entry-list response fields
+ * (flags + feed metadata). Mirrors the non-search list row.
+ */
+export interface EntryListSearchRow {
+	id: number;
+	title: string;
+	url: string | null;
+	author: string | null;
+	summary: string | null;
+	imageUrl: string | null;
+	publishedAt: string | null;
+	feedId: number;
+	feedTitle: string;
+	isRead: boolean;
+	isArchived: boolean;
+	isStarred: boolean;
+}
+
+export interface EntryListSearchOptions {
+	query: string;
+	limit: number;
+	/** Opaque rank cursor from a previous page. */
+	cursor?: string;
+	feedId?: number;
+	folderId?: number;
+	starred?: boolean;
+	unread?: boolean;
+	/** true = archived only, false = hide archived, null/undefined = both. */
+	archived?: boolean | null;
+}
+
+interface EntryListFtsRow {
+	id: number;
+	title: string;
+	url: string | null;
+	author: string | null;
+	summary: string | null;
+	image_url: string | null;
+	published_at: number | null;
+	feed_id: number;
+	feed_title: string;
+	is_read: number;
+	archived: number;
+	is_starred: number;
+	rank: number;
+}
+
+/**
+ * Full-text search over entries that returns the same shape as the entry
+ * list endpoint, so the list view can be filtered by a search term without
+ * changing the response contract. View filters (feed/folder/starred/unread/
+ * archived) are applied as extra predicates on the joined tables.
+ */
+export async function searchEntryList(
+	db: Database,
+	options: EntryListSearchOptions,
+): Promise<{ items: EntryListSearchRow[]; nextCursor: string | null }> {
+	const match = buildMatchExpression(options.query);
+	if (match.length === 0) return { items: [], nextCursor: null };
+
+	// Cursor decodes to { rank, entryId } for stable rank-ordered pagination.
+	let cursorRank: number | null = null;
+	let cursorEntryId: number | null = null;
+	if (options.cursor) {
+		try {
+			const parsed = JSON.parse(atob(options.cursor)) as { r: number; id: number };
+			cursorRank = parsed.r;
+			cursorEntryId = parsed.id;
+		} catch {
+			return { items: [], nextCursor: null };
+		}
+	}
+
+	const conditions = [sql`entries_fts MATCH ${match}`];
+	if (cursorRank !== null && cursorEntryId !== null) {
+		conditions.push(
+			sql`(f.rank > ${cursorRank} OR (f.rank = ${cursorRank} AND f.entry_id < ${cursorEntryId}))`,
+		);
+	}
+	if (options.feedId !== undefined) conditions.push(sql`e.feed_id = ${options.feedId}`);
+	if (options.folderId !== undefined) conditions.push(sql`fd.folder_id = ${options.folderId}`);
+	if (options.starred) conditions.push(sql`s.entry_id IS NOT NULL`);
+	if (options.unread) conditions.push(sql`COALESCE(rs.is_read, 0) = 0`);
+	if (options.archived === true) conditions.push(sql`COALESCE(rs.archived, 0) = 1`);
+	else if (options.archived === false) conditions.push(sql`COALESCE(rs.archived, 0) = 0`);
+
+	const rows = await db.all<EntryListFtsRow>(sql`
+      SELECT
+        e.id,
+        e.title,
+        e.url,
+        e.author,
+        e.summary,
+        e.image_url,
+        e.published_at,
+        e.feed_id,
+        fd.title AS feed_title,
+        COALESCE(rs.is_read, 0) AS is_read,
+        COALESCE(rs.archived, 0) AS archived,
+        s.entry_id IS NOT NULL AS is_starred,
+        f.rank AS rank
+      FROM entries_fts f
+      JOIN entries e ON e.id = f.entry_id
+      JOIN feeds fd ON fd.id = e.feed_id
+      LEFT JOIN read_status rs ON rs.entry_id = e.id
+      LEFT JOIN starred s ON s.entry_id = e.id
+      WHERE ${sql.join(conditions, sql.raw(" AND "))}
+      ORDER BY f.rank, f.entry_id DESC
+      LIMIT ${options.limit + 1}
+    `);
+
+	const hasMore = rows.length > options.limit;
+	const pageRows = hasMore ? rows.slice(0, options.limit) : rows;
+	const last = pageRows.at(-1);
+
+	const items: EntryListSearchRow[] = pageRows.map((row) => ({
+		id: row.id,
+		title: row.title,
+		url: row.url,
+		author: row.author,
+		summary: row.summary,
+		imageUrl: row.image_url,
+		publishedAt: row.published_at ? new Date(row.published_at).toISOString() : null,
+		feedId: row.feed_id,
+		feedTitle: row.feed_title,
+		isRead: Boolean(row.is_read),
+		isArchived: Boolean(row.archived),
+		isStarred: Boolean(row.is_starred),
+	}));
+
+	const nextCursor =
+		last !== undefined ? btoa(JSON.stringify({ r: last.rank, id: last.id })) : null;
+
+	return { items, nextCursor };
+}
+
+/**
+ * Keep the FTS `feed_title` column in sync when a feed is renamed. Without
+ * this, search results would keep showing (and matching) the old label.
+ */
+export async function updateFeedTitleInSearch(
+	db: Database,
+	feedId: number,
+	feedTitle: string,
+): Promise<void> {
+	await db.run(sql`
+      UPDATE entries_fts
+      SET feed_title = ${feedTitle}
+      WHERE entry_id IN (SELECT id FROM entries WHERE feed_id = ${feedId})
+    `);
 }

@@ -11,6 +11,7 @@ import UiButton from "@/components/UiButton.vue";
 import { useEntryMutations } from "@/composables/useEntryMutations";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
+import { sanitizeSafeYouTubePipeline } from "@/lib/youtube";
 import { useReaderStore } from "@/stores/reader";
 import { useSettingsStore } from "@/stores/settings";
 import type { EntryDetail } from "@/types";
@@ -32,10 +33,16 @@ const { data: entry, isPending } = useQuery({
 
 const sanitizedHtml = computed(() => {
 	if (!entry.value?.content) return "";
-	return DOMPurify.sanitize(entry.value.content, {
-		USE_PROFILES: { html: true },
-		ADD_ATTR: ["target", "rel"],
-	});
+	// YouTube embeds are allowed through a controlled transformation: source
+	// iframes are replaced with markers, sanitized, then re-expanded into
+	// our own youtube-nocookie.com iframes. DOMPurify itself never allows
+	// generic <iframe> from feed HTML.
+	return sanitizeSafeYouTubePipeline(entry.value.content, (raw) =>
+		DOMPurify.sanitize(raw, {
+			USE_PROFILES: { html: true },
+			ADD_ATTR: ["target", "rel"],
+		}),
+	);
 });
 
 // Inject site compatibility CSS (e.g. Steam) for the rendered content.

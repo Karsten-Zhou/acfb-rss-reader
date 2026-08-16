@@ -2,6 +2,9 @@ export default {
 	app: {
 		name: "RSS Reader",
 	},
+	layout: {
+		resizeList: "Artikelliste anpassen",
+	},
 	sidebar: {
 		all: "Alle",
 		starred: "Markiert",
@@ -44,6 +47,14 @@ export default {
 	login: {
 		subtitle: "Dein persönlicher Feed-Reader. Melde dich mit GitHub an, um fortzufahren.",
 		continue: "Mit GitHub fortfahren",
+	},
+	auth: {
+		signOutTitle: "Abmelden",
+		signOutConfirm:
+			"Möchtest du dich wirklich abmelden? Deine Sitzung auf diesem Gerät wird beendet.",
+		signOut: "Abmelden",
+		signOutError: "Abmeldung fehlgeschlagen. Bitte erneut versuchen.",
+		cancel: "Abbrechen",
 	},
 	feedEdit: {
 		addTitle: "Feed hinzufügen",

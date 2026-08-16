@@ -35,3 +35,8 @@
 	max-width: 100%;
 	height: auto;
 }
+
+/* links */
+.bb_link_host {
+	display: none;
+}

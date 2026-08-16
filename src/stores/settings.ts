@@ -14,11 +14,19 @@ export interface AiModelOption {
 
 export type ShortcutBindings = Record<ShortcutAction, string[]>;
 
+/** Desktop list column width (px). The sidebar is fixed; the reader takes the rest. */
+export interface ColumnWidths {
+	list: number;
+}
+
+export const DEFAULT_COLUMN_WIDTHS: ColumnWidths = { list: 384 };
+
 const THEME_KEY = "rss.theme";
 const LOCALE_KEY = "rss.locale";
 const AI_ENABLED_KEY = "rss.aiEnabled";
 const AI_MODEL_KEY = "rss.aiModel";
 const SHORTCUTS_KEY = "rss.shortcuts";
+const COLUMN_WIDTHS_KEY = "rss.columnWidths";
 
 const THEMES: ThemePreference[] = ["light", "dark", "system"];
 
@@ -48,6 +56,25 @@ function readLocalShortcuts(): ShortcutBindings {
 	}
 }
 
+function readLocalColumnWidths(): ColumnWidths {
+	try {
+		const raw = localStorage.getItem(COLUMN_WIDTHS_KEY);
+		if (!raw) return { ...DEFAULT_COLUMN_WIDTHS };
+		const parsed = JSON.parse(raw) as Partial<ColumnWidths>;
+		return {
+			list: clampWidth(parsed.list, DEFAULT_COLUMN_WIDTHS.list, 256, 512),
+		};
+	} catch {
+		return { ...DEFAULT_COLUMN_WIDTHS };
+	}
+}
+
+function clampWidth(value: unknown, fallback: number, min: number, max: number): number {
+	return typeof value === "number" && Number.isFinite(value)
+		? Math.min(max, Math.max(min, Math.round(value)))
+		: fallback;
+}
+
 export const useSettingsStore = defineStore("settings", () => {
 	const theme = ref<ThemePreference>(readLocal(THEME_KEY, "system"));
 	/** User's language preference; "auto" follows the browser language. */
@@ -60,6 +87,8 @@ export const useSettingsStore = defineStore("settings", () => {
 	const aiModels = ref<AiModelOption[]>([]);
 	/** Keyboard shortcut bindings (remappable in Settings). */
 	const shortcuts = ref<ShortcutBindings>(readLocalShortcuts());
+	/** Desktop column widths; the reader takes the remaining space. */
+	const columnWidths = ref<ColumnWidths>(readLocalColumnWidths());
 	const loaded = ref(false);
 
 	/** Effective locale after resolving the "auto" preference. */
@@ -109,6 +138,13 @@ export const useSettingsStore = defineStore("settings", () => {
 			if (settings.shortcuts && typeof settings.shortcuts === "object") {
 				shortcuts.value = mergeShortcuts(settings.shortcuts as Partial<ShortcutBindings>);
 				localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(shortcuts.value));
+			}
+			if (settings.columnWidths && typeof settings.columnWidths === "object") {
+				const w = settings.columnWidths as Partial<ColumnWidths>;
+				columnWidths.value = {
+					list: clampWidth(w.list, columnWidths.value.list, 256, 512),
+				};
+				localStorage.setItem(COLUMN_WIDTHS_KEY, JSON.stringify(columnWidths.value));
 			}
 
 			// AI summary preferences come from a dedicated endpoint that also
@@ -168,6 +204,13 @@ export const useSettingsStore = defineStore("settings", () => {
 		await persist({ shortcuts: shortcuts.value });
 	}
 
+	/** Update desktop column widths (local-first, backend sync best-effort). */
+	async function setColumnWidths(widths: ColumnWidths): Promise<void> {
+		columnWidths.value = { ...widths };
+		localStorage.setItem(COLUMN_WIDTHS_KEY, JSON.stringify(columnWidths.value));
+		await persist({ columnWidths: columnWidths.value });
+	}
+
 	function shortcutLabel(action: ShortcutAction): string {
 		return shortcutDisplay(shortcuts.value[action] ?? []);
 	}
@@ -179,6 +222,7 @@ export const useSettingsStore = defineStore("settings", () => {
 		aiModel,
 		aiModels,
 		shortcuts,
+		columnWidths,
 		shortcutLabel,
 		locale,
 		dark,
@@ -189,6 +233,7 @@ export const useSettingsStore = defineStore("settings", () => {
 		setAiEnabled,
 		setAiModel,
 		setShortcut,
+		setColumnWidths,
 	};
 });
 

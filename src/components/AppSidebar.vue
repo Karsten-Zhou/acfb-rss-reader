@@ -19,23 +19,23 @@ import { VueDraggable } from "vue-draggable-plus";
 import { useI18n } from "vue-i18n";
 import FeedDialog from "@/components/FeedDialog.vue";
 import SettingsDialog from "@/components/SettingsDialog.vue";
+import SignOutDialog from "@/components/SignOutDialog.vue";
 import ScrollArea from "@/components/scroll-area/ScrollArea.vue";
 import UiBadge from "@/components/UiBadge.vue";
 import UiButton from "@/components/UiButton.vue";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
-import { useAuthStore } from "@/stores/auth";
 import { type ReaderView, useReaderStore } from "@/stores/reader";
 import type { EntryDetail, EntryListItem, FeedWithCounts, Folder, Paginated } from "@/types";
 
 const emit = defineEmits<{ close: [] }>();
 
 const { t } = useI18n();
-const auth = useAuthStore();
 const reader = useReaderStore();
 const queryClient = useQueryClient();
 
 const settingsOpen = ref(false);
+const signOutOpen = ref(false);
 
 const feedsQuery = useQuery({
 	queryKey: queryKeys.feeds.all,
@@ -370,7 +370,7 @@ function onFaviconError(url: string): void {
           size="icon"
           class="size-8"
           :title="t('sidebar.signOut')"
-          @click="auth.logout()"
+          @click="signOutOpen = true"
         >
           <LogOut class="size-4" />
         </UiButton>
@@ -379,6 +379,7 @@ function onFaviconError(url: string): void {
   </aside>
 
   <SettingsDialog v-model:open="settingsOpen" />
+  <SignOutDialog v-model:open="signOutOpen" />
   <FeedDialog v-model:open="addFeedOpen" mode="add" :feed="null" />
   <FeedDialog
     :open="editFeedId !== null"

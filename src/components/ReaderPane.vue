@@ -3,11 +3,13 @@ import { BookOpen } from "@lucide/vue";
 import { useI18n } from "vue-i18n";
 
 import EntryReader from "@/components/EntryReader.vue";
+import { useColumnResize } from "@/composables/useColumnResize";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
 
 const { t } = useI18n();
 const reader = useReaderStore();
+const { isWide } = useColumnResize();
 </script>
 
 <template>
@@ -15,7 +17,9 @@ const reader = useReaderStore();
     :class="
       cn(
         'min-w-0 flex-1 flex-col',
-        reader.selectedEntryId !== null ? 'flex' : 'hidden md:flex',
+        // An open article always gets the reader; the placeholder shows only
+        // when there is room for it next to the list (three-column layout).
+        reader.selectedEntryId !== null ? 'flex' : isWide ? 'flex' : 'hidden',
       )
     "
   >

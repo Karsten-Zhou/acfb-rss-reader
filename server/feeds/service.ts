@@ -2,7 +2,15 @@ import { count, eq, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import type { FeedType } from "../../shared/index.ts";
 import { guessFaviconUrl, isLocalhost, normalizeUrl } from "../../shared/index.ts";
-import { type Database, entries, type Feed, feedFolders, feeds, readStatus } from "../db/index.ts";
+import {
+	type Database,
+	entries,
+	type Feed,
+	feedFolders,
+	feeds,
+	readStatus,
+	updateFeedTitleInSearch,
+} from "../db/index.ts";
 
 import { FeedError } from "./errors.ts";
 import { fetchFeedDocument } from "./fetch-document.ts";
@@ -260,6 +268,13 @@ export async function updateFeed(
 	if (input.title !== undefined) patch.title = input.title;
 
 	const updated = await db.update(feeds).set(patch).where(eq(feeds.id, id)).returning().get();
+
+	// Keep the FTS search index in sync when the label changed, so search
+	// matches and shows the current feed title (see updateFeedTitleInSearch).
+	if (updated && patch.title !== undefined) {
+		await updateFeedTitleInSearch(db, id, patch.title);
+	}
+
 	return updated ?? null;
 }
 

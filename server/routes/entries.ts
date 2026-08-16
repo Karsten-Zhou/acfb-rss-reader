@@ -21,7 +21,15 @@ import {
 	summarizeEntry,
 	toPlainText,
 } from "../ai/index.ts";
-import { type Database, entries, entryContents, feeds, readStatus, starred } from "../db/index.ts";
+import {
+	type Database,
+	entries,
+	entryContents,
+	feeds,
+	readStatus,
+	searchEntryList,
+	starred,
+} from "../db/index.ts";
 
 import { HttpError } from "../errors.ts";
 import { requireAuth } from "../middleware/auth.ts";
@@ -33,6 +41,8 @@ const entriesQuerySchema = z.object({
 	unread: z.enum(["true", "1"]).optional(),
 	starred: z.enum(["true", "1"]).optional(),
 	archived: z.enum(["true", "1", "false", "0"]).optional(),
+	/** Full-text search term (title/content/author/feed title/tags). */
+	q: z.string().trim().max(200).optional(),
 	...paginationQuerySchema.shape,
 });
 
@@ -112,6 +122,22 @@ entryRoutes.get("/", requireAuth(), async (c) => {
 	const db = c.get("db");
 	const query = entriesQuerySchema.parse(c.req.query());
 	const { limit } = query;
+
+	// With a search term, route through the FTS index (same response shape,
+	// rank-ordered pagination, view filters applied).
+	if (query.q) {
+		const page = await searchEntryList(db, {
+			query: query.q,
+			limit,
+			cursor: query.cursor,
+			feedId: query.feedId,
+			folderId: query.folderId,
+			starred: query.starred ? true : undefined,
+			unread: query.unread ? true : undefined,
+			archived: query.archived ? query.archived === "true" || query.archived === "1" : null,
+		});
+		return c.json(page);
+	}
 
 	const published = sql<number>`COALESCE(${entries.publishedAt}, 0)`;
 	const conditions = [];

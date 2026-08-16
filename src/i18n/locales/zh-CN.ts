@@ -2,6 +2,9 @@ export default {
 	app: {
 		name: "RSS 阅读器",
 	},
+	layout: {
+		resizeList: "调整文章列表宽度",
+	},
 	sidebar: {
 		all: "全部",
 		starred: "星标",
@@ -44,6 +47,13 @@ export default {
 	login: {
 		subtitle: "您的个人订阅阅读器，使用 GitHub 登录以继续。",
 		continue: "使用 GitHub 继续",
+	},
+	auth: {
+		signOutTitle: "退出登录",
+		signOutConfirm: "确定要退出登录吗？您在此设备上的会话将结束。",
+		signOut: "退出登录",
+		signOutError: "退出失败，请重试。",
+		cancel: "取消",
 	},
 	feedEdit: {
 		addTitle: "添加订阅源",

@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 
 import EntryList from "@/components/EntryList.vue";
 import UiInput from "@/components/UiInput.vue";
+import { useColumnResize } from "@/composables/useColumnResize";
 import { useEntryListQuery } from "@/composables/useEntryListQuery";
 import { useEntryMutations } from "@/composables/useEntryMutations";
 import { useKeyboardShortcuts } from "@/composables/useKeyboardShortcuts";
@@ -15,6 +16,7 @@ import { useSettingsStore } from "@/stores/settings";
 const { t } = useI18n();
 const reader = useReaderStore();
 const settings = useSettingsStore();
+const { isWide, listWidth } = useColumnResize();
 const { data } = useEntryListQuery();
 const { runFlagAction } = useEntryMutations();
 
@@ -68,10 +70,14 @@ useKeyboardShortcuts(() => [
   <section
     :class="
       cn(
-        'w-full min-w-0 flex-col border-r md:w-96 lg:w-[26rem]',
-        reader.selectedEntryId !== null ? 'hidden md:flex' : 'flex',
+        'w-full min-w-0 flex-col border-r',
+        // Below the three-column threshold, selecting an article shows the
+        // reader full-width; at wide widths both panes stay visible.
+        reader.selectedEntryId !== null && !isWide ? 'hidden' : 'flex',
+        isWide && 'shrink-0',
       )
     "
+    :style="isWide ? { width: `${listWidth}px`, flex: '0 0 auto' } : undefined"
   >
     <div class="flex h-12 shrink-0 items-center gap-2 border-b px-3">
       <div class="relative min-w-0 flex-1">

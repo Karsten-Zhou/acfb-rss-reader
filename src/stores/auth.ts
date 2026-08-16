@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import type { User } from "@/types";
 
 export const useAuthStore = defineStore("auth", () => {
@@ -27,12 +27,22 @@ export const useAuthStore = defineStore("auth", () => {
 		window.location.href = `/api/auth/login?redirect_to=${encodeURIComponent(target)}`;
 	}
 
+	/**
+	 * Sign out on the backend and clear local auth state.
+	 * Throws when the request fails for a real reason (callers show an error
+	 * and stay signed in); a 401 means the session is already gone.
+	 */
 	async function logout(): Promise<void> {
 		try {
 			await api.post<{ ok: boolean }>("/api/auth/logout");
-		} finally {
-			user.value = null;
+		} catch (err) {
+			if (err instanceof ApiError && err.status === 401) {
+				user.value = null;
+				return;
+			}
+			throw err;
 		}
+		user.value = null;
 	}
 
 	const isAuthenticated = (): boolean => user.value !== null;

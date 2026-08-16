@@ -2,6 +2,9 @@ export default {
 	app: {
 		name: "RSS Reader",
 	},
+	layout: {
+		resizeList: "Resize article list",
+	},
 	sidebar: {
 		all: "All",
 		starred: "Starred",
@@ -44,6 +47,13 @@ export default {
 	login: {
 		subtitle: "Your personal feed reader. Sign in with GitHub to continue.",
 		continue: "Continue with GitHub",
+	},
+	auth: {
+		signOutTitle: "Sign out",
+		signOutConfirm: "Are you sure you want to sign out? Your session on this device will be ended.",
+		signOut: "Sign out",
+		signOutError: "Could not sign out. Please try again.",
+		cancel: "Cancel",
 	},
 	feedEdit: {
 		addTitle: "Add feed",
