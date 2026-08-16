@@ -2,6 +2,9 @@ import { expect, test } from "bun:test";
 
 import { withD1Retry } from "../../server/db/client.ts";
 
+/** Short delays so the exhaustive-retry tests stay fast. */
+const TEST_DELAYS = [1, 1, 1];
+
 /** A minimal D1 binding whose prepared statements fail N times with a transient error. */
 function createFlakyBinding(
 	failures: number,
@@ -42,7 +45,7 @@ function createFlakyBinding(
 
 test("withD1Retry retries transient lock failures and succeeds", async () => {
 	const binding = createFlakyBinding(2);
-	const db = withD1Retry(binding);
+	const db = withD1Retry(binding, TEST_DELAYS);
 
 	const result = await db.prepare("SELECT 1").all();
 	expect(result.success).toBe(true);
@@ -50,7 +53,7 @@ test("withD1Retry retries transient lock failures and succeeds", async () => {
 
 test("withD1Retry retries transient failures on run()", async () => {
 	const binding = createFlakyBinding(1);
-	const db = withD1Retry(binding);
+	const db = withD1Retry(binding, TEST_DELAYS);
 
 	const result = await db.prepare("UPDATE x SET y = 1").run();
 	expect(result.success).toBe(true);
@@ -58,7 +61,7 @@ test("withD1Retry retries transient failures on run()", async () => {
 
 test("withD1Retry propagates persistent failures after exhausting retries", async () => {
 	const binding = createFlakyBinding(10);
-	const db = withD1Retry(binding);
+	const db = withD1Retry(binding, TEST_DELAYS);
 
 	expect(db.prepare("SELECT 1").all()).rejects.toThrow("database is locked");
 });

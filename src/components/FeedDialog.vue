@@ -15,7 +15,7 @@ import { useI18n } from "vue-i18n";
 import AsyncButton from "@/components/AsyncButton.vue";
 import UiButton from "@/components/UiButton.vue";
 import UiInput from "@/components/UiInput.vue";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import type { FeedWithCounts } from "@/types";
 
@@ -78,6 +78,11 @@ const save = useMutation({
 });
 
 const isAdd = computed(() => props.mode === "add");
+
+/** Prefer the server's explanation (duplicate, unreachable, parse error…). */
+const errorMessage = computed(() =>
+	save.error.value instanceof ApiError ? save.error.value.message : null,
+);
 </script>
 
 <template>
@@ -123,7 +128,7 @@ const isAdd = computed(() => props.mode === "add");
             />
           </div>
           <p v-if="save.isError.value" class="text-sm text-destructive">
-            {{ t("feedEdit.error") }}
+            {{ errorMessage ?? t("feedEdit.error") }}
           </p>
           <div class="flex justify-end gap-2">
             <UiButton variant="ghost" size="sm" @click="emit('update:open', false)">
