@@ -1,13 +1,14 @@
 # https://github.com/evilmartians/lefthook
+# pre-commit intentionally runs only lint-staged: it formats and fixes the
+# staged files fast. The full typecheck/lint/test gate runs once in
+# pre-push. (Running `bun run typecheck` in pre-commit both duplicated that
+# gate and intermittently dead-piped on Windows, blocking every commit.)
 pre-commit:
-  parallel: true
   commands:
     lint-staged:
       glob: "*.{ts,tsx,vue,js,jsx,json,md,css,html}"
       run: bunx biome check --write --no-errors-on-unmatched {staged_files}
       stage_fixed: true
-    typecheck:
-      run: bun run typecheck
 
 commit-msg:
   commands:
