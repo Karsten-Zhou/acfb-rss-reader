@@ -227,10 +227,14 @@ function onFaviconError(url: string): void {
 </script>
 
 <template>
-  <aside class="flex h-full w-64 shrink-0 flex-col border-r bg-background shadow-2xl md:shadow-none">
+  <aside
+    class="flex h-full w-64 shrink-0 flex-col border-r bg-background shadow-2xl md:shadow-none"
+  >
     <div class="flex h-12 items-center gap-2 border-b px-4">
       <Radio class="size-4 text-primary" />
-      <span class="flex-1 text-sm font-semibold tracking-tight">{{ t("app.name") }}</span>
+      <span class="flex-1 text-sm font-semibold tracking-tight">{{
+        t("app.name")
+      }}</span>
       <UiTooltip :content="t('sidebar.close')" side="bottom">
         <button
           class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
@@ -250,7 +254,10 @@ function onFaviconError(url: string): void {
         >
           <Rss class="size-4" />
           <span class="flex-1 text-left">{{ t("sidebar.all") }}</span>
-          <UiBadge v-if="totalUnread > 0" class="bg-muted-foreground/20 text-muted-foreground">
+          <UiBadge
+            class="h-5 w-6 shrink-0 justify-center px-0 bg-muted-foreground/20 text-muted-foreground"
+            v-if="totalUnread > 0"
+          >
             {{ totalUnread }}
           </UiBadge>
         </button>
@@ -272,28 +279,39 @@ function onFaviconError(url: string): void {
         </button>
 
         <template v-if="foldersQuery.data.value?.length">
-          <div class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground">
+          <div
+            class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground"
+          >
             {{ t("sidebar.folders") }}
           </div>
           <button
             v-for="folder in foldersQuery.data.value"
             :key="folder.id"
             class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-            :class="isActive({ kind: 'folder', folderId: folder.id }) && 'bg-accent'"
+            :class="
+              isActive({ kind: 'folder', folderId: folder.id }) && 'bg-accent'
+            "
             @click="selectView({ kind: 'folder', folderId: folder.id })"
           >
             <span class="flex-1 truncate text-left">{{ folder.name }}</span>
-            <UiBadge v-if="folder.unreadCount > 0" class="bg-muted-foreground/20 text-muted-foreground">
+            <UiBadge
+              class="h-5 w-6 shrink-0 justify-center px-0 bg-muted-foreground/20 text-muted-foreground"
+              v-if="folder.unreadCount > 0"
+            >
               {{ folder.unreadCount }}
             </UiBadge>
           </button>
         </template>
 
-        <div class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground">
+        <div
+          class="mt-2 px-2 text-xs font-medium uppercase text-muted-foreground"
+        >
           {{ t("sidebar.feeds") }}
         </div>
         <template v-if="feedsQuery.isPending.value">
-          <div class="px-2 py-1.5 text-sm text-muted-foreground">{{ t("sidebar.loading") }}</div>
+          <div class="px-2 py-1.5 text-sm text-muted-foreground">
+            {{ t("sidebar.loading") }}
+          </div>
         </template>
         <template v-else>
           <VueDraggable
@@ -309,7 +327,9 @@ function onFaviconError(url: string): void {
               v-for="feed in draggableFeeds"
               :key="feed.id"
               class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-              :class="isActive({ kind: 'feed', feedId: feed.id }) && 'bg-accent'"
+              :class="
+                isActive({ kind: 'feed', feedId: feed.id }) && 'bg-accent'
+              "
               @click="selectView({ kind: 'feed', feedId: feed.id })"
               @contextmenu.prevent="openContextMenu(feed, $event)"
               @pointerdown="onFeedPointerDown(feed, $event)"
@@ -325,7 +345,10 @@ function onFaviconError(url: string): void {
               />
               <Rss v-else class="size-4 shrink-0 text-muted-foreground" />
               <span class="flex-1 truncate text-left">{{ feed.title }}</span>
-              <UiBadge v-if="feed.unreadCount > 0" class="bg-muted-foreground/20 text-muted-foreground">
+              <UiBadge
+                class="h-5 w-6 shrink-0 justify-center px-0 bg-muted-foreground/20 text-muted-foreground"
+                v-if="feed.unreadCount > 0"
+              >
                 {{ feed.unreadCount }}
               </UiBadge>
               <GripVertical
@@ -334,7 +357,10 @@ function onFaviconError(url: string): void {
               />
             </button>
           </VueDraggable>
-          <div v-if="!feedsQuery.data.value?.length" class="px-2 py-1.5 text-sm text-muted-foreground">
+          <div
+            v-if="!feedsQuery.data.value?.length"
+            class="px-2 py-1.5 text-sm text-muted-foreground"
+          >
             {{ t("sidebar.noFeeds") }}
           </div>
         </template>
@@ -343,7 +369,12 @@ function onFaviconError(url: string): void {
 
     <div class="border-t p-2">
       <div class="flex items-center gap-2">
-        <UiButton variant="ghost" size="sm" class="flex-1 justify-start" @click="addFeedOpen = true">
+        <UiButton
+          variant="ghost"
+          size="sm"
+          class="flex-1 justify-start"
+          @click="addFeedOpen = true"
+        >
           <Plus class="size-4" />
           {{ t("sidebar.addFeed") }}
         </UiButton>
@@ -411,7 +442,7 @@ function onFaviconError(url: string): void {
         @click="requestDeleteFeed(contextMenu.feed.id)"
       >
         <Trash2 class="size-3.5" />
-        {{ t('sidebar.deleteFeed') }}
+        {{ t("sidebar.deleteFeed") }}
       </button>
     </div>
   </Teleport>

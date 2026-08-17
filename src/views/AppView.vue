@@ -45,7 +45,10 @@ const { isWide, listWidth, beginDrag, onHandleKey } = useColumnResize();
         <span class="text-sm font-semibold tracking-tight">{{ t("app.name") }}</span>
       </header>
 
-      <div class="relative flex min-h-0 flex-1 pb-14 md:pb-0">
+      <div
+        class="relative flex min-h-0 flex-1 md:pb-0"
+        :class="cn(reader.selectedEntryId === null && 'pb-14')"
+      >
         <EntryListPane />
         <!-- Resize handle: the interactive hit area is an absolute overlay
              centered on the boundary between list and reader, so the two
