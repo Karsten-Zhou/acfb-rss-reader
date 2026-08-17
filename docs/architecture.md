@@ -126,5 +126,5 @@ GitHub OAuth, single-user. Flow:
 
 ## See also
 
-- `docs/deployment.md` — deploy steps
-- `docs/environment.md` — env vars and secrets
+- `docs/quick-start.md` — setup and deployment
+- `docs/contribute.md` — development workflow and conventions

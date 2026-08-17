@@ -121,5 +121,5 @@ bun run db:studio      # drizzle studio
 
 ## Environment / secrets
 
-See `docs/environment.md`. Secrets are managed via `wrangler secret put` and
+See `docs/quick-start.md`. Secrets are managed via `wrangler secret put` and
 `.dev.vars` for local dev. Never commit real secrets.
