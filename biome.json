@@ -1,5 +1,6 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.5.8/schema.json",
+	"extends": ["./.biomelintrc-auto-import.json"],
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -16,7 +17,10 @@
 			"!**/.git",
 			"!**/drizzle",
 			"!**/migrations",
-			"!bun.lock"
+			"!bun.lock",
+			"!auto-imports.d.ts",
+			"!components.d.ts",
+			"!.biomelintrc-auto-import.json"
 		]
 	},
 	"formatter": {

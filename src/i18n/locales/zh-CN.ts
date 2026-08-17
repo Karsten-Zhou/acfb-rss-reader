@@ -29,7 +29,6 @@ export default {
 		searchPlaceholder: "搜索文章…",
 		unread: "未读",
 		onlyUnread: "仅未读",
-		now: "刚刚",
 		noArticles: "当前视图没有文章。",
 		refresh: "刷新",
 	},

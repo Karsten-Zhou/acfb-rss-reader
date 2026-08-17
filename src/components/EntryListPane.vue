@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { Search } from "@lucide/vue";
-import { computed } from "vue";
-import { useI18n } from "vue-i18n";
 
-import EntryList from "@/components/EntryList.vue";
-import UiInput from "@/components/UiInput.vue";
-import UiTooltip from "@/components/UiTooltip.vue";
 import { useColumnResize } from "@/composables/useColumnResize";
 import { useEntryListQuery } from "@/composables/useEntryListQuery";
 import { useEntryMutations } from "@/composables/useEntryMutations";

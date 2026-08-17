@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { Loader2, RefreshCw } from "@lucide/vue";
-import { computed } from "vue";
-import { useI18n } from "vue-i18n";
 import { RecycleScroller } from "vue-virtual-scroller";
 import "vue-virtual-scroller/index.css";
 
 import { useEntryListQuery } from "@/composables/useEntryListQuery";
-import EntryListItem from "./EntryListItem.vue";
 
 const { t } = useI18n();
 const { data, isFetching, hasNextPage, fetchNextPage, isPending, refetch } = useEntryListQuery();

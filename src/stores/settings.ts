@@ -1,8 +1,6 @@
-import { defineStore } from "pinia";
-import { computed, ref, watch } from "vue";
-
 import { i18n, LANGUAGE_PREFERENCES, type LanguagePreference, resolveAutoLocale } from "@/i18n";
 import { api } from "@/lib/api";
+import { setDayjsLocale } from "@/lib/dayjs";
 import { DEFAULT_SHORTCUTS, type ShortcutAction, shortcutDisplay } from "@/lib/shortcuts";
 
 export type ThemePreference = "light" | "dark" | "system";
@@ -110,6 +108,7 @@ export const useSettingsStore = defineStore("settings", () => {
 		(value) => {
 			i18n.global.locale.value = value;
 			document.documentElement.lang = value;
+			setDayjsLocale(value);
 		},
 		{ immediate: true },
 	);

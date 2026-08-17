@@ -3,12 +3,7 @@ import { Archive, ArrowLeft, CheckCheck, ExternalLink, Star } from "@lucide/vue"
 import { buildCompatibilityStyles } from "@shared/compatibility/index.ts";
 import { useQuery } from "@tanstack/vue-query";
 import DOMPurify from "dompurify";
-import { computed, ref, watch } from "vue";
-import { useI18n } from "vue-i18n";
 
-import AsyncButton from "@/components/AsyncButton.vue";
-import UiButton from "@/components/UiButton.vue";
-import UiTooltip from "@/components/UiTooltip.vue";
 import { useColumnResize } from "@/composables/useColumnResize";
 import { useEntryMutations } from "@/composables/useEntryMutations";
 import { api } from "@/lib/api";
@@ -18,8 +13,6 @@ import { sanitizeSafeYouTubePipeline } from "@/lib/youtube";
 import { useReaderStore } from "@/stores/reader";
 import { useSettingsStore } from "@/stores/settings";
 import type { EntryDetail } from "@/types";
-
-import EntrySummary from "./EntrySummary.vue";
 
 const props = defineProps<{ entryId: number }>();
 

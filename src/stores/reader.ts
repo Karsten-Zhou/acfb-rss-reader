@@ -1,6 +1,3 @@
-import { defineStore } from "pinia";
-import { computed, ref } from "vue";
-
 export type ReaderView =
 	| { kind: "all" }
 	| { kind: "starred" }

@@ -1,6 +1,3 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
-
 import { ApiError, api } from "@/lib/api";
 import type { User } from "@/types";
 

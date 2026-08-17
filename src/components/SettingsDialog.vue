@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Laptop, Moon, RotateCcw, Sun, X } from "@lucide/vue";
 import { APP_REPOSITORY_URL } from "@shared/constants.ts";
-import { useEventListener } from "@vueuse/core";
 import {
 	DialogClose,
 	DialogContent,
@@ -10,17 +9,6 @@ import {
 	DialogRoot,
 	DialogTitle,
 } from "reka-ui";
-import { computed, ref, watch } from "vue";
-import { useI18n } from "vue-i18n";
-import GithubMarkIcon from "@/components/GithubMarkIcon.vue";
-import UiSelect from "@/components/select/UiSelect.vue";
-import UiSelectContent from "@/components/select/UiSelectContent.vue";
-import UiSelectItem from "@/components/select/UiSelectItem.vue";
-import UiSelectTrigger from "@/components/select/UiSelectTrigger.vue";
-import UiSelectValue from "@/components/select/UiSelectValue.vue";
-import UiButton from "@/components/UiButton.vue";
-import UiSwitch from "@/components/UiSwitch.vue";
-import UiTooltip from "@/components/UiTooltip.vue";
 import { LANGUAGE_PREFERENCES, type LanguagePreference, LOCALE_LABELS } from "@/i18n";
 import { APP_BUILD_TIME, APP_VERSION } from "@/lib/build-meta";
 import {

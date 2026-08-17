@@ -1,5 +1,3 @@
-import { createI18n } from "vue-i18n";
-
 import de from "./locales/de.ts";
 import en from "./locales/en.ts";
 import zhCN from "./locales/zh-CN.ts";

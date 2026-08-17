@@ -26,5 +26,13 @@
 			"@shared/*": ["./shared/*"]
 		}
 	},
-	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "shared", "vite.config.ts"]
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.d.ts",
+		"src/**/*.vue",
+		"shared",
+		"vite.config.ts",
+		"auto-imports.d.ts",
+		"components.d.ts"
+	]
 }

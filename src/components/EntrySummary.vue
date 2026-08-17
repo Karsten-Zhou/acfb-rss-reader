@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { RefreshCw, Sparkles } from "@lucide/vue";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { computed, ref, watch } from "vue";
-import { useI18n } from "vue-i18n";
 
-import AsyncButton from "@/components/AsyncButton.vue";
 import { ApiError, api } from "@/lib/api";
 import { useSettingsStore } from "@/stores/settings";
 

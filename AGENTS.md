@@ -42,6 +42,20 @@ src -> shared/compatibility
 - **lefthook** for git hooks (pre-commit: lint-staged + typecheck; commit-msg:
   commitlint). Conventional commits enforced.
 - TypeScript, strict mode, `verbatimModuleSyntax` — use `import type` for types.
+- **unplugin-auto-import** (Vite) auto-imports Vue core + vue-router +
+  `@vueuse/core` + vue-i18n + pinia APIs — do NOT write explicit imports for
+  those (e.g. `ref`, `computed`, `useI18n`, `defineStore`, `RouterView`). The
+  generated `auto-imports.d.ts` / `.biomelintrc-auto-import.json` are committed
+  and regenerated on build; keep `tsconfig.app.json` and `biome.json` wired to
+  them. Type-only imports (`import type { HTMLAttributes } from "vue"`) stay
+  explicit.
+- **unplugin-vue-components** (Vite) auto-imports every component under
+  `src/components` (including nested folders like `select/` and `scroll-area/`)
+  — do NOT write explicit component imports in `<script setup>` (`<UiButton>`,
+  `<EntryList>`, `<ScrollBar>`, ...). The generated `components.d.ts` is
+  committed and wired into `tsconfig.app.json`; `biome.json` excludes it. Keep
+  only non-component imports from `.vue` files (e.g. exporting `buttonVariants`
+  from `UiButton.vue`) and the root `App.vue` entry point.
 
 ## Commands
 
@@ -90,6 +104,9 @@ bun run db:studio      # drizzle studio
 - Prefer mature, actively-maintained, Cloudflare-compatible libraries over
   custom infrastructure. Do not reinvent feed parsing, sanitization, HTTP
   retry, virtualization, etc.
+- **Date/time**: use **dayjs** — never hand-roll date math. The client imports
+  the configured instance from `src/lib/dayjs.ts` (relativeTime plugin +
+  locale sync); the server imports `dayjs` directly for session/expiry math.
 - REST + Hono + Zod validation on every request body/query/param.
 - Keep commits runnable and deployable at every milestone.
 

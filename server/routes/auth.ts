@@ -1,9 +1,9 @@
+import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { OAuthState } from "../../shared/index.ts";
 import {
-	addMs,
 	createOAuthState,
 	isOAuthStateValid,
 	KV_OAUTH_STATE_TTL_SECONDS,
@@ -135,7 +135,7 @@ authRoutes.get("/callback", async (c) => {
 	// Create the session.
 	const token = randomHex(32);
 	const tokenHash = await sha256Hex(token);
-	const expiresAt = addMs(new Date(), SESSION_TTL_MS);
+	const expiresAt = dayjs().add(SESSION_TTL_MS, "millisecond").toDate();
 	await db.insert(sessions).values({ tokenHash, userId: user.id, expiresAt });
 
 	setCookie(c, SESSION_COOKIE, token, {

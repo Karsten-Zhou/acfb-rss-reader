@@ -1,5 +1,3 @@
-import { computed, onMounted, onUnmounted, ref } from "vue";
-
 import { useSettingsStore } from "@/stores/settings";
 
 /**

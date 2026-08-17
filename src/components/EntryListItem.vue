@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useI18n } from "vue-i18n";
 import { useEntryMutations } from "@/composables/useEntryMutations";
-import { formatRelativeTime } from "@/lib/time";
+import dayjs from "@/lib/dayjs";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
-import { useSettingsStore } from "@/stores/settings";
 import type { EntryListItem as Entry } from "@/types";
 
 const props = defineProps<{ entry: Entry }>();
 
 const { t } = useI18n();
 const reader = useReaderStore();
-const settings = useSettingsStore();
 const { openEntry } = useEntryMutations();
 const isSelected = computed(() => reader.selectedEntryId === props.entry.id);
 
@@ -52,7 +48,7 @@ function select(): void {
       </template>
       <template v-if="entry.publishedAt">
         <span>·</span>
-        <span class="shrink-0">{{ formatRelativeTime(entry.publishedAt, settings.locale, t("list.now")) }}</span>
+        <span class="shrink-0">{{ dayjs(entry.publishedAt).fromNow() }}</span>
       </template>
     </div>
   </button>

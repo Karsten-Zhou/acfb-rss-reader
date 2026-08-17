@@ -8,10 +8,6 @@ import {
 	DialogRoot,
 	DialogTitle,
 } from "reka-ui";
-import { useI18n } from "vue-i18n";
-
-import AsyncButton from "@/components/AsyncButton.vue";
-import UiButton from "@/components/UiButton.vue";
 
 defineProps<{
 	open: boolean;

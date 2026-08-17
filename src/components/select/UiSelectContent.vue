@@ -9,8 +9,6 @@ import {
 } from "reka-ui";
 import type { HTMLAttributes } from "vue";
 import { cn } from "@/lib/utils";
-import UiSelectScrollDownButton from "./UiSelectScrollDownButton.vue";
-import UiSelectScrollUpButton from "./UiSelectScrollUpButton.vue";
 
 const props = defineProps<SelectContentProps & { class?: HTMLAttributes["class"] }>();
 const emits = defineEmits<SelectContentEmits>();

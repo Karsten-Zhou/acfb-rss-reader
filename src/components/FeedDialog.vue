@@ -9,12 +9,7 @@ import {
 	DialogRoot,
 	DialogTitle,
 } from "reka-ui";
-import { computed, ref, watch } from "vue";
-import { useI18n } from "vue-i18n";
 
-import AsyncButton from "@/components/AsyncButton.vue";
-import UiButton from "@/components/UiButton.vue";
-import UiInput from "@/components/UiInput.vue";
 import { ApiError, api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import type { FeedWithCounts } from "@/types";

@@ -1,9 +1,8 @@
+import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import type { Context, MiddlewareHandler } from "hono";
 import { deleteCookie, getCookie } from "hono/cookie";
 import {
-	addMs,
-	isExpired,
 	SESSION_COOKIE,
 	SESSION_SLIDING_WINDOW_MS,
 	SESSION_TTL_MS,
@@ -36,7 +35,7 @@ export async function authenticate(c: Context<AppEnv>) {
 	});
 	if (!session) return null;
 
-	if (isExpired(session.expiresAt)) {
+	if (!dayjs(session.expiresAt).isAfter(dayjs())) {
 		await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash));
 		deleteCookie(c, SESSION_COOKIE, { path: "/" });
 		return null;
@@ -44,7 +43,7 @@ export async function authenticate(c: Context<AppEnv>) {
 
 	if (Date.now() - session.lastSeenAt.getTime() >= SESSION_SLIDING_WINDOW_MS) {
 		const now = new Date();
-		const expiresAt = addMs(now, SESSION_TTL_MS);
+		const expiresAt = dayjs(now).add(SESSION_TTL_MS, "millisecond").toDate();
 		await db
 			.update(sessions)
 			.set({ lastSeenAt: now, expiresAt })

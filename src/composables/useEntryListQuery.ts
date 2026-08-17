@@ -1,5 +1,4 @@
 import { useInfiniteQuery } from "@tanstack/vue-query";
-import { computed } from "vue";
 
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";

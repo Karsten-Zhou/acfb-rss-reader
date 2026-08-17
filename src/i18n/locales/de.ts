@@ -29,7 +29,6 @@ export default {
 		searchPlaceholder: "Artikel durchsuchen…",
 		unread: "Ungelesen",
 		onlyUnread: "Nur ungelesen",
-		now: "gerade eben",
 		noArticles: "Keine Artikel in dieser Ansicht.",
 		refresh: "Aktualisieren",
 	},

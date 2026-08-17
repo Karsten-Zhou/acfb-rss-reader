@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { Menu } from "@lucide/vue";
-import { ref } from "vue";
-import { useI18n } from "vue-i18n";
 
-import AppSidebar from "@/components/AppSidebar.vue";
-import EntryListPane from "@/components/EntryListPane.vue";
-import MobileBottomNav from "@/components/MobileBottomNav.vue";
-import ReaderPane from "@/components/ReaderPane.vue";
-import UiTooltip from "@/components/UiTooltip.vue";
 import { COLUMN_HANDLE_WIDTH, useColumnResize } from "@/composables/useColumnResize";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";

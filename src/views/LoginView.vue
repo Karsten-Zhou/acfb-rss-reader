@@ -1,8 +1,4 @@
 <script setup lang="ts">
-import { useI18n } from "vue-i18n";
-
-import GithubMarkIcon from "@/components/GithubMarkIcon.vue";
-import UiButton from "@/components/UiButton.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const { t } = useI18n();

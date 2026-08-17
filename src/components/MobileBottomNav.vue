@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Archive, Menu, Rss, Star } from "@lucide/vue";
-import { useI18n } from "vue-i18n";
 
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";

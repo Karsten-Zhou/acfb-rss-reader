@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { BookOpen } from "@lucide/vue";
-import { useI18n } from "vue-i18n";
 
-import EntryReader from "@/components/EntryReader.vue";
 import { useColumnResize } from "@/composables/useColumnResize";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";

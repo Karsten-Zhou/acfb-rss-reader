@@ -9,11 +9,6 @@ import {
 	DialogRoot,
 	DialogTitle,
 } from "reka-ui";
-import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
-
-import AsyncButton from "@/components/AsyncButton.vue";
-import UiButton from "@/components/UiButton.vue";
 import { useAuthStore } from "@/stores/auth";
 
 const props = defineProps<{ open: boolean }>();

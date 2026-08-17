@@ -1,5 +1,3 @@
-import { useEventListener } from "@vueuse/core";
-
 function isTypingTarget(target: EventTarget | null): boolean {
 	if (!(target instanceof HTMLElement)) return false;
 	const tag = target.tagName;

@@ -13,18 +13,8 @@ import {
 	X,
 } from "@lucide/vue";
 import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
-import { useEventListener } from "@vueuse/core";
-import { computed, ref, watch } from "vue";
 import { VueDraggable } from "vue-draggable-plus";
-import { useI18n } from "vue-i18n";
-import DeleteFeedDialog from "@/components/DeleteFeedDialog.vue";
-import FeedDialog from "@/components/FeedDialog.vue";
-import SettingsDialog from "@/components/SettingsDialog.vue";
-import SignOutDialog from "@/components/SignOutDialog.vue";
-import ScrollArea from "@/components/scroll-area/ScrollArea.vue";
-import UiBadge from "@/components/UiBadge.vue";
-import UiButton from "@/components/UiButton.vue";
-import UiTooltip from "@/components/UiTooltip.vue";
+
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { type ReaderView, useReaderStore } from "@/stores/reader";
