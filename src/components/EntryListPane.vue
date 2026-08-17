@@ -18,7 +18,12 @@ const reader = useReaderStore();
 const settings = useSettingsStore();
 const { isWide, listWidth } = useColumnResize();
 const { data } = useEntryListQuery();
-const { runFlagAction } = useEntryMutations();
+const {
+	openEntry,
+	toggleRead: toggleReadAction,
+	toggleStarred: toggleStarredAction,
+	toggleArchive: toggleArchiveAction,
+} = useEntryMutations();
 
 const items = computed(() => data.value?.pages.flatMap((page) => page.items) ?? []);
 const selected = computed(() => items.value.find((item) => item.id === reader.selectedEntryId));
@@ -36,20 +41,20 @@ function moveSelection(delta: number): void {
 			: currentIndex.value + delta;
 	next = Math.max(0, Math.min(items.value.length - 1, next));
 	const entry = items.value[next];
-	if (entry) reader.selectEntry(entry.id);
+	if (entry) openEntry(entry.id, entry.isRead);
 }
 
 function toggleStarred(): void {
 	if (!selected.value) return;
-	runFlagAction("star", selected.value.id, { isStarred: !selected.value.isStarred });
+	toggleStarredAction(selected.value.id, selected.value.isStarred);
 }
 function toggleRead(): void {
 	if (!selected.value) return;
-	runFlagAction("unread", selected.value.id, { isRead: !selected.value.isRead });
+	toggleReadAction(selected.value.id, selected.value.isRead);
 }
 function toggleArchive(): void {
 	if (!selected.value) return;
-	runFlagAction("archive", selected.value.id, { isArchived: !selected.value.isArchived });
+	toggleArchiveAction(selected.value.id, selected.value.isArchived);
 }
 
 // Bindings are read reactively so remapping in Settings takes effect live.

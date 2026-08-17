@@ -1,15 +1,27 @@
 import { type InfiniteData, type QueryKey, useMutation, useQueryClient } from "@tanstack/vue-query";
+import { ref } from "vue";
 
 import { api } from "@/lib/api";
+import { createEntryFlagQueue, type EntryFlagsInput } from "@/lib/entryFlagsQueue";
 import { queryKeys } from "@/lib/query-keys";
-import { type ReaderPendingAction, useReaderStore } from "@/stores/reader";
+import { useReaderStore } from "@/stores/reader";
 import type { EntryDetail, EntryListItem, Paginated } from "@/types";
 
-export interface EntryFlagsInput {
-	isRead?: boolean;
-	isStarred?: boolean;
-	isArchived?: boolean;
-}
+/**
+ * Entry-flag mutations.
+ *
+ * Architecture:
+ * - **Explicit commands only.** Mutations originate from user intent
+ *   (opening an article, a toolbar click, a shortcut) — never from watching
+ *   fetched query data.
+ * - **One shared, per-entry queue** (`entryFlagsQueue.ts`) serializes sends
+ *   per entry, coalesces to the latest desired flags, applies optimistic
+ *   cache updates, and rolls back on failure. It also owns per-entry pending
+ *   state, so no global `pendingAction` scalar exists anymore.
+ * - **Pinia** keeps UI/navigation state (`selectedEntryId`, view, filters).
+ */
+
+export type EntryFlagsInputAlias = EntryFlagsInput;
 
 /** List query filters live at index 2 of the `["entries","list",filters]` key. */
 type EntryListFilters = Record<string, unknown>;
@@ -107,40 +119,94 @@ function restoreEntryCaches(
 	}
 }
 
-/** Mutations for entry flags with optimistic list + detail updates. */
+async function refreshCounts(queryClient: ReturnType<typeof useQueryClient>): Promise<void> {
+	await Promise.all([
+		queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+		queryClient.invalidateQueries({ queryKey: queryKeys.folders.all }),
+	]);
+}
+
+// ---------------------------------------------------------------------------
+// Shared per-entry flag queue. Module-level so every component using
+// useEntryMutations coordinates through the same queue, and the pending map
+// is shared/reactive across them.
+// ---------------------------------------------------------------------------
+
+const pendingFlags = ref<ReadonlyMap<number, EntryFlagsInput>>(new Map());
+
+let sharedQueue: ReturnType<typeof createEntryFlagQueue> | null = null;
+
+function getQueue(queryClient: ReturnType<typeof useQueryClient>) {
+	if (!sharedQueue) {
+		sharedQueue = createEntryFlagQueue({
+			send: async (entryId, flags) => {
+				await api.patch<{ ok: boolean }>(`/api/entries/${entryId}`, flags);
+			},
+			applyOptimistic: (entryId, flags) => {
+				patchCachedLists(queryClient, new Set([entryId]), flags);
+				patchCachedDetail(queryClient, new Set([entryId]), flags);
+			},
+			snapshot: () => snapshotEntryCaches(queryClient),
+			restore: (snapshot) => restoreEntryCaches(queryClient, snapshot as EntryCacheSnapshot),
+			// Secondary count refreshes must not extend the perceived mutation
+			// lifecycle: run them detached from the PATCH settlement.
+			onSuccess: () => {
+				void refreshCounts(queryClient);
+			},
+			onPendingChange: (pending) => {
+				pendingFlags.value = new Map(pending);
+			},
+		});
+	}
+	return sharedQueue;
+}
+
+/** Entry-flag actions shared by every caller (reader, list, keyboard). */
 export function useEntryMutations() {
 	const queryClient = useQueryClient();
 	const reader = useReaderStore();
+	const queue = getQueue(queryClient);
 
-	async function refreshCounts(): Promise<void> {
-		await Promise.all([
-			queryClient.invalidateQueries({ queryKey: queryKeys.feeds.all }),
-			queryClient.invalidateQueries({ queryKey: queryKeys.folders.all }),
-		]);
+	/** The user opened an entry: this is navigation intent, so mark-read is
+	 * an explicit command — it is never derived from observing query data. */
+	function openEntry(entryId: number, isRead?: boolean): void {
+		reader.selectEntry(entryId);
+		const alreadyRead =
+			isRead ??
+			queryClient.getQueryData<EntryDetail>(queryKeys.entries.detail(entryId))?.isRead ??
+			false;
+		if (!alreadyRead) queue.setFlags(entryId, { isRead: true });
 	}
 
-	const setFlags = useMutation({
-		mutationFn: ({ entryId, flags }: { entryId: number; flags: EntryFlagsInput }) =>
-			api.patch<{ ok: boolean }>(`/api/entries/${entryId}`, flags),
-		onMutate: async ({ entryId, flags }) => {
-			await queryClient.cancelQueries({ queryKey: ["entries"] });
-			const snapshot = snapshotEntryCaches(queryClient);
-			const entryIds = new Set([entryId]);
-			patchCachedLists(queryClient, entryIds, flags);
-			patchCachedDetail(queryClient, entryIds, flags);
-			return snapshot;
-		},
-		onError: (_error, _variables, snapshot) => {
-			restoreEntryCaches(queryClient, snapshot);
-		},
-		// Fire-and-forget the count/cache refresh: the flag PATCH has already
-		// succeeded, so the pending state and header spinner should clear now,
-		// not wait for the (possibly slow remote-D1) invalidation to finish.
-		onSuccess: () => {
-			void refreshCounts();
-		},
-	});
+	/** Close the reader (no mutation). */
+	function closeEntry(): void {
+		reader.selectEntry(null);
+	}
 
+	/** Send desired flag state for an entry (last write wins per field). */
+	function setFlags(entryId: number, flags: EntryFlagsInput, onSettled?: () => void): void {
+		queue.setFlags(entryId, flags, onSettled);
+	}
+
+	function toggleRead(entryId: number, currentIsRead: boolean): void {
+		queue.setFlags(entryId, { isRead: !currentIsRead });
+	}
+
+	function toggleStarred(entryId: number, currentIsStarred: boolean): void {
+		queue.setFlags(entryId, { isStarred: !currentIsStarred });
+	}
+
+	function toggleArchive(entryId: number, currentIsArchived: boolean): void {
+		queue.setFlags(entryId, { isArchived: !currentIsArchived });
+	}
+
+	/** True while a flag for this entry is pending (in-flight or queued). */
+	function isPending(entryId: number, field: keyof EntryFlagsInput): boolean {
+		return pendingFlags.value.get(entryId)?.[field] !== undefined;
+	}
+
+	// Bulk action (mark-all / archive-all). Kept as a distinct mutation for
+	// multi-entry user intents; it uses the same optimistic cache helpers.
 	const bulk = useMutation({
 		mutationFn: ({ entryIds, flags }: { entryIds: number[]; flags: EntryFlagsInput }) =>
 			api.post<{ ok: boolean; updated: number }>("/api/entries/bulk", { entryIds, ...flags }),
@@ -155,33 +221,19 @@ export function useEntryMutations() {
 			restoreEntryCaches(queryClient, snapshot);
 		},
 		onSuccess: () => {
-			void refreshCounts();
+			void refreshCounts(queryClient);
 		},
 	});
 
 	return {
+		openEntry,
+		closeEntry,
 		setFlags,
+		toggleRead,
+		toggleStarred,
+		toggleArchive,
+		isPending,
+		pendingFlags,
 		bulk,
-		/** Run a flag action while marking the matching header button as loading. */
-		runFlagAction(
-			action: ReaderPendingAction,
-			entryId: number,
-			flags: EntryFlagsInput,
-			onSettled?: () => void,
-		): void {
-			// The user has asserted control over this entry's state, so the
-			// auto-mark-read watcher won't fire a conflicting second PATCH.
-			reader.markReadControlled(entryId);
-			reader.pendingAction = action;
-			setFlags.mutate(
-				{ entryId, flags },
-				{
-					onSettled: () => {
-						reader.pendingAction = null;
-						onSettled?.();
-					},
-				},
-			);
-		},
 	};
 }

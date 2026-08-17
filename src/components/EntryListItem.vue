@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { useEntryMutations } from "@/composables/useEntryMutations";
 import { formatRelativeTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
@@ -12,7 +13,12 @@ const props = defineProps<{ entry: Entry }>();
 const { t } = useI18n();
 const reader = useReaderStore();
 const settings = useSettingsStore();
+const { openEntry } = useEntryMutations();
 const isSelected = computed(() => reader.selectedEntryId === props.entry.id);
+
+function select(): void {
+	openEntry(props.entry.id, props.entry.isRead);
+}
 </script>
 
 <template>
@@ -20,7 +26,7 @@ const isSelected = computed(() => reader.selectedEntryId === props.entry.id);
     type="button"
     class="flex w-full flex-col gap-1 border-b px-3 py-2.5 text-left transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none"
     :class="cn(isSelected && 'bg-accent')"
-    @click="reader.selectEntry(entry.id)"
+    @click="select"
   >
     <div class="flex items-center gap-2">
       <span

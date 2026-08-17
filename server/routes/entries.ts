@@ -66,45 +66,42 @@ function decodeCursor(cursor: string | undefined): Cursor | null {
 	return null;
 }
 
-/** Mark entries read/archived/starred, computing the new state in JS. */
+/**
+ * Set entry flags as an idempotent command: the client sends the *desired*
+ * state and each provided flag is written with its own upsert that touches
+ * only that flag's columns. No read-modify-write, so concurrent requests
+ * cannot interleave into a stale read of another flag.
+ */
 async function setEntriesFlags(db: Database, entryIds: number[], flags: EntryFlags): Promise<void> {
-	const existing = await db
-		.select()
-		.from(readStatus)
-		.where(inArray(readStatus.entryId, entryIds))
-		.all();
-	const statusById = new Map(existing.map((row) => [row.entryId, row]));
-
 	const items: BatchItem<"sqlite">[] = [];
 
 	for (const entryId of entryIds) {
-		const current = statusById.get(entryId);
-		const next = {
-			entryId,
-			isRead: flags.isRead ?? current?.isRead ?? false,
-			archived: flags.isArchived ?? current?.archived ?? false,
-			readAt: current?.readAt ?? null,
-			archivedAt: current?.archivedAt ?? null,
-		};
-		if (flags.isRead === true) next.readAt = new Date();
-		if (flags.isRead === false) next.readAt = null;
-		if (flags.isArchived === true) next.archivedAt = new Date();
-		if (flags.isArchived === false) next.archivedAt = null;
+		if (flags.isRead !== undefined) {
+			const readAt = flags.isRead ? new Date() : null;
+			items.push(
+				db
+					.insert(readStatus)
+					.values({ entryId, isRead: flags.isRead, readAt })
+					.onConflictDoUpdate({
+						target: readStatus.entryId,
+						set: { isRead: flags.isRead, readAt },
+					}),
+			);
+		}
 
-		items.push(
-			db
-				.insert(readStatus)
-				.values(next)
-				.onConflictDoUpdate({
-					target: readStatus.entryId,
-					set: {
-						isRead: next.isRead,
-						archived: next.archived,
-						readAt: next.readAt,
-						archivedAt: next.archivedAt,
-					},
-				}),
-		);
+		if (flags.isArchived !== undefined) {
+			const archivedAt = flags.isArchived ? new Date() : null;
+			items.push(
+				db
+					.insert(readStatus)
+					.values({ entryId, archived: flags.isArchived, archivedAt })
+					.onConflictDoUpdate({
+						target: readStatus.entryId,
+						set: { archived: flags.isArchived, archivedAt },
+					}),
+			);
+		}
+
 		if (flags.isStarred === true) {
 			items.push(db.insert(starred).values({ entryId }).onConflictDoNothing());
 		} else if (flags.isStarred === false) {
@@ -112,7 +109,9 @@ async function setEntriesFlags(db: Database, entryIds: number[], flags: EntryFla
 		}
 	}
 
-	await db.batch(items as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+	if (items.length > 0) {
+		await db.batch(items as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+	}
 }
 
 export const entryRoutes = new Hono<AppEnv>();

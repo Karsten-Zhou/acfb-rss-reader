@@ -3,7 +3,7 @@ import { Archive, ArrowLeft, CheckCheck, ExternalLink, Star } from "@lucide/vue"
 import { buildCompatibilityStyles } from "@shared/compatibility/index.ts";
 import { useQuery } from "@tanstack/vue-query";
 import DOMPurify from "dompurify";
-import { computed, ref, watch } from "vue";
+import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 import AsyncButton from "@/components/AsyncButton.vue";
@@ -25,7 +25,13 @@ const { t } = useI18n();
 const reader = useReaderStore();
 const settings = useSettingsStore();
 const { isWide } = useColumnResize();
-const { setFlags, runFlagAction } = useEntryMutations();
+const {
+	setFlags,
+	toggleStarred: toggleStarredAction,
+	toggleArchive: toggleArchiveAction,
+	isPending: isFlagPending,
+	closeEntry,
+} = useEntryMutations();
 
 const { data: entry, isPending } = useQuery({
 	queryKey: computed(() => queryKeys.entries.detail(props.entryId)),
@@ -65,46 +71,24 @@ watch(compatCss, (css) => {
 	}
 	el.textContent = css;
 });
-// Opening an entry marks it read (only once per selection).
-const markedRead = ref(false);
-watch(
-	() => props.entryId,
-	() => {
-		markedRead.value = false;
-	},
-);
-watch(entry, (value) => {
-	if (!value || value.isRead) return;
-	// Only auto-mark an article read when the user hasn't taken control of its
-	// read state (e.g. via Mark unread), to avoid a conflicting second PATCH.
-	if (reader.readControlledIds.has(value.id)) return;
-	if (markedRead.value) return;
-	markedRead.value = true;
-	setFlags.mutate({ entryId: value.id, flags: { isRead: true } });
-});
-
-// Track which header action is in flight so only that button shows a spinner.
-// Stored on the reader store so keyboard-triggered actions (in EntryListPane)
-// also light up the matching button.
-// runFlagAction marks the entry as read-controlled so the auto-mark-read
-// watcher won't fire a conflicting second PATCH after an optimistic change.
+// Opening an entry marks it read. That happens in the mutation layer via the
+// explicit openEntry() command (navigation intent), NOT by watching query
+// data here — so an optimistic cache change can never trigger another PATCH.
 
 function toggleStarred(): void {
 	if (!entry.value) return;
-	runFlagAction("star", props.entryId, { isStarred: !entry.value.isStarred });
+	toggleStarredAction(props.entryId, entry.value.isStarred);
 }
 
 function markUnread(): void {
 	// After marking an article unread, leave the reader so the user lands back
 	// on the list (mobile) / the no-article state (desktop), per spec.
-	runFlagAction("unread", props.entryId, { isRead: false }, () => {
-		reader.selectEntry(null);
-	});
+	setFlags(props.entryId, { isRead: false }, () => closeEntry());
 }
 
 function toggleArchive(): void {
 	if (!entry.value) return;
-	runFlagAction("archive", props.entryId, { isArchived: !entry.value.isArchived });
+	toggleArchiveAction(props.entryId, entry.value.isArchived);
 }
 
 function openOriginal(): void {
@@ -122,7 +106,7 @@ function openOriginal(): void {
         size="icon"
         :class="isWide && 'hidden'"
         :title="t('reader.back')"
-        @click="reader.selectEntry(null)"
+        @click="closeEntry"
       >
         <ArrowLeft class="size-4" />
       </UiButton>
@@ -135,7 +119,7 @@ function openOriginal(): void {
         :title="
           `${entry?.isStarred ? t('reader.unstar') : t('reader.star')} (${settings.shortcutLabel('toggleStar')})`
         "
-        :loading="reader.pendingAction === 'star'"
+        :loading="isFlagPending(props.entryId, 'isStarred')"
         @click="toggleStarred"
       >
         <Star class="size-4" :class="entry?.isStarred && 'fill-amber-400 text-amber-400'" />
@@ -144,7 +128,7 @@ function openOriginal(): void {
         variant="ghost"
         size="icon"
         :title="`${t('reader.markUnread')} (${settings.shortcutLabel('toggleRead')})`"
-        :loading="reader.pendingAction === 'unread'"
+        :loading="isFlagPending(props.entryId, 'isRead')"
         @click="markUnread"
       >
         <CheckCheck class="size-4" />
@@ -155,7 +139,7 @@ function openOriginal(): void {
         :title="
           `${reader.isArchivedView ? t('reader.unarchive') : t('reader.archive')} (${settings.shortcutLabel('toggleArchive')})`
         "
-        :loading="reader.pendingAction === 'archive'"
+        :loading="isFlagPending(props.entryId, 'isArchived')"
         @click="toggleArchive"
       >
         <Archive class="size-4" />
@@ -219,7 +203,7 @@ function openOriginal(): void {
           <AsyncButton
             variant="outline"
             size="sm"
-            :loading="reader.pendingAction === 'star'"
+            :loading="isFlagPending(props.entryId, 'isStarred')"
             @click="toggleStarred"
           >
             <Star class="size-3.5" :class="entry.isStarred && 'fill-amber-400 text-amber-400'" />
@@ -230,3 +214,4 @@ function openOriginal(): void {
     </div>
   </article>
 </template>
+
