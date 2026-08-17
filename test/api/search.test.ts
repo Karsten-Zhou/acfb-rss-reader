@@ -1,7 +1,8 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { searchEntryList } from "../../server/db/index.ts";
-import { createFeed, updateFeed } from "../../server/feeds/index.ts";
+import { eq } from "drizzle-orm";
+import { feeds, searchEntryList } from "../../server/db/index.ts";
+import { createFeed, refreshFeed, updateFeed } from "../../server/feeds/index.ts";
 
 import { createTestContext } from "./helpers.ts";
 
@@ -161,6 +162,24 @@ test("renaming a feed updates the FTS search index", async () => {
 		// The old name no longer matches the feed title.
 		const byOldName = await getEntries(ctx, token, "q=Example+Feed");
 		expect(byOldName.items).toHaveLength(0);
+	} finally {
+		restore();
+	}
+});
+
+test("refresh does not overwrite a custom feed title", async () => {
+	const restore = mockFeedFetch(rssFixture);
+	try {
+		const ctx = createTestContext();
+		const feed = await createFeed(ctx.db, ctx.env.KV_STORE, {
+			url: "https://example.com/feed.xml",
+			title: "Custom Feed Label",
+		});
+
+		await refreshFeed(ctx.db, ctx.env.KV_STORE, feed);
+
+		const refreshed = await ctx.db.query.feeds.findFirst({ where: eq(feeds.id, feed.id) });
+		expect(refreshed?.title).toBe("Custom Feed Label");
 	} finally {
 		restore();
 	}

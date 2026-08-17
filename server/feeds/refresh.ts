@@ -82,7 +82,6 @@ export async function refreshFeed(
 			.update(feeds)
 			.set({
 				siteUrl: parsed.siteUrl ?? feed.siteUrl,
-				title: parsed.title || feed.title,
 				description: parsed.description ?? feed.description,
 				type: parsed.feedType,
 				etag: result.etag,
