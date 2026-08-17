@@ -50,8 +50,10 @@ export function buildSummaryPrompt(
 		`Write the summary in ${languageLabel(lang)}.`,
 		'Output only the summary itself: no preamble, no labels, no "here is a summary",',
 		"no commentary, no questions, and do not address the reader.",
-		"Use 3-5 short sentences or bullet points that capture the key points and conclusions.",
+		"Use 3-5 short sentences that capture the key points and conclusions.",
 		"Keep it under 100 words.",
+		"Do not use markdown or any formatting: output plain text only.",
+		"Output only a single paragraph with no line breaks.",
 	].join(" ");
 	return {
 		messages: [
