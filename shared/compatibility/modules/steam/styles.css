@@ -40,3 +40,85 @@
 .bb_link_host {
 	display: none;
 }
+
+/*
+ * bbcode headings.
+ *
+ * Steam feeds frequently emit headings as `div.bb_h1` / `div.bb_h2` / etc.
+ * (or `p.class`) instead of semantic `h1`/`h2` elements, so the generic
+ * `.reader-content h1` rules in main.css never apply. Mirror the same
+ * typography on the bbcode classes so those headings match the rest of the
+ * article.
+ */
+.bb_h1,
+.bb_h2,
+.bb_h3,
+.bb_h4 {
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	line-height: 1.25;
+	color: var(--foreground);
+	margin: 1.5rem 0 0.5rem;
+}
+
+.bb_h1 {
+	font-size: 1.25rem;
+}
+.bb_h2 {
+	font-size: 1.125rem;
+}
+.bb_h3 {
+	font-size: 1rem;
+}
+.bb_h4 {
+	font-size: 0.875rem;
+}
+
+/* bbcode paragraphs, lists, blockquotes — match reader-content defaults */
+.bb_p,
+.bbcode p {
+	margin: 1rem 0;
+}
+
+.bb_ul,
+.bb_ol,
+.bbcode ul,
+.bbcode ol {
+	margin: 1rem 0;
+	padding-left: 1.5rem;
+}
+
+.bb_ul,
+.bbcode ul {
+	list-style: disc;
+}
+.bb_ol,
+.bbcode ol {
+	list-style: decimal;
+}
+
+.bb_blockquote,
+.bbcode blockquote {
+	border-left: 2px solid var(--border);
+	padding-left: 1rem;
+	margin: 1rem 0;
+	color: var(--muted-foreground);
+}
+
+/* bbcode code blocks */
+.bb_code,
+.bbcode pre {
+	margin: 1rem 0;
+	padding: 1rem;
+	overflow-x: auto;
+	border-radius: var(--radius-md);
+	background: var(--muted);
+	font-size: 0.875rem;
+}
+
+/* bbcode horizontal rule */
+.bb_hr,
+.bbcode hr {
+	margin: 1.5rem 0;
+	border-color: var(--border);
+}
