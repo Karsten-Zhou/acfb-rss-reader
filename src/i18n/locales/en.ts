@@ -21,7 +21,8 @@ export default {
 		settings: "Settings",
 		menu: "Menu",
 		deleteFeed: "Delete feed",
-		confirmDeleteFeed: "Delete?",
+		deleteFeedTitle: "Delete feed",
+		deleteFeedConfirm: 'Delete "{name}"? This removes the feed and its articles.',
 		editFeed: "Edit feed…",
 	},
 	list: {

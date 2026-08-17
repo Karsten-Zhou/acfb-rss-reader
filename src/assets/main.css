@@ -165,6 +165,57 @@
 .reader-content video {
 	@apply my-4 h-auto max-w-full rounded-md;
 }
+/* Image loading placeholder: feed images default to a 1:1 full-width reserved
+   box with a shimmering skeleton while they load/fail, so an unloaded image
+   NEVER collapses to zero height — that is what avoided the layout flash.
+   Once EntryReader learns the natural dimensions it sets `aspect-ratio` on
+   the element and adds `.loaded`, and the height morphs smoothly to the real
+   shape. */
+.reader-content .reader-img {
+	position: relative;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1 / 1;
+	object-fit: cover;
+	background-color: color-mix(in srgb, var(--muted) 55%, transparent);
+	background-image: linear-gradient(
+		100deg,
+		transparent 40%,
+		color-mix(in srgb, var(--border) 45%, transparent) 50%,
+		transparent 60%
+	);
+	background-size: 200% 100%;
+	transition: aspect-ratio 0.4s ease;
+	animation: reader-img-shimmer 1.4s ease-in-out infinite;
+}
+.reader-content .reader-img.loaded {
+	background-color: transparent;
+	background-image: none;
+	animation: none;
+}
+@keyframes reader-img-shimmer {
+	0% {
+		background-position: 120% 0;
+	}
+	100% {
+		background-position: -120% 0;
+	}
+}
+/* Tooltip pop/fade-in animation (replaces the arrow). */
+.ui-tooltip {
+	transform-origin: var(--reka-tooltip-content-transform-origin, center);
+	animation: ui-tooltip-in 0.14s ease-out;
+}
+@keyframes ui-tooltip-in {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
 .reader-content iframe {
 	@apply my-4 aspect-video w-full max-w-full rounded-md border-0;
 }

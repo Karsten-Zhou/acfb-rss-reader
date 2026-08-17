@@ -21,7 +21,8 @@ export default {
 		settings: "设置",
 		menu: "菜单",
 		deleteFeed: "删除订阅源",
-		confirmDeleteFeed: "删除？",
+		deleteFeedTitle: "删除订阅源",
+		deleteFeedConfirm: "删除“{name}”？这将移除该订阅源及其文章。",
 		editFeed: "编辑订阅源…",
 	},
 	list: {

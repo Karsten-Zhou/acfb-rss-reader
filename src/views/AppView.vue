@@ -7,6 +7,7 @@ import AppSidebar from "@/components/AppSidebar.vue";
 import EntryListPane from "@/components/EntryListPane.vue";
 import MobileBottomNav from "@/components/MobileBottomNav.vue";
 import ReaderPane from "@/components/ReaderPane.vue";
+import UiTooltip from "@/components/UiTooltip.vue";
 import { COLUMN_HANDLE_WIDTH, useColumnResize } from "@/composables/useColumnResize";
 import { cn } from "@/lib/utils";
 import { useReaderStore } from "@/stores/reader";
@@ -39,20 +40,24 @@ const { isWide, listWidth, beginDrag, onHandleKey } = useColumnResize();
         class="flex h-12 shrink-0 items-center gap-2 border-b px-3 md:hidden"
         :class="cn(reader.selectedEntryId !== null && 'hidden')"
       >
-        <button
-          type="button"
-          class="rounded p-1 hover:bg-accent"
-          :title="t('sidebar.menu')"
-          @click="sidebarOpen = true"
-        >
-          <Menu class="size-5" />
-        </button>
+        <UiTooltip :content="t('sidebar.menu')" side="bottom">
+          <button
+            type="button"
+            class="rounded p-1 hover:bg-accent"
+            @click="sidebarOpen = true"
+          >
+            <Menu class="size-5" />
+          </button>
+        </UiTooltip>
         <span class="text-sm font-semibold tracking-tight">{{ t("app.name") }}</span>
       </header>
 
-      <div class="flex min-h-0 flex-1 pb-14 md:pb-0">
+      <div class="relative flex min-h-0 flex-1 pb-14 md:pb-0">
         <EntryListPane />
-        <!-- Resize handle: list | reader (thin divider, highlighted on hover/drag) -->
+        <!-- Resize handle: the interactive hit area is an absolute overlay
+             centered on the boundary between list and reader, so the two
+             panes abut with no visible gap. The 1px divider (highlighted on
+             hover/drag) is drawn by this handle on top of the boundary. -->
         <button
           v-if="isWide"
           type="button"
@@ -61,15 +66,17 @@ const { isWide, listWidth, beginDrag, onHandleKey } = useColumnResize();
           :aria-valuenow="listWidth"
           :aria-valuemin="256"
           :aria-valuemax="512"
-          class="group relative z-10 hidden shrink-0 cursor-col-resize touch-none select-none bg-transparent outline-none md:block"
-          :style="{ width: `${COLUMN_HANDLE_WIDTH}px` }"
-          :title="t('layout.resizeList')"
+          class="group absolute z-10 top-0 bottom-0 hidden cursor-col-resize touch-none select-none outline-none md:block"
+          :style="{ left: `${listWidth - COLUMN_HANDLE_WIDTH / 2}px`, width: `${COLUMN_HANDLE_WIDTH}px` }"
           @pointerdown.prevent="beginDrag($event)"
           @keydown="onHandleKey($event)"
         >
           <span
             class="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border transition-all group-hover:w-0.5 group-hover:bg-primary/60 group-focus-visible:w-0.5 group-focus-visible:bg-primary/60"
           />
+          <UiTooltip :content="t('layout.resizeList')" side="right">
+            <span class="absolute inset-0" />
+          </UiTooltip>
         </button>
         <ReaderPane />
       </div>

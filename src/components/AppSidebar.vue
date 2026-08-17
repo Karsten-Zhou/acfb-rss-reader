@@ -17,12 +17,14 @@ import { useEventListener } from "@vueuse/core";
 import { computed, ref, watch } from "vue";
 import { VueDraggable } from "vue-draggable-plus";
 import { useI18n } from "vue-i18n";
+import DeleteFeedDialog from "@/components/DeleteFeedDialog.vue";
 import FeedDialog from "@/components/FeedDialog.vue";
 import SettingsDialog from "@/components/SettingsDialog.vue";
 import SignOutDialog from "@/components/SignOutDialog.vue";
 import ScrollArea from "@/components/scroll-area/ScrollArea.vue";
 import UiBadge from "@/components/UiBadge.vue";
 import UiButton from "@/components/UiButton.vue";
+import UiTooltip from "@/components/UiTooltip.vue";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { type ReaderView, useReaderStore } from "@/stores/reader";
@@ -124,7 +126,6 @@ function openContextMenu(feed: FeedWithCounts, event: MouseEvent): void {
 
 function closeContextMenu(): void {
 	contextMenu.value = null;
-	deletingFeedId.value = null;
 }
 
 // Close on outside pointer-down or Escape.
@@ -142,13 +143,15 @@ useEventListener(window, "keydown", (event) => {
 	if (event.key === "Escape") closeContextMenu();
 });
 
-// --- Delete feed (two-step confirm: click once to arm, again to confirm) ---
+// --- Delete feed (modal confirmation) ---
 const deletingFeedId = ref<number | null>(null);
+const deletingFeed = computed(
+	() => feedsQuery.data.value?.find((feed) => feed.id === deletingFeedId.value) ?? null,
+);
 
 const deleteFeed = useMutation({
 	mutationFn: (id: number) => api.delete<{ ok: boolean }>(`/api/feeds/${id}`),
 	onSuccess: async (_data, feedId) => {
-		deletingFeedId.value = null;
 		closeContextMenu();
 
 		// If the open article belonged to the deleted feed, close the reader.
@@ -186,21 +189,18 @@ const deleteFeed = useMutation({
 			queryClient.invalidateQueries({ queryKey: ["search"] }),
 		]);
 	},
-	onError: () => {
+	onSettled: () => {
 		deletingFeedId.value = null;
 	},
 });
 
-function onDeleteFeed(feedId: number): void {
-	if (deletingFeedId.value === feedId) {
-		deleteFeed.mutate(feedId);
-		return;
-	}
+function requestDeleteFeed(feedId: number): void {
+	// Context menu's first click opens the confirm modal instead of arming it.
 	deletingFeedId.value = feedId;
-	// Auto-cancel the pending confirmation if the user moves on.
-	window.setTimeout(() => {
-		if (deletingFeedId.value === feedId) deletingFeedId.value = null;
-	}, 3000);
+}
+function closeDeleteDialog(): void {
+	if (deleteFeed.isPending.value) return;
+	deletingFeedId.value = null;
 }
 
 // --- Edit feed ---
@@ -241,13 +241,14 @@ function onFaviconError(url: string): void {
     <div class="flex h-12 items-center gap-2 border-b px-4">
       <Radio class="size-4 text-primary" />
       <span class="flex-1 text-sm font-semibold tracking-tight">{{ t("app.name") }}</span>
-      <button
-        class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
-        :title="t('sidebar.close')"
-        @click="emit('close')"
-      >
-        <X class="size-4" />
-      </button>
+      <UiTooltip :content="t('sidebar.close')" side="bottom">
+        <button
+          class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+          @click="emit('close')"
+        >
+          <X class="size-4" />
+        </button>
+      </UiTooltip>
     </div>
 
     <ScrollArea class="min-h-0 flex-1">
@@ -356,30 +357,39 @@ function onFaviconError(url: string): void {
           <Plus class="size-4" />
           {{ t("sidebar.addFeed") }}
         </UiButton>
-        <UiButton
-          variant="ghost"
-          size="icon"
-          class="size-8"
-          :title="t('sidebar.settings')"
-          @click="settingsOpen = true"
-        >
-          <SettingsIcon class="size-4" />
-        </UiButton>
-        <UiButton
-          variant="ghost"
-          size="icon"
-          class="size-8"
-          :title="t('sidebar.signOut')"
-          @click="signOutOpen = true"
-        >
-          <LogOut class="size-4" />
-        </UiButton>
+        <UiTooltip :content="t('sidebar.settings')" side="top">
+          <UiButton
+            variant="ghost"
+            size="icon"
+            class="size-8"
+            @click="settingsOpen = true"
+          >
+            <SettingsIcon class="size-4" />
+          </UiButton>
+        </UiTooltip>
+        <UiTooltip :content="t('sidebar.signOut')" side="top">
+          <UiButton
+            variant="ghost"
+            size="icon"
+            class="size-8"
+            @click="signOutOpen = true"
+          >
+            <LogOut class="size-4" />
+          </UiButton>
+        </UiTooltip>
       </div>
     </div>
   </aside>
 
   <SettingsDialog v-model:open="settingsOpen" />
   <SignOutDialog v-model:open="signOutOpen" />
+  <DeleteFeedDialog
+    :open="deletingFeedId !== null"
+    :feed-name="deletingFeed?.title ?? ''"
+    :busy="deleteFeed.isPending.value"
+    @update:open="closeDeleteDialog"
+    @confirm="deletingFeedId !== null && deleteFeed.mutate(deletingFeedId)"
+  />
   <FeedDialog v-model:open="addFeedOpen" mode="add" :feed="null" />
   <FeedDialog
     :open="editFeedId !== null"
@@ -407,16 +417,11 @@ function onFaviconError(url: string): void {
       </button>
       <button
         type="button"
-        class="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-        :class="deletingFeedId === contextMenu.feed.id && 'text-destructive'"
-        @click="onDeleteFeed(contextMenu.feed.id)"
+        class="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-destructive"
+        @click="requestDeleteFeed(contextMenu.feed.id)"
       >
         <Trash2 class="size-3.5" />
-        {{
-          deletingFeedId === contextMenu.feed.id
-            ? t('sidebar.confirmDeleteFeed')
-            : t('sidebar.deleteFeed')
-        }}
+        {{ t('sidebar.deleteFeed') }}
       </button>
     </div>
   </Teleport>

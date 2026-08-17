@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 
 import EntryList from "@/components/EntryList.vue";
 import UiInput from "@/components/UiInput.vue";
+import UiTooltip from "@/components/UiTooltip.vue";
 import { useColumnResize } from "@/composables/useColumnResize";
 import { useEntryListQuery } from "@/composables/useEntryListQuery";
 import { useEntryMutations } from "@/composables/useEntryMutations";
@@ -75,11 +76,15 @@ useKeyboardShortcuts(() => [
   <section
     :class="
       cn(
-        'w-full min-w-0 flex-col border-r',
+        'w-full min-w-0 flex-col',
         // Below the three-column threshold, selecting an article shows the
         // reader full-width; at wide widths both panes stay visible.
         reader.selectedEntryId !== null && !isWide ? 'hidden' : 'flex',
         isWide && 'shrink-0',
+        // In wide mode the resize handle draws the single divider line, so
+        // the list must not add its own border-r (would be a duplicated,
+        // offset segmenting line). It is kept for the 2-column layout.
+        !isWide && 'border-r',
       )
     "
     :style="isWide ? { width: `${listWidth}px`, flex: '0 0 auto' } : undefined"
@@ -95,15 +100,16 @@ useKeyboardShortcuts(() => [
           class="h-8 pl-8 text-sm"
         />
       </div>
-      <button
-        type="button"
-        class="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-        :class="reader.showUnreadOnly && 'bg-accent text-foreground'"
-        :title="t('list.onlyUnread')"
-        @click="reader.showUnreadOnly = !reader.showUnreadOnly"
-      >
-        {{ t("list.unread") }}
-      </button>
+      <UiTooltip :content="t('list.onlyUnread')" side="bottom">
+        <button
+          type="button"
+          class="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+          :class="reader.showUnreadOnly && 'bg-accent text-foreground'"
+          @click="reader.showUnreadOnly = !reader.showUnreadOnly"
+        >
+          {{ t("list.unread") }}
+        </button>
+      </UiTooltip>
     </div>
 
     <EntryList />

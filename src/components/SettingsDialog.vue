@@ -20,6 +20,7 @@ import UiSelectTrigger from "@/components/select/UiSelectTrigger.vue";
 import UiSelectValue from "@/components/select/UiSelectValue.vue";
 import UiButton from "@/components/UiButton.vue";
 import UiSwitch from "@/components/UiSwitch.vue";
+import UiTooltip from "@/components/UiTooltip.vue";
 import { LANGUAGE_PREFERENCES, type LanguagePreference, LOCALE_LABELS } from "@/i18n";
 import { APP_BUILD_TIME, APP_VERSION } from "@/lib/build-meta";
 import {
@@ -236,16 +237,17 @@ function languageLabel(lang: LanguagePreference): string {
                   >
                     {{ capturing === action ? t("settings.pressKey") : settings.shortcutLabel(action) }}
                   </UiButton>
-                  <UiButton
-                    variant="ghost"
-                    size="icon"
-                    class="size-7"
-                    :title="t('settings.resetShortcut')"
-                    :disabled="isDefault(action)"
-                    @click="resetShortcut(action)"
-                  >
-                    <RotateCcw class="size-3.5" />
-                  </UiButton>
+                  <UiTooltip :content="t('settings.resetShortcut')" side="top">
+                    <UiButton
+                      variant="ghost"
+                      size="icon"
+                      class="size-7"
+                      :disabled="isDefault(action)"
+                      @click="resetShortcut(action)"
+                    >
+                      <RotateCcw class="size-3.5" />
+                    </UiButton>
+                  </UiTooltip>
                 </div>
               </div>
             </div>
