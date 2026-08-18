@@ -59,6 +59,8 @@ export default {
 	feedEdit: {
 		addTitle: "Add feed",
 		editTitle: "Edit feed",
+		descriptionAdd: "Subscribe to a new RSS, Atom or JSON feed by entering its URL.",
+		descriptionEdit: "Rename this feed. The URL is locked for existing feeds.",
 		name: "Name",
 		namePlaceholder: "Feed name (optional)",
 		url: "Feed URL",
@@ -77,6 +79,7 @@ export default {
 	},
 	settings: {
 		title: "Settings",
+		description: "Adjust your reader preferences and notifications.",
 		theme: "Theme",
 		themeLight: "Light",
 		themeDark: "Dark",
@@ -110,5 +113,34 @@ export default {
 		builtAt: "Built at",
 		github: "GitHub repository",
 		close: "Close",
+	},
+	notification: {
+		errorTitle: "Notifications unavailable",
+		permissionDeniedTitle: "Permission denied",
+		permissionDeniedBody:
+			"You blocked notifications in the browser. Allow them in your browser's site settings, then try again.",
+		removeFailedTitle: "Couldn't disable",
+		removeFailedBody: "We couldn't remove this device's subscription. Please try again.",
+		settingsFailedTitle: "Couldn't update setting",
+		settingsFailedBody: "We couldn't save your notification preference. Please try again.",
+		successTitle: "Notifications enabled",
+		successBody: "New articles will be delivered to this device.",
+		errors: {
+			"load-capability-failed": "Couldn't check notification support.",
+			"sw-failed": "Couldn't register the notification service.",
+			"not-configured": "Notifications aren't set up on the server yet.",
+			"subscribe-failed": "Couldn't create a subscription on this device.",
+			"sync-failed": "Couldn't save the subscription with the server.",
+		},
+	},
+	error: {
+		entryActionFailed: "Couldn't update the article",
+		entryActionFailedRead: "Couldn't update read status.",
+		entryActionFailedStar: "Couldn't update star.",
+		entryActionFailedArchive: "Couldn't update archive status.",
+		bulkFailed: "Couldn't update articles.",
+	},
+	toast: {
+		dismiss: "Dismiss",
 	},
 } as const;

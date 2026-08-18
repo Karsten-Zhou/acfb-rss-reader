@@ -59,6 +59,8 @@ export default {
 	feedEdit: {
 		addTitle: "添加订阅源",
 		editTitle: "编辑订阅源",
+		descriptionAdd: "输入网址订阅新的 RSS、Atom 或 JSON 订阅源。",
+		descriptionEdit: "重命名此订阅源。已有订阅源的网址已锁定。",
 		name: "名称",
 		namePlaceholder: "订阅源名称（可选）",
 		url: "订阅源 URL",
@@ -77,6 +79,7 @@ export default {
 	},
 	settings: {
 		title: "设置",
+		description: "调整阅读器偏好与通知设置。",
 		theme: "主题",
 		themeLight: "浅色",
 		themeDark: "深色",
@@ -109,5 +112,33 @@ export default {
 		builtAt: "构建时间",
 		github: "GitHub 仓库",
 		close: "关闭",
+	},
+	notification: {
+		errorTitle: "通知不可用",
+		permissionDeniedTitle: "权限被拒绝",
+		permissionDeniedBody: "你已在浏览器中阻止通知。请在浏览器站点设置中允许后重试。",
+		removeFailedTitle: "无法停用",
+		removeFailedBody: "无法移除此设备的订阅，请重试。",
+		settingsFailedTitle: "无法更新设置",
+		settingsFailedBody: "无法保存你的通知偏好，请重试。",
+		successTitle: "通知已开启",
+		successBody: "新文章将推送到此设备。",
+		errors: {
+			"load-capability-failed": "无法检查通知支持状态。",
+			"sw-failed": "无法注册通知服务。",
+			"not-configured": "服务器尚未配置通知功能。",
+			"subscribe-failed": "无法在此设备上创建订阅。",
+			"sync-failed": "无法与服务器保存订阅。",
+		},
+	},
+	error: {
+		entryActionFailed: "无法更新文章",
+		entryActionFailedRead: "无法更新已读状态。",
+		entryActionFailedStar: "无法更新星标。",
+		entryActionFailedArchive: "无法更新归档状态。",
+		bulkFailed: "无法更新文章。",
+	},
+	toast: {
+		dismiss: "关闭",
 	},
 } as const;

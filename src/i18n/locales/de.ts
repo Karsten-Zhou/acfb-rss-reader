@@ -60,6 +60,8 @@ export default {
 	feedEdit: {
 		addTitle: "Feed hinzufügen",
 		editTitle: "Feed bearbeiten",
+		descriptionAdd: "Abonniere einen neuen RSS-, Atom- oder JSON-Feed über seine URL.",
+		descriptionEdit: "Benenne diesen Feed um. Die URL ist bei vorhandenen Feeds gesperrt.",
 		name: "Name",
 		namePlaceholder: "Feed-Name (optional)",
 		url: "Feed-URL",
@@ -78,6 +80,7 @@ export default {
 	},
 	settings: {
 		title: "Einstellungen",
+		description: "Passe deine Reader-Einstellungen und Benachrichtigungen an.",
 		theme: "Design",
 		themeLight: "Hell",
 		themeDark: "Dunkel",
@@ -111,5 +114,37 @@ export default {
 		builtAt: "Erstellt am",
 		github: "GitHub-Repository",
 		close: "Schließen",
+	},
+	notification: {
+		errorTitle: "Benachrichtigungen nicht verfügbar",
+		permissionDeniedTitle: "Berechtigung verweigert",
+		permissionDeniedBody:
+			"Du hast Benachrichtigungen im Browser blockiert. Erlaube sie in den Website-Einstellungen und versuche es erneut.",
+		removeFailedTitle: "Deaktivieren fehlgeschlagen",
+		removeFailedBody:
+			"Das Abonnement dieses Geräts konnte nicht entfernt werden. Bitte versuche es erneut.",
+		settingsFailedTitle: "Einstellung konnte nicht aktualisiert werden",
+		settingsFailedBody:
+			"Deine Benachrichtigungs-Einstellung konnte nicht gespeichert werden. Bitte versuche es erneut.",
+		successTitle: "Benachrichtigungen aktiviert",
+		successBody: "Neue Artikel werden an dieses Gerät geliefert.",
+		errors: {
+			"load-capability-failed":
+				"Die Unterstützung für Benachrichtigungen konnte nicht geprüft werden.",
+			"sw-failed": "Der Benachrichtigungsdienst konnte nicht registriert werden.",
+			"not-configured": "Benachrichtigungen sind auf dem Server noch nicht eingerichtet.",
+			"subscribe-failed": "Auf diesem Gerät konnte kein Abonnement erstellt werden.",
+			"sync-failed": "Das Abonnement konnte nicht mit dem Server gespeichert werden.",
+		},
+	},
+	error: {
+		entryActionFailed: "Artikel konnte nicht aktualisiert werden",
+		entryActionFailedRead: "Gelesen-Status konnte nicht aktualisiert werden.",
+		entryActionFailedStar: "Markierung konnte nicht aktualisiert werden.",
+		entryActionFailedArchive: "Archiv-Status konnte nicht aktualisiert werden.",
+		bulkFailed: "Artikel konnten nicht aktualisiert werden.",
+	},
+	toast: {
+		dismiss: "Schließen",
 	},
 } as const;
