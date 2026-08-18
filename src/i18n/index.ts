@@ -9,13 +9,6 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 export const LANGUAGE_PREFERENCES = ["auto", ...SUPPORTED_LOCALES] as const;
 export type LanguagePreference = (typeof LANGUAGE_PREFERENCES)[number];
 
-/** Maps a locale code to its display name (shown in the language picker). */
-export const LOCALE_LABELS: Record<AppLocale, string> = {
-	"en-US": "English (US)",
-	de: "Deutsch",
-	"zh-CN": "中文",
-};
-
 /**
  * Resolve the best supported locale for a browser preference list (e.g.
  * `navigator.languages`). Uses `Intl.Locale` to parse/normalize BCP-47 tags:
