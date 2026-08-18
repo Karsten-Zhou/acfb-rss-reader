@@ -87,6 +87,8 @@ Each step is a pure, testable module in `server/feeds`.
 - `/api/opml` — OPML export/import
 - `/api/settings` — key/value app settings (GET/PUT)
 - `/api/favicon` — proxy + KV-cache site favicons (avoids hotlinking/CORS)
+- `/api/push` — Web Push subscription lifecycle (capability, VAPID key,
+  create/update/remove subscription, cleanup)
 - `/api/health` — liveness + DB probe
 
 ## Data model
@@ -102,6 +104,8 @@ Each step is a pure, testable module in `server/feeds`.
 - `fetch_logs` — per-feed fetch diagnostics
 - `users` / `sessions` — the single allowed GitHub user + auth sessions
 - `settings` — key/value app settings
+- `push_subscriptions` — one per-device Web Push subscription
+- `notification_deliveries` — idempotent new-article notification ledger
 - `entries_fts` — FTS5 full-text search index
 
 ## Authentication

@@ -15,6 +15,7 @@ src/     # Vue 3 SPA client (shadcn-vue, Tailwind, Pinia, TanStack Query)
 server/  # Cloudflare Worker (Hono API + refresh Workflow)
   db/        # Drizzle schema, migrations, D1 client, FTS5 search, test mocks
   feeds/     # Feed fetching, parsing, normalization, pipeline
+  notifications/ # Web Push: VAPID, subscription management, delivery service
   routes/    # Hono API routes
   middleware/# Hono middleware (context, auth)
   test/      # bun tests live at the repo-root `test/` instead
@@ -23,7 +24,7 @@ shared/  # Framework-agnostic code used by both client and server
   schemas/        # Zod schemas
   utils/          # Small pure utilities (hash, time, url)
 test/    # bun test suite (db, feeds, api)
-public/  # SPA static assets
+public/  # SPA static assets (incl. the root-scoped service worker sw.js)
 ```
 
 Dependency direction (no cycles):
@@ -95,8 +96,16 @@ bun run db:studio      # drizzle studio
 6. **Compatibility CSS** is the primary mechanism for site-specific rendering
    fixes; JS fixes are the exception. Each module contributes `detect.ts` +
    `styles.css`.
-7. Business logic lives in `server/` (API, feeds, db), never in UI components.
-   Components are thin and composed.
+9. **Business logic lives in `server/`** (API, feeds, db), never in UI
+   components. Components are thin and composed.
+10. **Push notifications**: standard Web Push (`web-push` lib, VAPID),
+    service worker at `public/sw.js` (root scope), D1 tables
+    `push_subscriptions` (per device) + `notification_deliveries` (idempotency
+    ledger keyed `(entry_id, notification_type)`). Only the existing
+    `refreshFeed` pipeline decides what's "new" — first import/OPML never
+    notifies. Idempotency via `INSERT … ON CONFLICT DO NOTHING` claim row.
+    VAPID private key is a server secret; public key is served to the browser
+    (Push API requires it).
 
 ## Conventions
 

@@ -192,6 +192,44 @@ Add `http://localhost:8787/api/auth/callback` to your GitHub OAuth App's callbac
 
 ---
 
+## Browser notifications (optional)
+
+You can get a native notification on your desktop/phone whenever a new article
+shows up. This uses the standard browser Web Push API — no third-party service.
+
+1. Generate a VAPID key pair (once):
+
+   ```sh
+   bunx web-push generate-vapid-keys --json
+   ```
+
+2. Store the keys as secrets:
+
+   ```sh
+   bunx wrangler secret put VAPID_PUBLIC_KEY
+   bunx wrangler secret put VAPID_PRIVATE_KEY
+   bunx wrangler secret put VAPID_SUBJECT   # e.g. mailto:you@example.com
+   ```
+
+   The private key stays on the server; only the public key is shared with
+   the browser (that's required by the Push API).
+
+   For local development, put the same keys in `.dev.vars` (gitignored).
+
+3. Apply the push database migration:
+
+   ```sh
+   bunx wrangler d1 migrations apply rss-reader-db --remote
+   ```
+
+4. Sign in, open **Settings → Browser notifications**, and turn it on.
+
+See [push-notifications.md](push-notifications.md) for the full detail: how
+notifications are sent, how duplicates are prevented, browser support, and how
+invalid subscriptions are cleaned up.
+
+---
+
 ## Reference: environment variables
 
 For reference, here are all the variables the app uses:
@@ -202,6 +240,9 @@ For reference, here are all the variables the app uses:
 | `GITHUB_CLIENT_SECRET` | secret | GitHub OAuth App client secret (step 7) |
 | `ALLOWED_GITHUB_USER_ID` | secret | Your numeric GitHub user ID (step 7) |
 | `APP_ORIGIN` | secret | Your app's public URL (step 7) |
+| `VAPID_PUBLIC_KEY` | secret | Web Push VAPID public key (pull notifications) |
+| `VAPID_PRIVATE_KEY` | secret | Web Push VAPID private key (server-only) |
+| `VAPID_SUBJECT` | secret | Web Push contact (`mailto:`/`https://`) |
 | `DB` | binding | D1 database (step 4) |
 | `KV_STORE` | binding | KV namespace (step 4) |
 | `REFRESH_WORKFLOW` | binding | Auto-configured by Cloudflare |
@@ -210,4 +251,5 @@ For reference, here are all the variables the app uses:
 ## See also
 
 - [Architecture](architecture.md) — how the system works under the hood
+- [Push notifications](push-notifications.md) — browser notification system
 - [Contributing](contribute.md) — development workflow and coding conventions
