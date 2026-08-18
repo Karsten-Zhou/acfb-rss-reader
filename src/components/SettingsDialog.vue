@@ -105,64 +105,39 @@ function languageLabel(lang: LanguagePreference): string {
 
 // --- Browser notifications ---
 /**
- * Global on/off preference. Turning it on when this device is not yet
- * subscribed runs the subscribe flow (a user gesture, so permission is only
- * requested here — never on page load). Shows a spinner while the long
- * roundtrip runs, and rolls back + toasts on failure.
+ * The switch subscribes/unsubscribes this device only. Turning it on runs
+ * the subscribe flow (a user gesture, so permission is only requested here —
+ * never on page load); turning it off removes this device's subscription.
+ * Other devices are unaffected. The store shows toasts on failure and the
+ * switch reflects the optimistic target state while busy.
  */
-async function toggleNotifications(preference: boolean): Promise<void> {
-	if (preference) {
-		if (!notifications.supported) return;
-		if (!notifications.subscribed) {
-			const ok = await notifications.enable();
-			if (!ok) return; // permission denied / failed — global stays off
-		}
-		await notifications.setEnabled(true);
+function toggleNotifications(value: boolean): void {
+	if (value) {
+		void notifications.enable();
 	} else {
-		await notifications.setEnabled(false);
+		void notifications.disable();
 	}
 }
 
-const isTogglingNotifications = computed(
-	() => notifications.loading === "subscribe" || notifications.loading === "toggle",
-);
-
-/** Subscribe this device without toggling the global preference. */
-async function enableDevice(): Promise<void> {
-	await notifications.enable();
-}
-
-/** Unsubscribe this device, leaving the global preference intact. */
-async function disableDevice(): Promise<void> {
-	await notifications.disable();
-}
-
-const isDeviceButtonBusy = computed(
-	() =>
-		notifications.busy &&
-		(notifications.loading === "subscribe" || notifications.loading === "unsubscribe"),
+/** Optimistic switch state: on while subscribing, off while unsubscribing. */
+const notificationsSwitchValue = computed(
+	() => notifications.subscribed || notifications.loading === "subscribe",
 );
 
 function notificationsHint(): string {
+	if (notifications.loading === "subscribe") return t("settings.notificationsSubscribing");
+	if (notifications.loading === "unsubscribe") return t("settings.notificationsDisabling");
 	switch (notifications.status) {
 		case "unsupported":
 			return t("settings.notificationsUnsupported");
 		case "permission-denied":
 			return t("settings.notificationsDenied");
-		case "idle":
-			return isTogglingNotifications.value
-				? t("settings.notificationsSubscribing")
-				: t("settings.notificationsIdle");
 		case "subscribed":
-			return isDeviceButtonBusy.value
-				? t("settings.notificationsSubscribing")
-				: t("settings.notificationsSubscribed");
+			return t("settings.notificationsSubscribed");
 		case "sync-failed":
 			return t("settings.notificationsSyncFailed");
-		case "subscribing":
-			return t("settings.notificationsSubscribing");
 		default:
-			return "";
+			return t("settings.notificationsIdle");
 	}
 }
 
@@ -284,49 +259,29 @@ function openPermissionSettings(): void {
           <!-- Browser notifications -->
           <section>
             <div class="flex items-center justify-between gap-4">
-              <p class="text-sm font-medium">{{ t("settings.notifications") }}</p>
+              <div>
+                <p class="text-sm font-medium">{{ t("settings.notifications") }}</p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                  {{ t("settings.notificationsDeviceHint") }}
+                </p>
+              </div>
               <UiSwitch
-                :model-value="notifications.enabled"
+                :model-value="notificationsSwitchValue"
                 :disabled="!notifications.supported || notifications.busy"
                 :aria-label="t('settings.notifications')"
                 @update:model-value="(value: unknown) => toggleNotifications(value === true)"
               />
             </div>
-            <p class="mt-1 text-xs text-muted-foreground">{{ notificationsHint() }}</p>
-            <div
-              v-if="notifications.supported && (notifications.enabled || notifications.permission === 'granted')"
-              class="mt-3"
-            >
-              <div class="flex items-center gap-2">
-                <UiButton
-                  v-if="!notifications.subscribed"
-                  variant="outline"
-                  size="sm"
-                  :loading="notifications.loading === 'subscribe'"
-                  :disabled="notifications.busy"
-                  @click="enableDevice"
-                >
-                  {{ t("settings.notificationsEnableDevice") }}
-                </UiButton>
-                <UiButton
-                  v-else
-                  variant="outline"
-                  size="sm"
-                  :loading="notifications.loading === 'unsubscribe'"
-                  :disabled="notifications.busy"
-                  @click="disableDevice"
-                >
-                  {{ t("settings.notificationsDisableDevice") }}
-                </UiButton>
-                <a
-                  v-if="notifications.permission === 'denied'"
-                  href="#"
-                  class="text-xs text-muted-foreground underline"
-                  @click.prevent="openPermissionSettings"
-                >
-                  {{ t("settings.notificationsOpenSettings") }}
-                </a>
-              </div>
+            <div class="mt-1 flex items-center justify-between gap-2">
+              <p class="text-xs text-muted-foreground">{{ notificationsHint() }}</p>
+              <a
+                v-if="notifications.permission === 'denied'"
+                href="#"
+                class="shrink-0 text-xs text-muted-foreground underline"
+                @click.prevent="openPermissionSettings"
+              >
+                {{ t("settings.notificationsOpenSettings") }}
+              </a>
             </div>
           </section>
 

@@ -1,13 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import webpush from "web-push";
-import { type PushNotificationPayload, SETTING_NOTIFICATION_ENABLED } from "../../shared/index.ts";
-import {
-	type Database,
-	notificationDeliveries,
-	pushSubscriptions,
-	settings,
-	users,
-} from "../db/index.ts";
+import type { PushNotificationPayload } from "../../shared/index.ts";
+import { type Database, notificationDeliveries, pushSubscriptions, users } from "../db/index.ts";
 import { logger } from "../logging.ts";
 import type { Env } from "../types.ts";
 
@@ -36,19 +30,6 @@ function toPushError(err: unknown): PushErrorLike {
 		return { statusCode: e.statusCode, message: e.message };
 	}
 	return { message: String(err) };
-}
-
-/** Whether the global browser-notifications preference is enabled. */
-export async function isNotificationsEnabled(db: Database): Promise<boolean> {
-	const row = await db.query.settings.findFirst({
-		where: eq(settings.key, SETTING_NOTIFICATION_ENABLED),
-	});
-	if (!row) return false;
-	try {
-		return JSON.parse(row.value) === true;
-	} catch {
-		return false;
-	}
 }
 
 /**
@@ -131,16 +112,14 @@ async function recordFailure(db: Database, id: number): Promise<void> {
  * Workflow retries or repeated feed refreshes.
  *
  * Returns true when the entry was processed (already-delivered counts as
- * processed). Returns false only when notifications are globally disabled or
- * Web Push is not configured (so callers can skip without erroring).
+ * processed). Returns false only when Web Push is not configured (so callers
+ * can skip without erroring).
  */
 export async function notifyNewEntry(
 	db: Database,
 	env: Env,
 	n: NewEntryNotification,
 ): Promise<boolean> {
-	if (!(await isNotificationsEnabled(db))) return false;
-
 	// No VAPID credentials -> nothing we can send. Quietly skip and never
 	// fail the feed pipeline (e.g. local dev before keys are configured).
 	if (!getVapidConfig(env)) {
@@ -152,6 +131,15 @@ export async function notifyNewEntry(
 	const userId = await getUserId(db);
 	if (userId === null) return false;
 
+	// Per-device opt-in: only devices with an active subscription receive
+	// notifications, so fetch them first and bail out early when the user
+	// has not enabled notifications on any device.
+	const subs = await db
+		.select()
+		.from(pushSubscriptions)
+		.where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.active, true)));
+	if (subs.length === 0) return false;
+
 	// Claim the idempotency row.
 	const claim = await db
 		.insert(notificationDeliveries)
@@ -162,11 +150,6 @@ export async function notifyNewEntry(
 		logger.info("Push: already notified entry", { entryId: n.entryId });
 		return true;
 	}
-
-	const subs = await db
-		.select()
-		.from(pushSubscriptions)
-		.where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.active, true)));
 
 	const payload = buildPayload(n);
 	let sent = 0;

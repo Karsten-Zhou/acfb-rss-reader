@@ -162,18 +162,17 @@ identifies the app to the push service.
 
 Settings → **Browser notifications**:
 
-- The toggle is the **global** preference (all devices) and is persisted to
-  `settings` (`notificationEnabled`) and cached locally.
-- Turning it on when the current device isn't subscribed runs the subscribe
-  flow: register the service worker → request notification permission (only
-  from this explicit click) → fetch the VAPID public key → create the browser
-  `PushSubscription` → persist it server-side.
-- Turning it off sets the global preference to off and stops new-article
-  notifications everywhere.
-
-Per-device controls (**Enable/Disable this device**) subscribe/unsubscribe
-just that device without touching the global preference, so you can e.g. turn
-off notifications on your desktop while keeping them on your phone.
+- The switch is **per device**: it subscribes/unsubscribes only the current
+  device. Other devices are unaffected — you can e.g. turn notifications off
+  on your desktop while keeping them on your phone. There is no global
+  on/off preference; a device receives notifications if and only if it holds
+  an active subscription.
+- Turning it on runs the subscribe flow: register the service worker →
+  request notification permission (only from this explicit click) → fetch the
+  VAPID public key → create the browser `PushSubscription` → persist it
+  server-side.
+- Turning it off unsubscribes the browser and removes the server-side
+  subscription row.
 
 ## Notification lifecycle
 
@@ -184,8 +183,9 @@ off notifications on your desktop while keeping them on your phone.
 3. Only genuinely-new entries (newly inserted) are passed to
    `notifyNewEntry`.
 4. `notifyNewEntry`:
-   - Checks the global `notificationEnabled` preference (off ⇒ skip).
    - Checks VAPID is configured.
+   - Loads the user's **active** subscriptions; none ⇒ skip (notifications
+     are opt-in per device — there is no global on/off preference).
    - **Claims the idempotency row** with `INSERT … ON CONFLICT DO NOTHING`
      into `notification_deliveries`. If the (entry, type) row already exists,
      nothing is sent — this is what prevents duplicates across refreshes,
@@ -232,9 +232,9 @@ through the login flow and preserves the destination.
 
 ## Disabling notifications
 
-- **Globally**: Settings → Browser notifications → off.
-- **Per device**: Settings → Browser notifications → **Disable this device**
-  (unsubscribes the browser and removes the server-side row).
+- **Per device**: Settings → Browser notifications → switch off
+  (unsubscribes the browser and removes the server-side row). Other devices
+  keep receiving notifications.
 - **Blocked permission**: If the browser blocks notifications, the UI shows a
   "denied" state and points to the browser's site-permission settings; the app
   won't keep re-prompting.

@@ -6,7 +6,6 @@ import {
 	createDb,
 	notificationDeliveries,
 	pushSubscriptions,
-	settings,
 	users,
 } from "../../server/db/index.ts";
 import { applyMigrations, createD1Mock } from "../../server/db/testing/index.ts";
@@ -108,14 +107,6 @@ async function seedUser(db: TestDb): Promise<number> {
 	return user!.id;
 }
 
-async function enableNotifications(db: TestDb): Promise<void> {
-	await db
-		.insert(settings)
-		.values({ key: "notificationEnabled", value: "true" })
-		.onConflictDoUpdate({ target: settings.key, set: { value: "true" } })
-		.run();
-}
-
 async function addSub(db: TestDb, userId: number, sub: typeof SUB_A): Promise<number> {
 	const { upsertPushSubscription } = await import("../../server/notifications/subscriptions.ts");
 	const { id } = await upsertPushSubscription(db, userId, sub);
@@ -166,7 +157,6 @@ describe("notifyNewEntry multi-subscription delivery", () => {
 		const userId = await seedUser(db);
 		await addSub(db, userId, SUB_A);
 		await addSub(db, userId, SUB_B);
-		await enableNotifications(db);
 
 		await notifyNewEntry(db, makeEnv() as never, notification(10));
 
@@ -187,7 +177,6 @@ describe("notifyNewEntry multi-subscription delivery", () => {
 		const userId = await seedUser(db);
 		await addSub(db, userId, SUB_A);
 		await addSub(db, userId, SUB_DEAD);
-		await enableNotifications(db);
 
 		// SUB_DEAD reports 410 Gone from the push service.
 		results[SUB_DEAD.endpoint] = { statusCode: 410 };
@@ -213,7 +202,6 @@ describe("notifyNewEntry multi-subscription delivery", () => {
 		const userId = await seedUser(db);
 		await addSub(db, userId, SUB_A);
 		await addSub(db, userId, SUB_B);
-		await enableNotifications(db);
 
 		results[SUB_B.endpoint] = { error: true, statusCode: 500 };
 
@@ -232,12 +220,11 @@ describe("notifyNewEntry multi-subscription delivery", () => {
 	});
 });
 
-describe("notifyNewEntry preference handling", () => {
+describe("notifyNewEntry failure handling", () => {
 	test("deactivates a subscription only after repeated failures", async () => {
 		const { db } = makeDb();
 		const userId = await seedUser(db);
 		await addSub(db, userId, SUB_A);
-		await enableNotifications(db);
 
 		results[SUB_A.endpoint] = { error: true, statusCode: 500 };
 
@@ -260,7 +247,6 @@ describe("notifyNewEntry idempotency", () => {
 		const { db } = makeDb();
 		const userId = await seedUser(db);
 		await addSub(db, userId, SUB_A);
-		await enableNotifications(db);
 
 		await notifyNewEntry(db, makeEnv() as never, notification(1));
 		const afterFirst = sent.filter((s) => s.endpoint === SUB_A.endpoint).length;
@@ -276,14 +262,14 @@ describe("notifyNewEntry idempotency", () => {
 		expect(rows.length).toBe(1);
 	});
 
-	test("respects the global on/off preference (off => no send)", async () => {
+	test("skips when no device is subscribed (per-device opt-in)", async () => {
 		const { db } = makeDb();
-		const userId = await seedUser(db);
-		await addSub(db, userId, SUB_A);
-		// Do NOT enable notifications.
+		await seedUser(db);
+		// No subscription added — notifications are opt-in per device.
 
-		await notifyNewEntry(db, makeEnv() as never, notification(5));
+		const ok = await notifyNewEntry(db, makeEnv() as never, notification(5));
 
+		expect(ok).toBe(false);
 		expect(sent.length).toBe(0);
 		const rows = await db.select().from(notificationDeliveries).all();
 		expect(rows.length).toBe(0);
@@ -293,7 +279,6 @@ describe("notifyNewEntry idempotency", () => {
 		const { db } = makeDb();
 		const userId = await seedUser(db);
 		await addSub(db, userId, SUB_A);
-		await enableNotifications(db);
 
 		const ok = await notifyNewEntry(db, makeEnv("") as never, notification(9));
 		expect(ok).toBe(false);

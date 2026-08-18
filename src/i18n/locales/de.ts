@@ -91,15 +91,15 @@ export default {
 		aiSummaryHint: "Erstellt eine KI-Zusammenfassung für jeden Artikel (nutzt Workers AI).",
 		aiModel: "Zusammenfassungsmodell",
 		notifications: "Browser-Benachrichtigungen",
+		notificationsDeviceHint: "Gilt nur für dieses Gerät — andere Geräte sind nicht betroffen.",
 		notificationsUnsupported: "Dieser Browser unterstützt keine Push-Benachrichtigungen.",
 		notificationsIdle: "Aktivieren, um über neue Artikel benachrichtigt zu werden.",
 		notificationsSubscribing: "Berechtigung wird angefordert…",
+		notificationsDisabling: "Wird deaktiviert…",
 		notificationsSubscribed: "Neue Artikel werden an dieses Gerät geliefert.",
 		notificationsDenied:
 			"Benachrichtigungen sind im Browser blockiert. Aktiviere sie in den Website-Einstellungen, um fortzufahren.",
 		notificationsSyncFailed: "Das Abonnement konnte nicht mit dem Server synchronisiert werden.",
-		notificationsEnableDevice: "Dieses Gerät aktivieren",
-		notificationsDisableDevice: "Dieses Gerät deaktivieren",
 		notificationsOpenSettings: "Browser-Einstellungen öffnen",
 		shortcuts: "Tastaturkürzel",
 		pressKey: "Taste drücken…",
@@ -123,9 +123,6 @@ export default {
 		removeFailedTitle: "Deaktivieren fehlgeschlagen",
 		removeFailedBody:
 			"Das Abonnement dieses Geräts konnte nicht entfernt werden. Bitte versuche es erneut.",
-		settingsFailedTitle: "Einstellung konnte nicht aktualisiert werden",
-		settingsFailedBody:
-			"Deine Benachrichtigungs-Einstellung konnte nicht gespeichert werden. Bitte versuche es erneut.",
 		successTitle: "Benachrichtigungen aktiviert",
 		successBody: "Neue Artikel werden an dieses Gerät geliefert.",
 		errors: {

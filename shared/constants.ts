@@ -55,9 +55,3 @@ export const KV_OAUTH_STATE_TTL_SECONDS = 10 * 60; // 10 minutes
 
 /** Name of the service worker file (root-scoped, served as a static asset). */
 export const SERVICE_WORKER_PATH = "/sw.js";
-
-/**
- * Global key in the `settings` table controlling whether new-article browser
- * notifications are sent. When false, the refresh pipeline never sends.
- */
-export const SETTING_NOTIFICATION_ENABLED = "notificationEnabled";

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { pushSubscriptionSchema } from "../../shared/index.ts";
 import { HttpError } from "../errors.ts";
 import { requireAuth } from "../middleware/auth.ts";
-import { cleanupInactiveSubscriptions, isNotificationsEnabled } from "../notifications/index.ts";
+import { cleanupInactiveSubscriptions } from "../notifications/index.ts";
 import {
 	listPushSubscriptions,
 	removePushSubscription,
@@ -34,22 +34,18 @@ function parseOr400<T>(schema: z.ZodType<T>, body: unknown): T {
 
 /**
  * GET /api/push/capability — the browser-side capability/status surface:
- * whether Web Push is configured server-side, an icon, and (only when
- * requested by an authenticated client) the user's current subscription list.
+ * whether Web Push is configured server-side, the VAPID public key, and the
+ * user's current subscription list.
  */
 pushRoutes.get("/capability", requireAuth(), async (c) => {
 	const db = c.get("db");
 	const user = c.get("user");
 	const vapid = getVapidConfig(c.env);
 
-	const [enabled, subs] = await Promise.all([
-		isNotificationsEnabled(db),
-		listPushSubscriptions(db, user.id),
-	]);
+	const subs = await listPushSubscriptions(db, user.id);
 
 	return c.json({
 		configured: vapid !== null,
-		enabled,
 		publicKey: vapid?.publicKey ?? null,
 		subscriptions: subs,
 	});

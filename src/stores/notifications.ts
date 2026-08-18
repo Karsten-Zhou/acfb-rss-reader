@@ -15,28 +15,24 @@ import { useToastStore } from "@/stores/toast";
 
 export interface PushCapability {
 	configured: boolean;
-	enabled: boolean;
 	publicKey: string | null;
 	subscriptions: Array<{ id: number; endpoint: string; active: boolean; createdAt: string }>;
 }
 
-const NOTIFICATION_ENABLED_KEY = "rss.notificationEnabled";
-
 /**
  * Pinia store managing the browser push-notification subscription lifecycle:
- * permission, service-worker registration, server-side persistence, and the
- * global on/off preference.
+ * permission, service-worker registration, and server-side persistence.
  *
- * The global preference (`notificationEnabled`) is both persisted to the
- * backend (`settings`) and cached locally, so the state is known even on the
- * login screen / offline. The browser-level subscription is a separate,
- * per-device concern handled by the Push API.
+ * Notifications are purely per-device: the settings switch subscribes or
+ * unsubscribes *this* device only. There is no global on/off preference —
+ * a device receives new-article notifications if and only if it holds an
+ * active subscription. Other devices are unaffected.
  *
- * Loading: every operation (subscribe/unsubscribe/toggle) may wait on a long
+ * Loading: every operation (subscribe/unsubscribe) may wait on a long
  * network roundtrip (permission prompt, VAPID fetch, D1 persistence), so each
- * exposes a `busy` state that disables the toggle/buttons, and use a
- * per-operation `loading` enum where the UI needs to distinguish. Failures are
- * surfaced as toasts (they were previously best-effort/silent).
+ * exposes a `busy` state that disables the switch, and a per-operation
+ * `loading` enum where the UI needs to distinguish. Failures are surfaced as
+ * toasts (they were previously best-effort/silent).
  */
 export const useNotificationsStore = defineStore("notifications", () => {
 	const supported = ref<boolean>(false);
@@ -45,11 +41,10 @@ export const useNotificationsStore = defineStore("notifications", () => {
 	/** Server-side subscription id for the current device, if persisted. */
 	const subscriptionId = ref<number | null>(null);
 	const configured = ref<boolean>(false);
-	const enabled = ref<boolean>(localStorage.getItem(NOTIFICATION_ENABLED_KEY) === "true");
 	const publicKey = ref<string | null>(null);
 
-	/** One of "idle" | "subscribe" | "unsubscribe" | "toggle" — what is running. */
-	const loading = ref<"idle" | "subscribe" | "unsubscribe" | "toggle">("idle");
+	/** One of "idle" | "subscribe" | "unsubscribe" — what is running. */
+	const loading = ref<"idle" | "subscribe" | "unsubscribe">("idle");
 	/** Last error code (maps to an i18n message + toast). */
 	const error = ref<string | null>(null);
 
@@ -185,8 +180,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 
 	/**
 	 * Disable on the current device: unsubscribe from the browser and remove
-	 * the server-side subscription. The global preference is left untouched
-	 * (it applies to all devices).
+	 * the server-side subscription. Other devices are unaffected.
 	 */
 	async function disable(): Promise<void> {
 		if (busy.value) return;
@@ -224,39 +218,12 @@ export const useNotificationsStore = defineStore("notifications", () => {
 		}
 	}
 
-	/**
-	 * Toggle the global on/off preference (persisted to the backend). Returns
-	 * true on success; surfaces failures as a toast. This can take a long
-	 * roundtrip, so `loading` is set to "toggle" and `enabled` only flips on
-	 * success (rolls back on failure).
-	 */
-	async function setEnabled(value: boolean): Promise<boolean> {
-		if (busy.value) return false;
-		const previous = enabled.value;
-		loading.value = "toggle";
-		error.value = null;
-		try {
-			await api.put<{ ok: boolean }>("/api/settings", { notificationEnabled: value });
-			enabled.value = value;
-			localStorage.setItem(NOTIFICATION_ENABLED_KEY, String(value));
-			return true;
-		} catch {
-			enabled.value = previous;
-			error.value = "sync-failed";
-			useToastStore().error("notification.settingsFailedTitle", "notification.settingsFailedBody");
-			return false;
-		} finally {
-			loading.value = "idle";
-		}
-	}
-
 	return {
 		supported,
 		permission,
 		subscribed,
 		subscriptionId,
 		configured,
-		enabled,
 		publicKey,
 		busy,
 		loading,
@@ -265,7 +232,6 @@ export const useNotificationsStore = defineStore("notifications", () => {
 		init,
 		enable,
 		disable,
-		setEnabled,
 		refreshBrowserState,
 		resetLocalState,
 	};

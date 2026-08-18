@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
-import { createDb, feeds, notificationDeliveries, settings, users } from "../../server/db/index.ts";
+import { createDb, feeds, notificationDeliveries, users } from "../../server/db/index.ts";
 import { applyMigrations, createD1Mock, createKvMock } from "../../server/db/testing/index.ts";
 import { upsertPushSubscription } from "../../server/notifications/subscriptions.ts";
 import type { Env } from "../../server/types.ts";
@@ -74,17 +74,12 @@ describe("refresh -> notify integration", () => {
 		const { db } = makeDb();
 		const env = makeEnv();
 
-		// Seed a user + a subscription + enable notifications.
+		// Seed a user + a subscription (per-device opt-in).
 		const [user] = await db
 			.insert(users)
 			.values({ githubId: 1, githubLogin: "testuser" })
 			.returning({ id: users.id });
 		await upsertPushSubscription(db, user!.id, SUB);
-		await db
-			.insert(settings)
-			.values({ key: "notificationEnabled", value: "true" })
-			.onConflictDoUpdate({ target: settings.key, set: { value: "true" } })
-			.run();
 
 		// Seed an existing feed.
 		const [feed] = await db
@@ -116,16 +111,15 @@ describe("refresh -> notify integration", () => {
 		expect(deliveredAgain.length).toBe(2); // still only 2 ledger rows
 	});
 
-	test("notifications are skipped when the global preference is off", async () => {
+	test("notifications are skipped when no device is subscribed", async () => {
 		const { db } = makeDb();
 		const env = makeEnv();
 
-		const [user] = await db
+		await db
 			.insert(users)
 			.values({ githubId: 1, githubLogin: "testuser" })
 			.returning({ id: users.id });
-		await upsertPushSubscription(db, user!.id, SUB);
-		// Do NOT enable notifications.
+		// No subscription — notifications are opt-in per device.
 
 		const [feed] = await db
 			.insert(feeds)
