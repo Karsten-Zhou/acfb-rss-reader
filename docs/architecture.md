@@ -45,15 +45,15 @@ Workers Assets from the same dev server.
 
 ## Layout
 
-| Directory | Responsibility                                                       |
-| --------- | -------------------------------------------------------------------- |
-| `shared/` | Zod schemas, domain types, constants, pure utilities, compatibility  |
-| `server/db/`  | Drizzle schema, client factory, SQL migrations, test mocks       |
-| `server/feeds/` | Feed fetch (ETag/backoff/retry), parse, normalize, dedupe, pipeline |
+| Directory        | Responsibility                                                          |
+| ---------------- | ----------------------------------------------------------------------- |
+| `shared/`        | Zod schemas, domain types, constants, pure utilities, compatibility     |
+| `server/db/`     | Drizzle schema, client factory, SQL migrations, test mocks              |
+| `server/feeds/`  | Feed fetch (ETag/backoff/retry), parse, normalize, dedupe, pipeline     |
 | `server/routes/` | Hono API routes (auth, feeds, entries, search, opml, settings, favicon) |
-| `server/`  | Hono app, middleware, GitHub OAuth, session handling, Worker entry  |
-| `src/`     | Vue 3 SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)             |
-| `test/`    | bun test suite (db, feeds, api)                                     |
+| `server/`        | Hono app, middleware, GitHub OAuth, session handling, Worker entry      |
+| `src/`           | Vue 3 SPA (shadcn-vue, Tailwind, Pinia, TanStack Query)                 |
+| `test/`          | bun test suite (db, feeds, api)                                         |
 
 ## Feed processing pipeline
 

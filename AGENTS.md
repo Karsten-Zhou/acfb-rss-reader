@@ -96,16 +96,16 @@ bun run db:studio      # drizzle studio
 6. **Compatibility CSS** is the primary mechanism for site-specific rendering
    fixes; JS fixes are the exception. Each module contributes `detect.ts` +
    `styles.css`.
-9. **Business logic lives in `server/`** (API, feeds, db), never in UI
+7. **Business logic lives in `server/`** (API, feeds, db), never in UI
    components. Components are thin and composed.
-10. **Push notifications**: standard Web Push (`web-push` lib, VAPID),
-    service worker at `public/sw.js` (root scope), D1 tables
-    `push_subscriptions` (per device) + `notification_deliveries` (idempotency
-    ledger keyed `(entry_id, notification_type)`). Only the existing
-    `refreshFeed` pipeline decides what's "new" — first import/OPML never
-    notifies. Idempotency via `INSERT … ON CONFLICT DO NOTHING` claim row.
-    VAPID private key is a server secret; public key is served to the browser
-    (Push API requires it).
+8. **Push notifications**: standard Web Push (`web-push` lib, VAPID),
+   service worker at `public/sw.js` (root scope), D1 tables
+   `push_subscriptions` (per device) + `notification_deliveries` (idempotency
+   ledger keyed `(entry_id, notification_type)`). Only the existing
+   `refreshFeed` pipeline decides what's "new" — first import/OPML never
+   notifies. Idempotency via `INSERT … ON CONFLICT DO NOTHING` claim row.
+   VAPID private key is a server secret; public key is served to the browser
+   (Push API requires it).
 
 ## Conventions
 

@@ -1,30 +1,19 @@
 # Quick Start
 
-Ask an AI for help if you don't know what to do.
+Deploy your personal RSS reader in about 10 minutes. One command does the work;
+you only do the parts that need _your_ accounts.
 
-## What you'll end up with
+## 1 Accounts
 
-A personal RSS reader hosted at `https://<your-name>.workers.dev`. One user (you), your own Cloudflare data, no third-party servers.
+- [Cloudflare](https://dash.cloudflare.com/sign-up) — sign up (or log in)
+- [GitHub](https://github.com/join) — sign up (you log in to the reader with this)
 
-## 1 · Create accounts
+## 2 Install Git and Bun
 
-You need two free accounts:
+Install [Git](https://git-scm.com/downloads) and [Bun](https://bun.sh). A
+terminal is enough — you'll run a few commands.
 
-1. **Cloudflare** — [sign up](https://dash.cloudflare.com/sign-up) (or log in if you already have one).
-2. **GitHub** — [sign up](https://github.com/join) (you'll use this to log in to the reader).
-
-## 2 · Install prerequisites
-
-Open a terminal on your computer and install these tools:
-
-| Tool | What it is | Install |
-|---|---|---|
-| [Git](https://git-scm.com/downloads) | Version control | Download and run the installer |
-| [Bun](https://bun.sh) | JavaScript runtime & package manager | Visit [bun.sh](https://bun.sh) and follow the install command for your OS |
-
-> **How to open a terminal:** Windows — press <kbd>Win</kbd>, type "PowerShell", press Enter. Mac — open "Terminal" from Applications → Utilities. Linux — search for "Terminal" in your app launcher.
-
-## 3 · Clone the project
+## 3 Clone and install
 
 ```sh
 git clone https://github.com/XiaoSong-CPE/cloudflare-based-rss-reader.git
@@ -32,224 +21,45 @@ cd cloudflare-based-rss-reader
 bun install
 ```
 
-## 4 · Create Cloudflare resources
+## 4 Create a GitHub OAuth App
 
-Log in to Cloudflare from the terminal:
+1. Open <https://github.com/settings/developers> → **OAuth Apps → New OAuth App**.
+2. Application name: `RSS Reader`.
+3. Homepage URL and callback URL: put any placeholder for now, e.g.
+   `https://placeholder.workers.dev` and
+   `https://placeholder.workers.dev/api/auth/callback`.
+4. Register the app. Copy the **Client ID**, and generate + copy a **Client secret**.
 
-```sh
-bunx wrangler login
-```
+> You'll update the URLs in step 6.
 
-This opens a browser page — approve it.
-
-Then create the two cloud resources the app needs:
-
-```sh
-# Database (D1)
-bunx wrangler d1 create rss-reader-db
-```
-
-Copy the `database_id` from the output — you'll need it in the next step.
+## 5 Run the setup
 
 ```sh
-# Key-Value store (KV)
-bunx wrangler kv namespace create KV_STORE
+bun run setup
 ```
 
-Copy the `id` from the output as well.
+It asks for your **OAuth Client ID**, **Client secret**, and **GitHub
+username**, then automates the rest (Cloudflare login, database, secrets,
+deploy). When it finishes it prints your app's URL.
 
-Now open `wrangler.jsonc` in a text editor and paste the IDs into the bindings:
+## 6 Update the OAuth App URLs
 
-```jsonc
-{
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_id": "paste-your-database_id-here"
-    }
-  ],
-  "kv_namespaces": [
-    {
-      "binding": "KV_STORE",
-      "id": "paste-your-id-here"
-    }
-  ]
-}
-```
+Back in [your OAuth App](https://github.com/settings/developers), set:
 
-## 5 · Create a GitHub OAuth App
-
-1. Go to [github.com/settings/developers](https://github.com/settings/developers).
-2. Click **OAuth Apps** → **New OAuth App**.
-3. Fill in:
-   - **Application name:** `RSS Reader` (anything you like).
-   - **Homepage URL:** `https://<your-cf-username>.workers.dev` — but you don't know this yet, so use a placeholder like `https://placeholder.workers.dev` for now.
-   - **Authorization callback URL:** `https://<your-cf-username>.workers.dev/api/auth/callback` — same placeholder for now.
-4. Click **Register application**.
-5. Copy the **Client ID**.
-6. Click **Generate a new client secret** and copy it immediately (it won't be shown again).
-
-> You'll update the URLs after deploying in step 8.
-
-## 6 · Find your GitHub user ID
-
-Open this URL in a browser, replacing `<your-username>` with your GitHub username:
-
-```
-https://api.github.com/users/<your-username>
-```
-
-Find the `"id"` field — it's a number like `12345678`. This is **not** your username; it's your unique numeric ID.
-
-## 7 · Set secrets and apply migrations
-
-Tell Cloudflare the secrets the app needs. Paste the values when prompted:
-
-```sh
-# Your GitHub OAuth credentials
-bunx wrangler secret put GITHUB_CLIENT_ID
-bunx wrangler secret put GITHUB_CLIENT_SECRET
-
-# Your numeric GitHub user ID (from step 6)
-bunx wrangler secret put ALLOWED_GITHUB_USER_ID
-
-# Your app's public URL (https://<your-cf-username>.workers.dev)
-bunx wrangler secret put APP_ORIGIN
-```
-
-Then set up the database tables:
-
-```sh
-bunx wrangler d1 migrations apply rss-reader-db --remote
-```
-
-## 8 · Deploy
-
-```sh
-bun run deploy
-```
-
-After a minute or two, the app is live at `https://<your-cf-username>.workers.dev`.
-
-## 9 · Update the OAuth App URLs and Worker Secrets
-
-Go back to [your OAuth App settings](https://github.com/settings/developers), open the app you created in step 5, and update:
-
-- **Homepage URL** → `https://<your-cf-username>.workers.dev`
-- **Authorization callback URL** → `https://<your-cf-username>.workers.dev/api/auth/callback`
+- **Homepage URL** → the URL from step 5
+- **Authorization callback URL** → `<that URL>/api/auth/callback`
 
 Click **Update application**.
 
-```sh
-# Update your app's public URL
-bunx wrangler secret put APP_ORIGIN
-```
+## 7 Log in
 
-## 10 · Log in
-
-Open `https://<your-cf-username>.workers.dev` in your browser. Click **Sign in with GitHub**. You should see the RSS reader dashboard.
+Open your app's URL and **Sign in with GitHub**. Add a feed. Done.
 
 ---
 
-## AI summaries (optional)
+Optional extras (after setup): **AI summaries** — Settings → toggle **AI
+Summaries** on and pick a model. **Browser notifications** — see
+[push-notifications.md](push-notifications.md).
 
-The app can generate per-article AI summaries using Cloudflare Workers AI. This feature is **off by default**.
-
-To enable it:
-
-1. Open the app and go to **Settings**.
-2. Toggle **AI Summaries** on and pick a model.
-
-The AI runs on your Cloudflare account (free tier: 10,000 neurons/day). Summaries are cached for 30 days so repeated views are free.
-
----
-
-## Local development
-
-If you want to run the app on your own computer instead of deploying:
-
-```sh
-bun run dev
-```
-
-This starts a development server at `http://localhost:8787`. It connects to the same remote Cloudflare database and KV store you set up above, so your local and deployed data stay in sync.
-
-> **Note:** Local development requires the Cloudflare login from step 4. Writes in local dev affect the real remote database and count toward Cloudflare's free-tier usage.
-
-### Updating the OAuth App for local dev
-
-Add `http://localhost:8787/api/auth/callback` to your GitHub OAuth App's callback URLs (GitHub allows up to 10) so local login works too.
-
-### What's the difference?
-
-| | Deployed (step 8) | Local (`bun run dev`) |
-|---|---|---|
-| URL | `https://<you>.workers.dev` | `http://localhost:8787` |
-| Where code runs | Cloudflare edge network | Your computer |
-| Database | Remote D1 | Same remote D1 |
-| KV store | Remote KV | Same remote KV |
-| Cost | Cloudflare free tier | Same (uses remote resources) |
-
----
-
-## Browser notifications (optional)
-
-You can get a native notification on your desktop/phone whenever a new article
-shows up. This uses the standard browser Web Push API — no third-party service.
-
-1. Generate a VAPID key pair (once):
-
-   ```sh
-   bunx web-push generate-vapid-keys --json
-   ```
-
-2. Store the keys as secrets:
-
-   ```sh
-   bunx wrangler secret put VAPID_PUBLIC_KEY
-   bunx wrangler secret put VAPID_PRIVATE_KEY
-   bunx wrangler secret put VAPID_SUBJECT   # e.g. mailto:you@example.com
-   ```
-
-   The private key stays on the server; only the public key is shared with
-   the browser (that's required by the Push API).
-
-   For local development, put the same keys in `.dev.vars` (gitignored).
-
-3. Apply the push database migration:
-
-   ```sh
-   bunx wrangler d1 migrations apply rss-reader-db --remote
-   ```
-
-4. Sign in, open **Settings → Browser notifications**, and turn it on.
-
-See [push-notifications.md](push-notifications.md) for the full detail: how
-notifications are sent, how duplicates are prevented, browser support, and how
-invalid subscriptions are cleaned up.
-
----
-
-## Reference: environment variables
-
-For reference, here are all the variables the app uses:
-
-| Variable | Kind | Description |
-|---|---|---|
-| `GITHUB_CLIENT_ID` | secret | GitHub OAuth App client ID (step 7) |
-| `GITHUB_CLIENT_SECRET` | secret | GitHub OAuth App client secret (step 7) |
-| `ALLOWED_GITHUB_USER_ID` | secret | Your numeric GitHub user ID (step 7) |
-| `APP_ORIGIN` | secret | Your app's public URL (step 7) |
-| `VAPID_PUBLIC_KEY` | secret | Web Push VAPID public key (pull notifications) |
-| `VAPID_PRIVATE_KEY` | secret | Web Push VAPID private key (server-only) |
-| `VAPID_SUBJECT` | secret | Web Push contact (`mailto:`/`https://`) |
-| `DB` | binding | D1 database (step 4) |
-| `KV_STORE` | binding | KV namespace (step 4) |
-| `REFRESH_WORKFLOW` | binding | Auto-configured by Cloudflare |
-| `AI` | binding | Auto-configured by Cloudflare |
-
-## See also
-
-- [Architecture](architecture.md) — how the system works under the hood
-- [Push notifications](push-notifications.md) — browser notification system
-- [Contributing](contribute.md) — development workflow and coding conventions
+For developers — what the setup script does, environment variables, and how to
+run the app locally: see [Contributing](contribute.md).

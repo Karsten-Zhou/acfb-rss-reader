@@ -4,19 +4,19 @@ Development guide for working on the Cloudflare RSS Reader.
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `bun install` | Install all dependencies |
-| `bun run dev` | Dev server — SPA + Worker API on `http://localhost:8787` |
-| `bun run build` | Build the Worker (SPA assets + script) |
-| `bun run deploy` | Build then deploy |
-| `bun run typecheck` | Typecheck server (`tsc`) + client (`vue-tsc`) |
-| `bun run lint` | Biome check |
-| `bun run lint:fix` | Biome auto-fix |
-| `bun run test` | Run the full bun test suite |
-| `bun run db:generate` | Drizzle-kit: schema → SQL migration |
-| `bun run db:migrate` | Apply migrations to remote D1 |
-| `bun run db:studio` | Drizzle Studio |
+| Command               | What it does                                             |
+| --------------------- | -------------------------------------------------------- |
+| `bun install`         | Install all dependencies                                 |
+| `bun run dev`         | Dev server — SPA + Worker API on `http://localhost:8787` |
+| `bun run build`       | Build the Worker (SPA assets + script)                   |
+| `bun run deploy`      | Build then deploy                                        |
+| `bun run typecheck`   | Typecheck server (`tsc`) + client (`vue-tsc`)            |
+| `bun run lint`        | Biome check                                              |
+| `bun run lint:fix`    | Biome auto-fix                                           |
+| `bun run test`        | Run the full bun test suite                              |
+| `bun run db:generate` | Drizzle-kit: schema → SQL migration                      |
+| `bun run db:migrate`  | Apply migrations to local D1                             |
+| `bun run db:studio`   | Drizzle Studio                                           |
 
 ## Project layout
 
@@ -75,6 +75,7 @@ This project uses two Vite auto-import plugins:
 **unplugin-auto-import** — Vue core, vue-router, `@vueuse/core`, vue-i18n, Pinia APIs are auto-imported. Do **not** write explicit imports for `ref`, `computed`, `useI18n`, `defineStore`, `RouterView`, `createRouter`, `createWebHistory`, `createI18n`, etc.
 
 **unplugin-vue-components** — Every component under `src/components/` (including nested `select/`, `scroll-area/`) is auto-imported. Do **not** write explicit component imports in `<script setup>`. Keep only:
+
 - Type-only imports (`import type { HTMLAttributes } from "vue"`)
 - Named `.vue` exports (e.g. `buttonVariants` from `UiButton.vue`)
 
@@ -94,13 +95,69 @@ The generated `auto-imports.d.ts`, `components.d.ts`, and `.biomelintrc-auto-imp
 - Commitlint enforces `body-max-line-length: 100` — wrap body lines.
 - Keep commits runnable and deployable at every milestone.
 
-## Known gotchas
+## Local development
 
-- **CRLF (Windows)**: Editor save can CRLF a file → `git status` shows ` M` with empty diff, and `bun run lint` fails (Biome wants LF). Fix: `git restore -- <files>` or `bun run lint:fix`.
-- **PowerShell quoting**: `git commit -m "...\"quotes\"..."` breaks. Use a here-string → `Set-Content .git\COMMIT_MSG` → `git commit -F .git\COMMIT_MSG`.
-- **Remote D1/KV in local dev**: `remote: true` means local dev hits the real remote resources — writes are slow (seconds) and count toward usage.
-- **Dialogs don't close on Escape** (reka-ui) — use the Close button or overlay click.
-- **lefthook typecheck can hang** (Windows) with no subprocess spawned. Kill the hung terminal and orphaned lefthook processes, then re-run. lefthook v2.1.10 hangs less.
+To run the app on your own machine (for testing changes, not for end users):
+
+```sh
+bun run dev
+```
+
+This starts a development server at `http://localhost:8787`. It connects to
+**the same remote Cloudflare database and KV store** you set up for your
+deployment, so your local and deployed data stay in sync. Writes in local dev
+affect the real remote database and count toward Cloudflare's free-tier usage.
+
+> Requires the Cloudflare login from the quick start (`bunx wrangler login`).
+
+To be able to log in locally, add `http://localhost:8787/api/auth/callback`
+to your GitHub OAuth App's callback URLs (GitHub allows up to 10).
+
+|                 | Deployed                    | Local (`bun run dev`)        |
+| --------------- | --------------------------- | ---------------------------- |
+| URL             | `https://<you>.workers.dev` | `http://localhost:8787`      |
+| Where code runs | Cloudflare edge network     | Your computer                |
+| Database        | Remote D1                   | Same remote D1               |
+| KV store        | Remote KV                   | Same remote KV               |
+| Cost            | Cloudflare free tier        | Same (uses remote resources) |
+
+## Deployment reference
+
+`bun run setup` (a typed script at `scripts/setup.ts`) automates deployment.
+For a normal install you only need [quick-start.md](quick-start.md); this is
+what it does and how to reproduce it by hand.
+
+### What the setup script does
+
+1. `bunx wrangler login` — log in to Cloudflare.
+2. Creates the resources and writes their IDs into `wrangler.jsonc`:
+   - `bunx wrangler d1 create rss-reader-db` → `DB.database_id`
+   - `bunx wrangler kv namespace create KV_STORE` → `KV_STORE.id`
+3. Prompts for the OAuth Client ID / secret and GitHub username, looks up your
+   numeric GitHub user id, then stores secrets with `wrangler secret put`:
+   - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ALLOWED_GITHUB_USER_ID`
+   - `APP_ORIGIN` (your app's public URL)
+4. Applies migrations: `bunx wrangler d1 migrations apply rss-reader-db --remote`.
+5. Builds and deploys: `bun run deploy`.
+
+### Environment variables
+
+| Variable                 | Kind    | Description                                              |
+| ------------------------ | ------- | -------------------------------------------------------- |
+| `GITHUB_CLIENT_ID`       | secret  | GitHub OAuth App client ID                               |
+| `GITHUB_CLIENT_SECRET`   | secret  | GitHub OAuth App client secret                           |
+| `ALLOWED_GITHUB_USER_ID` | secret  | Your numeric GitHub user ID                              |
+| `APP_ORIGIN`             | secret  | Your app's public URL (also set locally via `.dev.vars`) |
+| `VAPID_PUBLIC_KEY`       | secret  | Web Push VAPID public key (optional)                     |
+| `VAPID_PRIVATE_KEY`      | secret  | Web Push VAPID private key (server-only)                 |
+| `VAPID_SUBJECT`          | secret  | Web Push contact (`mailto:`/`https://`)                  |
+| `DB`                     | binding | D1 database                                              |
+| `KV_STORE`               | binding | KV namespace                                             |
+| `REFRESH_WORKFLOW`       | binding | Auto-configured by Cloudflare                            |
+| `AI`                     | binding | Auto-configured by Cloudflare                            |
+
+Secrets are managed with `wrangler secret put <NAME>` (remote) and
+`.dev.vars` (local dev). Never commit real secrets.
 
 ## See also
 
