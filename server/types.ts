@@ -23,6 +23,12 @@ export interface Env {
 	/** Public origin of the app (used for redirects and cookie scope). */
 	APP_ORIGIN: string;
 	ENVIRONMENT: "development" | "production";
+	/** Web Push VAPID public key (URL-safe base64). Served to the browser. */
+	VAPID_PUBLIC_KEY: string;
+	/** Web Push VAPID private key (URL-safe base64). Server-only secret. */
+	VAPID_PRIVATE_KEY?: string;
+	/** VAPID subject: a `mailto:` or `https://` URI identifying the app. */
+	VAPID_SUBJECT?: string;
 }
 
 /** Values stored on the Hono context. */

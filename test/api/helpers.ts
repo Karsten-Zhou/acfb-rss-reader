@@ -26,6 +26,9 @@ export function createTestContext(overrides: Partial<Env> = {}): TestContext {
 		ALLOWED_GITHUB_USER_ID: "12345",
 		APP_ORIGIN: "http://localhost:8787",
 		ENVIRONMENT: "development",
+		VAPID_PUBLIC_KEY: "test-vapid-public-key",
+		VAPID_PRIVATE_KEY: "test-vapid-private-key",
+		VAPID_SUBJECT: "mailto:test@example.com",
 		...overrides,
 	};
 
