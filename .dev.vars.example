@@ -15,3 +15,20 @@ GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 ALLOWED_GITHUB_USER_ID=your_numeric_github_user_id
 APP_ORIGIN=http://localhost:8787
+
+# --- Browser push notifications (optional) ---
+# Generate a VAPID key pair ONCE (it must stay stable so existing
+# subscriptions remain valid across redeploys):
+#
+#   bunx web-push generate-vapid-keys --json
+#
+# Then paste the public/private keys below. For a single-user personal app,
+# VAPID_SUBJECT is a mailto: or https:// URI identifying you, e.g.
+# mailto:you@example.com.
+#
+# The PRIVATE key is a server secret — it never leaves the server and must
+# never be committed. The PUBLIC key is served to the browser (the Push API
+# requires it).
+VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_SUBJECT=mailto:you@example.com

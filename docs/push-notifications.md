@@ -120,15 +120,43 @@ identifies the app to the push service.
 
 ## Local development
 
-1. Set the VAPID vars in `.dev.vars` (see above).
-2. Apply migrations: `bunx wrangler d1 migrations apply rss-reader-db --local`
-   (or `--remote` if your dev uses remote bindings).
-3. `bun run dev` → `http://localhost:8787`.
-4. Sign in, open **Settings**, enable **Browser notifications**.
+1. Generate a VAPID key pair (once):
 
-> Note: notification delivery needs a real HTTPS origin and a browser that
-> supports the Push API. On `http://localhost` most browsers allow
-> service-worker registration and notifications, but Safari is stricter.
+   ```sh
+   bunx web-push generate-vapid-keys --json
+   ```
+
+2. Copy `.dev.vars.example` to `.dev.vars` (or add to an existing one) and
+   paste the values:
+
+   ```
+   VAPID_PUBLIC_KEY=<publicKey>
+   VAPID_PRIVATE_KEY=<privateKey>
+   VAPID_SUBJECT=mailto:you@example.com
+   ```
+
+   Use the **same** keys for local and production so a subscription created
+   in local dev stays valid if you deploy, and vice-versa.
+
+3. Apply migrations: `bunx wrangler d1 migrations apply rss-reader-db --local`
+   (or `--remote` if your dev uses remote bindings).
+
+4. `bun run dev` → `http://localhost:8787`.
+
+5. Sign in, open **Settings**, enable **Browser notifications**.
+
+> **Important for local testing:** the Push API requires a **secure context**.
+> `http://localhost` is treated as a secure context by Chrome/Edge/Firefox (so
+> service-worker registration and notifications work), but Safari does *not*
+> treat plain `http://localhost` as secure for push. To test in Safari, or to
+> test on a phone, run the dev server through a tunnel that provides HTTPS
+> (e.g. `cloudflared tunnel --url http://localhost:8787`) and set
+> `APP_ORIGIN` to that HTTPS origin.
+>
+> On desktop Chrome/Edge/Firefox (`http://localhost`), you can verify
+> end-to-end without deploying: sign in, enable notifications, then trigger a
+> feed refresh (e.g. add a feed and click **Refresh**) and a notification
+> should appear even when the tab is in the background.
 
 ## Enable in the app
 
