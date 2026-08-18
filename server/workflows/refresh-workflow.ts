@@ -33,7 +33,7 @@ export class RefreshWorkflow extends WorkflowEntrypoint<Env, RefreshWorkflowPara
 					retries: { limit: 2, delay: "1 second", backoff: "exponential" },
 					timeout: "60 seconds",
 				},
-				async () => refreshFeeds(db, this.env.KV_STORE, chunk),
+				async () => refreshFeeds(db, this.env.KV_STORE, chunk, { env: this.env }),
 			);
 			refreshed += results.reduce((sum, r) => sum + (r.outcome === "ok" ? r.newEntries : 0), 0);
 		}

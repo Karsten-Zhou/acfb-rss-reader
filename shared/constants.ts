@@ -52,3 +52,12 @@ export const FETCH_LOG_RETENTION = 50;
 export const KV_FAVICON_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 export const KV_FEED_BODY_TTL_SECONDS = 60 * 60 * 6; // 6 hours
 export const KV_OAUTH_STATE_TTL_SECONDS = 10 * 60; // 10 minutes
+
+/** Name of the service worker file (root-scoped, served as a static asset). */
+export const SERVICE_WORKER_PATH = "/sw.js";
+
+/**
+ * Global key in the `settings` table controlling whether new-article browser
+ * notifications are sent. When false, the refresh pipeline never sends.
+ */
+export const SETTING_NOTIFICATION_ENABLED = "notificationEnabled";

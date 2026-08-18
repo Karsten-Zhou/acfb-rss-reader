@@ -28,6 +28,13 @@ export interface ParsedFeed {
 export interface IngestStats {
 	newEntries: number;
 	totalEntries: number;
+	/**
+	 * The genuinely-new entries that were just persisted, including their
+	 * assigned database ids. Only present when at least one entry was new.
+	 * Used by the refresh pipeline to decide on notifications; the first
+	 * import path (new feed / OPML) deliberately ignores it.
+	 */
+	inserted?: Array<{ id: number; guid: string; title: string; url: string | null }>;
 }
 
 export type RefreshOutcome = "ok" | "not_modified" | "error";

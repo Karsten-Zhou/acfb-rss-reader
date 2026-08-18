@@ -1,6 +1,8 @@
 import { eq, inArray, isNull, lte, or } from "drizzle-orm";
 import { DEFAULT_REFRESH_INTERVAL_MS, FEED_MIN_REFRESH_INTERVAL_MS } from "../../shared/index.ts";
 import { type Database, type Feed, feeds, fetchLogs } from "../db/index.ts";
+import { notifyNewEntry } from "../notifications/index.ts";
+import type { Env } from "../types.ts";
 
 import { fetchFeedDocument } from "./fetch-document.ts";
 import { ingestFeed } from "./ingest.ts";
@@ -25,6 +27,7 @@ export async function refreshFeed(
 	db: Database,
 	kv: KVNamespace,
 	feed: Feed,
+	env?: Env,
 ): Promise<RefreshFeedResult> {
 	const startedAt = Date.now();
 
@@ -102,6 +105,25 @@ export async function refreshFeed(
 			etag: result.etag,
 			lastModified: result.lastModified,
 		});
+
+		// Notify for genuinely-new articles discovered by a scheduled/manual
+		// refresh of an existing feed. `ingestFeed` returns `inserted` only
+		// for entries persisted just now; deduplication already happened. The
+		// notification service enforces its own idempotency, so a retry can
+		// never send a duplicate. New-feed/OPML first import does NOT call
+		// this path, so historical backlogs are never notified.
+		if (env && stats.inserted && stats.inserted.length > 0) {
+			for (const entry of stats.inserted) {
+				await notifyNewEntry(db, env, {
+					entryId: entry.id,
+					title: entry.title,
+					url: entry.url,
+					feedId: feed.id,
+					feedTitle: feed.title,
+				});
+			}
+		}
+
 		return {
 			feedId: feed.id,
 			outcome: "ok",
@@ -161,7 +183,7 @@ export async function refreshFeeds(
 	db: Database,
 	kv: KVNamespace,
 	feedIds: number[],
-	options: { concurrency?: number } = {},
+	options: { concurrency?: number; env?: Env } = {},
 ): Promise<RefreshFeedResult[]> {
 	if (feedIds.length === 0) return [];
 
@@ -170,7 +192,7 @@ export async function refreshFeeds(
 	const eligible = feedRows.filter((feed) => isRefreshable(feed, now));
 
 	const results = await mapWithConcurrency(eligible, options.concurrency ?? 5, async (feed) =>
-		refreshFeed(db, kv, feed),
+		refreshFeed(db, kv, feed, options.env),
 	);
 	return results;
 }

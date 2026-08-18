@@ -94,5 +94,14 @@ export async function ingestFeed(
 	}
 	await db.batch(dependent as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
 
-	return { newEntries: newEntries.length, totalEntries: newEntries.length };
+	return {
+		newEntries: newEntries.length,
+		totalEntries: newEntries.length,
+		inserted: newEntries.map((entry, index) => ({
+			id: ids[index]!,
+			guid: entry.guid,
+			title: entry.title,
+			url: entry.url,
+		})),
+	};
 }

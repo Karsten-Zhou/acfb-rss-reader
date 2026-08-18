@@ -85,6 +85,6 @@ feedRoutes.post("/:id/refresh", requireAuth(), async (c) => {
 	const feed = await db.query.feeds.findFirst({ where: eq(feeds.id, id) });
 	if (!feed) throw new HttpError(404, "NOT_FOUND", "Feed not found");
 
-	const result = await refreshFeed(db, c.env.KV_STORE, feed);
+	const result = await refreshFeed(db, c.env.KV_STORE, feed, c.env);
 	return c.json({ result });
 });

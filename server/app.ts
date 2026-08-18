@@ -12,6 +12,7 @@ import { feedRoutes } from "./routes/feeds.ts";
 import { folderRoutes } from "./routes/folders.ts";
 import { healthRoutes } from "./routes/health.ts";
 import { opmlRoutes } from "./routes/opml.ts";
+import { pushRoutes } from "./routes/push.ts";
 import { searchRoutes } from "./routes/search.ts";
 import { settingsRoutes } from "./routes/settings.ts";
 import type { AppEnv, Env } from "./types.ts";
@@ -38,6 +39,7 @@ export function createApp(env: Env) {
 	app.route("/api/opml", opmlRoutes);
 	app.route("/api/settings", settingsRoutes);
 	app.route("/api/favicon", faviconRoutes);
+	app.route("/api/push", pushRoutes);
 
 	app.notFound(notFound);
 	app.onError(onError);
