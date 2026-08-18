@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { createEntryFlagQueue, type EntryFlagsInput } from "@/lib/entryFlagsQueue";
 import { queryKeys } from "@/lib/query-keys";
 import { useReaderStore } from "@/stores/reader";
+import { useToastStore } from "@/stores/toast";
 import type { EntryDetail, EntryListItem, Paginated } from "@/types";
 
 /**
@@ -139,7 +140,22 @@ function getQueue(queryClient: ReturnType<typeof useQueryClient>) {
 	if (!sharedQueue) {
 		sharedQueue = createEntryFlagQueue({
 			send: async (entryId, flags) => {
-				await api.patch<{ ok: boolean }>(`/api/entries/${entryId}`, flags);
+				try {
+					await api.patch<{ ok: boolean }>(`/api/entries/${entryId}`, flags);
+				} catch {
+					// Surface the failure instead of failing silently. Pick a
+					// message based on which flags were being changed.
+					if (flags.isStarred !== undefined) {
+						useToastStore().error("error.entryActionFailedStar", undefined);
+					} else if (flags.isArchived !== undefined) {
+						useToastStore().error("error.entryActionFailedArchive", undefined);
+					} else if (flags.isRead !== undefined) {
+						useToastStore().error("error.entryActionFailedRead", undefined);
+					} else {
+						useToastStore().error("error.entryActionFailed", undefined);
+					}
+					throw new Error("entry-update-failed");
+				}
 			},
 			applyOptimistic: (entryId, flags) => {
 				patchCachedLists(queryClient, new Set([entryId]), flags);
@@ -218,6 +234,7 @@ export function useEntryMutations() {
 		},
 		onError: (_error, _variables, snapshot) => {
 			restoreEntryCaches(queryClient, snapshot);
+			useToastStore().error("error.bulkFailed", undefined);
 		},
 		onSuccess: () => {
 			void refreshCounts(queryClient);

@@ -11,6 +11,7 @@ import {
 	toSubscriptionInput,
 	unsubscribeFromPush,
 } from "@/lib/pushNotifications";
+import { useToastStore } from "@/stores/toast";
 
 export interface PushCapability {
 	configured: boolean;
@@ -30,6 +31,12 @@ const NOTIFICATION_ENABLED_KEY = "rss.notificationEnabled";
  * backend (`settings`) and cached locally, so the state is known even on the
  * login screen / offline. The browser-level subscription is a separate,
  * per-device concern handled by the Push API.
+ *
+ * Loading: every operation (subscribe/unsubscribe/toggle) may wait on a long
+ * network roundtrip (permission prompt, VAPID fetch, D1 persistence), so each
+ * exposes a `busy` state that disables the toggle/buttons, and use a
+ * per-operation `loading` enum where the UI needs to distinguish. Failures are
+ * surfaced as toasts (they were previously best-effort/silent).
  */
 export const useNotificationsStore = defineStore("notifications", () => {
 	const supported = ref<boolean>(false);
@@ -40,10 +47,22 @@ export const useNotificationsStore = defineStore("notifications", () => {
 	const configured = ref<boolean>(false);
 	const enabled = ref<boolean>(localStorage.getItem(NOTIFICATION_ENABLED_KEY) === "true");
 	const publicKey = ref<string | null>(null);
-	const busy = ref<boolean>(false);
+
+	/** One of "idle" | "subscribe" | "unsubscribe" | "toggle" — what is running. */
+	const loading = ref<"idle" | "subscribe" | "unsubscribe" | "toggle">("idle");
+	/** Last error code (maps to an i18n message + toast). */
 	const error = ref<string | null>(null);
 
+	const busy = computed(() => loading.value !== "idle");
+
 	const status = computed<PushStatus>(() => describePushState(permission.value, subscribed.value));
+
+	function toastError(code: string): void {
+		error.value = code;
+		// Never show raw exceptions; map to a human message. `code` is a key
+		// under `notification.errors.*` resolved to localized text.
+		useToastStore().error("notification.errorTitle", `notification.errors.${code}`);
+	}
 
 	/** Load the backend capability surface (VAPID key + server config). */
 	async function loadCapability(): Promise<void> {
@@ -54,6 +73,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 		} catch {
 			configured.value = false;
 			publicKey.value = null;
+			toastError("load-capability-failed");
 		}
 	}
 
@@ -73,7 +93,9 @@ export const useNotificationsStore = defineStore("notifications", () => {
 	/**
 	 * Initialise on app start / settings open. Reconciles the browser's
 	 * current subscription with the backend so a stale or changed
-	 * subscription is updated. Never requests permission here.
+	 * subscription is updated. Never requests permission here. Silent on
+	 * failure (non-fatal; retried next time) — but it does not flash a toast
+	 * on every page load.
 	 */
 	async function init(): Promise<void> {
 		await refreshBrowserState();
@@ -91,7 +113,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 					});
 					subscriptionId.value = id;
 				} catch {
-					// Non-fatal: the subscription will be reconciled next time.
+					// Non-fatal: reconciled next time.
 				}
 			}
 		}
@@ -110,19 +132,25 @@ export const useNotificationsStore = defineStore("notifications", () => {
 	 */
 	async function enable(): Promise<boolean> {
 		if (!supported.value) return false;
-		busy.value = true;
+		if (busy.value) return false;
+		loading.value = "subscribe";
 		error.value = null;
 		try {
 			const perm = await requestNotificationPermission();
 			permission.value = perm;
 			if (perm !== "granted") {
-				if (perm === "denied") error.value = "permission-denied";
+				if (perm === "denied") {
+					useToastStore().error(
+						"notification.permissionDeniedTitle",
+						"notification.permissionDeniedBody",
+					);
+				}
 				return false;
 			}
 
 			const registered = await registerServiceWorker();
 			if (!registered) {
-				error.value = "sw-failed";
+				toastError("sw-failed");
 				return false;
 			}
 
@@ -131,13 +159,13 @@ export const useNotificationsStore = defineStore("notifications", () => {
 				await loadCapability();
 			}
 			if (!publicKey.value) {
-				error.value = "not-configured";
+				toastError("not-configured");
 				return false;
 			}
 
 			const sub = await subscribeToPush(publicKey.value);
 			if (!sub) {
-				error.value = "subscribe-failed";
+				toastError("subscribe-failed");
 				return false;
 			}
 
@@ -145,12 +173,13 @@ export const useNotificationsStore = defineStore("notifications", () => {
 			const { id } = await api.put<{ ok: boolean; id: number }>("/api/push/subscription", body);
 			subscriptionId.value = id;
 			subscribed.value = true;
+			useToastStore().success("notification.successTitle", "notification.successBody");
 			return true;
 		} catch {
-			error.value = "sync-failed";
+			toastError("sync-failed");
 			return false;
 		} finally {
-			busy.value = false;
+			loading.value = "idle";
 		}
 	}
 
@@ -160,42 +189,64 @@ export const useNotificationsStore = defineStore("notifications", () => {
 	 * (it applies to all devices).
 	 */
 	async function disable(): Promise<void> {
-		busy.value = true;
+		if (busy.value) return;
+		loading.value = "unsubscribe";
 		error.value = null;
 		try {
 			const sub = await getBrowserSubscription();
 			if (subscriptionId.value !== null) {
 				try {
 					await api.delete(`/api/push/subscription/${subscriptionId.value}`);
-				} catch {
-					// 404 means it's already gone; ignore.
+				} catch (err) {
+					// 404 means it's already gone; anything else is a real failure.
+					const status = (err as { status?: number } | null)?.status;
+					if (status !== 404) {
+						useToastStore().error(
+							"notification.removeFailedTitle",
+							"notification.removeFailedBody",
+						);
+					}
 				}
 				subscriptionId.value = null;
 			} else if (sub) {
-				// No known id but a browser subscription exists — remove by endpoint.
 				try {
 					await api.post("/api/push/subscription/remove", {
 						endpoint: sub.endpoint,
 					});
 				} catch {
-					// ignore
+					useToastStore().error("notification.removeFailedTitle", "notification.removeFailedBody");
 				}
 			}
 			await unsubscribeFromPush();
 			subscribed.value = false;
 		} finally {
-			busy.value = false;
+			loading.value = "idle";
 		}
 	}
 
-	/** Toggle the global on/off preference (persisted to the backend). */
-	async function setEnabled(value: boolean): Promise<void> {
-		enabled.value = value;
-		localStorage.setItem(NOTIFICATION_ENABLED_KEY, String(value));
+	/**
+	 * Toggle the global on/off preference (persisted to the backend). Returns
+	 * true on success; surfaces failures as a toast. This can take a long
+	 * roundtrip, so `loading` is set to "toggle" and `enabled` only flips on
+	 * success (rolls back on failure).
+	 */
+	async function setEnabled(value: boolean): Promise<boolean> {
+		if (busy.value) return false;
+		const previous = enabled.value;
+		loading.value = "toggle";
+		error.value = null;
 		try {
 			await api.put<{ ok: boolean }>("/api/settings", { notificationEnabled: value });
+			enabled.value = value;
+			localStorage.setItem(NOTIFICATION_ENABLED_KEY, String(value));
+			return true;
 		} catch {
-			// Backend sync is best-effort (consistent with the settings store).
+			enabled.value = previous;
+			error.value = "sync-failed";
+			useToastStore().error("notification.settingsFailedTitle", "notification.settingsFailedBody");
+			return false;
+		} finally {
+			loading.value = "idle";
 		}
 	}
 
@@ -208,6 +259,7 @@ export const useNotificationsStore = defineStore("notifications", () => {
 		enabled,
 		publicKey,
 		busy,
+		loading,
 		error,
 		status,
 		init,
