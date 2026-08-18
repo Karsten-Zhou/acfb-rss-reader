@@ -1,6 +1,6 @@
 # A Cloudflare Based RSS Reader
 
-A **personal, self-hosted RSS reader** that runs entirely on Cloudflare's serverless platform. This project aims to provide an alternative to [Folo](https://app.folo.is/) for users who don't want to be bordered by its paid plans.
+A **personal, self-hosted RSS reader** that runs entirely on Cloudflare's serverless platform. This project aims to provide an alternative to [Folo](https://app.folo.is/) for users who don't want to be bothered by its paid plans.
 
 ![showcase](docs/showcase.png)
 
