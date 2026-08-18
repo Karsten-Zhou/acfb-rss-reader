@@ -4,12 +4,13 @@ import { APP_REPOSITORY_URL } from "@shared/constants.ts";
 import {
 	DialogClose,
 	DialogContent,
+	DialogDescription,
 	DialogOverlay,
 	DialogPortal,
 	DialogRoot,
 	DialogTitle,
 } from "reka-ui";
-import { LANGUAGE_PREFERENCES, type LanguagePreference, LOCALE_LABELS } from "@/i18n";
+import { LANGUAGE_PREFERENCES, type LanguagePreference } from "@/i18n";
 import { APP_BUILD_TIME, APP_VERSION } from "@/lib/build-meta";
 import {
 	DEFAULT_SHORTCUTS,
@@ -90,25 +91,24 @@ function setAiEnabled(value: boolean): void {
 function setAiModel(value: string): void {
 	void settings.setAiModel(value);
 }
+
 function languageLabel(lang: LanguagePreference): string {
 	if (lang !== "auto") {
-		return LOCALE_LABELS[lang];
+		return new Intl.DisplayNames([lang], { type: "language" }).of(lang) ?? lang;
 	}
 
-	// The configured locale is the single source of truth: it resolves the
-	// browser language and also determines the display language of the name.
-	const resolved = settings.locale;
-	const languageName =
-		new Intl.DisplayNames([settings.locale], { type: "language" }).of(resolved) ?? resolved;
-
-	return t("settings.languageAuto", [languageName]);
+	return t("settings.languageAuto", [
+		new Intl.DisplayNames([navigator.language], { type: "language" }).of(navigator.language) ??
+			navigator.language,
+	]);
 }
 
 // --- Browser notifications ---
 /**
  * Global on/off preference. Turning it on when this device is not yet
  * subscribed runs the subscribe flow (a user gesture, so permission is only
- * requested here — never on page load).
+ * requested here — never on page load). Shows a spinner while the long
+ * roundtrip runs, and rolls back + toasts on failure.
  */
 async function toggleNotifications(preference: boolean): Promise<void> {
 	if (preference) {
@@ -123,6 +123,10 @@ async function toggleNotifications(preference: boolean): Promise<void> {
 	}
 }
 
+const isTogglingNotifications = computed(
+	() => notifications.loading === "subscribe" || notifications.loading === "toggle",
+);
+
 /** Subscribe this device without toggling the global preference. */
 async function enableDevice(): Promise<void> {
 	await notifications.enable();
@@ -133,6 +137,12 @@ async function disableDevice(): Promise<void> {
 	await notifications.disable();
 }
 
+const isDeviceButtonBusy = computed(
+	() =>
+		notifications.busy &&
+		(notifications.loading === "subscribe" || notifications.loading === "unsubscribe"),
+);
+
 function notificationsHint(): string {
 	switch (notifications.status) {
 		case "unsupported":
@@ -140,9 +150,13 @@ function notificationsHint(): string {
 		case "permission-denied":
 			return t("settings.notificationsDenied");
 		case "idle":
-			return t("settings.notificationsIdle");
+			return isTogglingNotifications.value
+				? t("settings.notificationsSubscribing")
+				: t("settings.notificationsIdle");
 		case "subscribed":
-			return t("settings.notificationsSubscribed");
+			return isDeviceButtonBusy.value
+				? t("settings.notificationsSubscribing")
+				: t("settings.notificationsSubscribed");
 		case "sync-failed":
 			return t("settings.notificationsSyncFailed");
 		case "subscribing":
@@ -183,6 +197,7 @@ function openPermissionSettings(): void {
             <X class="size-4" />
           </DialogClose>
         </div>
+        <DialogDescription class="sr-only">{{ t("settings.description") }}</DialogDescription>
 
         <div class="mt-5 space-y-6">
           <!-- Theme -->
@@ -272,7 +287,7 @@ function openPermissionSettings(): void {
               <p class="text-sm font-medium">{{ t("settings.notifications") }}</p>
               <UiSwitch
                 :model-value="notifications.enabled"
-                :disabled="!notifications.supported"
+                :disabled="!notifications.supported || notifications.busy"
                 :aria-label="t('settings.notifications')"
                 @update:model-value="(value: unknown) => toggleNotifications(value === true)"
               />
@@ -287,7 +302,8 @@ function openPermissionSettings(): void {
                   v-if="!notifications.subscribed"
                   variant="outline"
                   size="sm"
-                  :disabled="notifications.busy || notifications.status === 'subscribing'"
+                  :loading="notifications.loading === 'subscribe'"
+                  :disabled="notifications.busy"
                   @click="enableDevice"
                 >
                   {{ t("settings.notificationsEnableDevice") }}
@@ -296,6 +312,7 @@ function openPermissionSettings(): void {
                   v-else
                   variant="outline"
                   size="sm"
+                  :loading="notifications.loading === 'unsubscribe'"
                   :disabled="notifications.busy"
                   @click="disableDevice"
                 >
