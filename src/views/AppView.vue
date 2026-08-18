@@ -3,13 +3,33 @@ import { Menu } from "@lucide/vue";
 
 import { COLUMN_HANDLE_WIDTH, useColumnResize } from "@/composables/useColumnResize";
 import { cn } from "@/lib/utils";
+import { useNotificationsStore } from "@/stores/notifications";
 import { useReaderStore } from "@/stores/reader";
 
 const { t } = useI18n();
 const reader = useReaderStore();
+const notifications = useNotificationsStore();
 const sidebarOpen = ref(false);
+const route = useRoute();
+
+// Reconcile the push subscription with the backend on app start (no prompt;
+// permission is only ever requested from an explicit user action).
+onMounted(() => {
+	void notifications.init();
+});
 
 const { isWide, listWidth, beginDrag, onHandleKey } = useColumnResize();
+
+// Deep links (e.g. `/reader/42` from a notification click) select the article
+// in the reader. Other navigations keep the existing selection.
+watch(
+	() => route.params.entryId,
+	(entryId) => {
+		const id = typeof entryId === "string" ? Number.parseInt(entryId, 10) : NaN;
+		reader.selectEntry(Number.isFinite(id) ? id : null);
+	},
+	{ immediate: true },
+);
 </script>
 
 <template>
