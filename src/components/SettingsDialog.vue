@@ -18,6 +18,7 @@ import {
 	type ShortcutAction,
 } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
+import { useNotificationsStore } from "@/stores/notifications";
 import { type ThemePreference, useSettingsStore } from "@/stores/settings";
 
 const props = defineProps<{ open: boolean }>();
@@ -25,6 +26,7 @@ const emit = defineEmits<{ "update:open": [value: boolean] }>();
 
 const { t } = useI18n();
 const settings = useSettingsStore();
+const notifications = useNotificationsStore();
 
 // --- Keyboard shortcut remapping ---
 const capturing = ref<ShortcutAction | null>(null);
@@ -100,6 +102,66 @@ function languageLabel(lang: LanguagePreference): string {
 		new Intl.DisplayNames([settings.locale], { type: "language" }).of(resolved) ?? resolved;
 
 	return t("settings.languageAuto", [languageName]);
+}
+
+// --- Browser notifications ---
+/**
+ * Global on/off preference. Turning it on when this device is not yet
+ * subscribed runs the subscribe flow (a user gesture, so permission is only
+ * requested here — never on page load).
+ */
+async function toggleNotifications(preference: boolean): Promise<void> {
+	if (preference) {
+		if (!notifications.supported) return;
+		if (!notifications.subscribed) {
+			const ok = await notifications.enable();
+			if (!ok) return; // permission denied / failed — global stays off
+		}
+		await notifications.setEnabled(true);
+	} else {
+		await notifications.setEnabled(false);
+	}
+}
+
+/** Subscribe this device without toggling the global preference. */
+async function enableDevice(): Promise<void> {
+	await notifications.enable();
+}
+
+/** Unsubscribe this device, leaving the global preference intact. */
+async function disableDevice(): Promise<void> {
+	await notifications.disable();
+}
+
+function notificationsHint(): string {
+	switch (notifications.status) {
+		case "unsupported":
+			return t("settings.notificationsUnsupported");
+		case "permission-denied":
+			return t("settings.notificationsDenied");
+		case "idle":
+			return t("settings.notificationsIdle");
+		case "subscribed":
+			return t("settings.notificationsSubscribed");
+		case "sync-failed":
+			return t("settings.notificationsSyncFailed");
+		case "subscribing":
+			return t("settings.notificationsSubscribing");
+		default:
+			return "";
+	}
+}
+
+/** Opening the browser's site-permission settings (no prompt, guidance only). */
+function openPermissionSettings(): void {
+	// `Permission.request()` is limited to some APIs; push permission can't be
+	// requested non-gesture. We simply point the user at the browser's site
+	// settings — no dialog here to avoid a stale/confusing prompt.
+	void navigator.permissions?.query({ name: "notifications" as PermissionName })?.then((status) => {
+		// No-op: browsers don't open settings programmatically; the hint
+		// text already tells the user how to re-enable.
+		void status;
+	});
 }
 </script>
 
@@ -201,6 +263,53 @@ function languageLabel(lang: LanguagePreference): string {
                   </UiSelectItem>
                 </UiSelectContent>
               </UiSelect>
+            </div>
+          </section>
+
+          <!-- Browser notifications -->
+          <section>
+            <div class="flex items-center justify-between gap-4">
+              <p class="text-sm font-medium">{{ t("settings.notifications") }}</p>
+              <UiSwitch
+                :model-value="notifications.enabled"
+                :disabled="!notifications.supported"
+                :aria-label="t('settings.notifications')"
+                @update:model-value="(value: unknown) => toggleNotifications(value === true)"
+              />
+            </div>
+            <p class="mt-1 text-xs text-muted-foreground">{{ notificationsHint() }}</p>
+            <div
+              v-if="notifications.supported && (notifications.enabled || notifications.permission === 'granted')"
+              class="mt-3"
+            >
+              <div class="flex items-center gap-2">
+                <UiButton
+                  v-if="!notifications.subscribed"
+                  variant="outline"
+                  size="sm"
+                  :disabled="notifications.busy || notifications.status === 'subscribing'"
+                  @click="enableDevice"
+                >
+                  {{ t("settings.notificationsEnableDevice") }}
+                </UiButton>
+                <UiButton
+                  v-else
+                  variant="outline"
+                  size="sm"
+                  :disabled="notifications.busy"
+                  @click="disableDevice"
+                >
+                  {{ t("settings.notificationsDisableDevice") }}
+                </UiButton>
+                <a
+                  v-if="notifications.permission === 'denied'"
+                  href="#"
+                  class="text-xs text-muted-foreground underline"
+                  @click.prevent="openPermissionSettings"
+                >
+                  {{ t("settings.notificationsOpenSettings") }}
+                </a>
+              </div>
             </div>
           </section>
 
