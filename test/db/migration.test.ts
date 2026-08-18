@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { applyMigrations } from "../../server/db/testing/index.ts";
 
 const migrationPath = new URL(
 	"../../server/db/migrations/0000_ordinary_dexter_bennett.sql",
@@ -54,4 +55,23 @@ test("FTS5 virtual table supports insert and MATCH queries", () => {
 
 	expect(rows).toHaveLength(1);
 	expect(rows[0]?.entry_id).toBe(1);
+});
+
+test("all migrations apply cleanly, including push tables", () => {
+	const db = new Database(":memory:");
+	applyMigrations(db);
+
+	const tables = (
+		db.query("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as {
+			name: string;
+		}[]
+	).map((t) => t.name);
+
+	expect(tables).toEqual(expect.arrayContaining(["push_subscriptions", "notification_deliveries"]));
+
+	// The delivery ledger uses a composite primary key for idempotency.
+	const pk = db
+		.query("SELECT sql FROM sqlite_master WHERE type='table' AND name='notification_deliveries'")
+		.get() as { sql: string };
+	expect(pk.sql).toContain("PRIMARY KEY(`entry_id`, `notification_type`)");
 });
