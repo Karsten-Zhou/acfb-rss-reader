@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/vue-query";
 import {
 	DialogClose,
 	DialogContent,
+	DialogDescription,
 	DialogOverlay,
 	DialogPortal,
 	DialogRoot,
@@ -54,6 +55,7 @@ const signOut = useMutation({
         </div>
 
         <p class="mt-3 text-sm text-muted-foreground">{{ t("auth.signOutConfirm") }}</p>
+        <DialogDescription class="sr-only">{{ t("auth.signOutConfirm") }}</DialogDescription>
 
         <p v-if="signOut.isError.value" class="mt-3 text-sm text-destructive">
           {{ t("auth.signOutError") }}

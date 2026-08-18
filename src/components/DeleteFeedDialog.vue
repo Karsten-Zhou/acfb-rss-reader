@@ -3,6 +3,7 @@ import { Trash2, X } from "@lucide/vue";
 import {
 	DialogClose,
 	DialogContent,
+	DialogDescription,
 	DialogOverlay,
 	DialogPortal,
 	DialogRoot,
@@ -48,6 +49,9 @@ const { t } = useI18n();
         <p class="mt-3 text-sm text-muted-foreground">
           {{ t("sidebar.deleteFeedConfirm", { name: feedName }) }}
         </p>
+        <DialogDescription class="sr-only">
+          {{ t("sidebar.deleteFeedConfirm", { name: feedName }) }}
+        </DialogDescription>
 
         <div class="mt-6 flex justify-end gap-2">
           <UiButton variant="ghost" size="sm" :disabled="busy" @click="emit('update:open', false)">

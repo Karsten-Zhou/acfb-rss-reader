@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/vue-query";
 import {
 	DialogClose,
 	DialogContent,
+	DialogDescription,
 	DialogOverlay,
 	DialogPortal,
 	DialogRoot,
@@ -99,6 +100,9 @@ const errorMessage = computed(() =>
             <X class="size-4" />
           </DialogClose>
         </div>
+        <DialogDescription class="sr-only">
+          {{ isAdd ? t("feedEdit.descriptionAdd") : t("feedEdit.descriptionEdit") }}
+        </DialogDescription>
 
         <form class="mt-4 space-y-4" @submit.prevent="save.mutate()">
           <div>
