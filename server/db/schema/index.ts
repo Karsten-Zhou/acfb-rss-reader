@@ -10,6 +10,7 @@
 export * from "./auth.ts";
 export * from "./entries.ts";
 export * from "./feeds.ts";
+export * from "./notifications.ts";
 export * from "./relations.ts";
 export * from "./search.ts";
 export * from "./system.ts";
