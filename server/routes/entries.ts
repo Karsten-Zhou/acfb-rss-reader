@@ -15,7 +15,6 @@ import {
 	DEFAULT_SUMMARY_MODEL,
 	getAiSettings,
 	getCachedSummary,
-	normalizeSummaryLanguage,
 	SUMMARY_MODELS,
 	SummaryError,
 	summarizeEntry,
@@ -297,7 +296,6 @@ async function loadEntryContent(db: Database, id: number) {
 /** GET /api/entries/:id/summary — cached AI summary, if any. */
 entryRoutes.get("/:id/summary", requireAuth(), async (c) => {
 	const id = idSchema.parse(c.req.param("id"));
-	const lang = normalizeSummaryLanguage(c.req.query("lang"));
 	const entry = await loadEntryContent(c.get("db"), id);
 	if (!entry) throw new HttpError(404, "NOT_FOUND", "Entry not found");
 
@@ -312,7 +310,12 @@ entryRoutes.get("/:id/summary", requireAuth(), async (c) => {
 		});
 	}
 	const contentHash = await sha256Hex(entry.content);
-	const cached = await getCachedSummary(c.env.KV_STORE, contentHash, model.id, lang);
+	const cached = await getCachedSummary(
+		c.env.KV_STORE,
+		contentHash,
+		model.id,
+		c.req.query("lang") ?? "en",
+	);
 	return c.json({
 		enabled: ai.enabled,
 		summary: cached,

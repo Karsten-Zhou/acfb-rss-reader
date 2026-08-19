@@ -6,31 +6,14 @@
 
 export const SUMMARY_PROMPT_VERSION = "v2";
 
-export type SummaryLanguage = "en" | "de" | "zh";
-
-const SUPPORTED_LANGUAGES: ReadonlySet<string> = new Set(["en", "de", "zh"]);
-
-/**
- * Resolve an arbitrary locale string (e.g. "zh-CN", "zh-Hans", "en-US") to one
- * of the supported summary languages using the platform's locale parser,
- * falling back to "en" for unsupported or unparseable input.
- */
-export function normalizeSummaryLanguage(lang: string | undefined | null): SummaryLanguage {
-	if (!lang) return "en";
-	let code: string;
-	try {
-		code = new Intl.Locale(lang).language;
-	} catch {
-		return "en";
-	}
-	return SUPPORTED_LANGUAGES.has(code) ? (code as SummaryLanguage) : "en";
-}
-
 const languageNames = new Intl.DisplayNames(["en"], { type: "language" });
 
-/** Human-readable language name (e.g. "German"), for embedding in the prompt. */
-function languageLabel(lang: SummaryLanguage): string {
-	return languageNames.of(lang) ?? lang;
+/**
+ * Human-readable language label (e.g. "German") for the *requested* output
+ * language. Invalid / unknown codes fall back to English ("English").
+ */
+function languageLabel(lang: string): string {
+	return languageNames.of(lang) ?? "English";
 }
 
 /**
@@ -41,7 +24,7 @@ function languageLabel(lang: SummaryLanguage): string {
  * and to keep it short.
  */
 export function buildSummaryPrompt(
-	lang: SummaryLanguage,
+	lang: string,
 	title: string,
 	content: string,
 ): { messages: Array<{ role: "system" | "user"; content: string }> } {

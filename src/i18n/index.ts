@@ -2,7 +2,7 @@ import de from "./locales/de.ts";
 import en from "./locales/en.ts";
 import zhCN from "./locales/zh-CN.ts";
 
-export const SUPPORTED_LOCALES = ["en-US", "de", "zh-CN"] as const;
+export const SUPPORTED_LOCALES = ["en", "de", "zh-CN"] as const;
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
 /** User-facing language preference, including "follow the browser". */
@@ -30,15 +30,15 @@ export function resolveAutoLocale(preferred: readonly string[]): AppLocale {
 		);
 		if (byLanguage) return byLanguage;
 	}
-	return "en-US";
+	return "en";
 }
 
 export const i18n = createI18n({
 	legacy: false,
-	locale: "en-US",
-	fallbackLocale: "en-US",
+	locale: "en",
+	fallbackLocale: "en",
 	messages: {
-		"en-US": en,
+		en: en,
 		de,
 		"zh-CN": zhCN,
 	},

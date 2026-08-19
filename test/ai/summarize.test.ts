@@ -3,21 +3,11 @@ import { expect, test } from "bun:test";
 import {
 	buildSummaryPrompt,
 	mapAiError,
-	normalizeSummaryLanguage,
 	stripSummaryPreamble,
 	summarizeEntry,
 	summaryCacheKey,
 	toPlainText,
 } from "../../server/ai/index.ts";
-
-test("normalizeSummaryLanguage maps locale codes", () => {
-	expect(normalizeSummaryLanguage(undefined)).toBe("en");
-	expect(normalizeSummaryLanguage("en-US")).toBe("en");
-	expect(normalizeSummaryLanguage("de")).toBe("de");
-	expect(normalizeSummaryLanguage("zh-CN")).toBe("zh");
-	expect(normalizeSummaryLanguage("zh-Hans")).toBe("zh");
-	expect(normalizeSummaryLanguage("fr")).toBe("en");
-});
 
 test("toPlainText strips HTML", () => {
 	expect(toPlainText("<p>Hello <b>world</b> &amp; more</p>")).toBe("Hello world & more");

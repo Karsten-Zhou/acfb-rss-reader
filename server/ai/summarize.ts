@@ -1,11 +1,6 @@
 import { KV_SUMMARY_TTL_SECONDS, sha256Hex } from "../../shared/index.ts";
 import { DEFAULT_SUMMARY_MODEL, SUMMARY_MODELS } from "./models.ts";
-import {
-	buildSummaryPrompt,
-	normalizeSummaryLanguage,
-	SUMMARY_PROMPT_VERSION,
-	type SummaryLanguage,
-} from "./prompts.ts";
+import { buildSummaryPrompt, SUMMARY_PROMPT_VERSION } from "./prompts.ts";
 
 export type SummaryErrorCode =
 	| "DISABLED"
@@ -50,11 +45,7 @@ export function toPlainText(html: string): string {
 }
 
 /** KV key for a generated summary. Includes content hash, model and language. */
-export function summaryCacheKey(
-	contentHash: string,
-	modelId: string,
-	lang: SummaryLanguage,
-): string {
+export function summaryCacheKey(contentHash: string, modelId: string, lang: string): string {
 	return `summary:${SUMMARY_PROMPT_VERSION}:${contentHash}:${modelId}:${lang}`;
 }
 
@@ -62,7 +53,7 @@ export async function getCachedSummary(
 	kv: KVNamespace,
 	contentHash: string,
 	modelId: string,
-	lang: SummaryLanguage,
+	lang: string,
 ): Promise<string | null> {
 	return kv.get(summaryCacheKey(contentHash, modelId, lang));
 }
@@ -71,7 +62,7 @@ async function cacheSummary(
 	kv: KVNamespace,
 	contentHash: string,
 	modelId: string,
-	lang: SummaryLanguage,
+	lang: string,
 	summary: string,
 ): Promise<void> {
 	await kv.put(summaryCacheKey(contentHash, modelId, lang), summary, {
@@ -134,7 +125,7 @@ export async function summarizeEntry(options: SummarizeOptions): Promise<Summary
 		throw new SummaryError("NO_CONTENT", "The article has no text to summarize");
 	}
 
-	const lang = normalizeSummaryLanguage(options.lang);
+	const lang = options.lang ?? "en";
 	const model = options.model
 		? (SUMMARY_MODELS[options.model] ?? SUMMARY_MODELS[DEFAULT_SUMMARY_MODEL])
 		: SUMMARY_MODELS[DEFAULT_SUMMARY_MODEL];
