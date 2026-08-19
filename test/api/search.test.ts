@@ -159,7 +159,7 @@ test("renaming a feed updates the FTS search index", async () => {
 		expect(byNewName.items).toHaveLength(2);
 		expect(byNewName.items.every((i) => i.feedTitle === "Renamed Feed")).toBe(true);
 
-		// The old name no longer matches the feed title.
+		// The old name does not match the feed title.
 		const byOldName = await getEntries(ctx, token, "q=Example+Feed");
 		expect(byOldName.items).toHaveLength(0);
 	} finally {

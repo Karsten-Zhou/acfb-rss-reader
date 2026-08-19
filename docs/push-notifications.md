@@ -89,14 +89,25 @@ already notified for this article", which is what makes retries safe.
 Web Push auth uses a VAPID key pair. The keys must be **stable**: generating a
 new pair on every deploy would invalidate all existing subscriptions.
 
-### Generate
+### Automatic (recommended)
+
+`bun run setup` generates a key pair, stores it as Worker secrets
+(`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`) and writes the same
+values into `.dev.vars`, so local dev and production share one key pair.
+`VAPID_SUBJECT` is set to a synthetic contact address derived from your
+Cloudflare account id; change it with `bunx wrangler secret put VAPID_SUBJECT`
+if you prefer a real address.
+
+### Manual
+
+Generate a key pair:
 
 ```sh
 bunx web-push generate-vapid-keys --json
 # {"publicKey":"...","privateKey":"..."}
 ```
 
-### Configure locally (`.dev.vars`, gitignored)
+Locally (`.dev.vars`, gitignored):
 
 ```
 VAPID_PUBLIC_KEY=<publicKey>
@@ -104,7 +115,7 @@ VAPID_PRIVATE_KEY=<privateKey>
 VAPID_SUBJECT=mailto:you@example.com
 ```
 
-### Configure in production (Worker secrets)
+In production (Worker secrets):
 
 ```sh
 bunx wrangler secret put VAPID_PUBLIC_KEY
@@ -120,14 +131,9 @@ identifies the app to the push service.
 
 ## Local development
 
-1. Generate a VAPID key pair (once):
-
-   ```sh
-   bunx web-push generate-vapid-keys --json
-   ```
-
-2. Copy `.dev.vars.example` to `.dev.vars` (or add to an existing one) and
-   paste the values:
+1. Put the VAPID keys into `.dev.vars` — `bun run setup` already did this for
+   you; otherwise generate a pair (`bunx web-push generate-vapid-keys --json`)
+   and add it to a copy of `.dev.vars.example`:
 
    ```
    VAPID_PUBLIC_KEY=<publicKey>
@@ -138,12 +144,12 @@ identifies the app to the push service.
    Use the **same** keys for local and production so a subscription created
    in local dev stays valid if you deploy, and vice-versa.
 
-3. Apply migrations: `bunx wrangler d1 migrations apply rss-reader-db --local`
+2. Apply migrations: `bunx wrangler d1 migrations apply rss-reader-db --local`
    (or `--remote` if your dev uses remote bindings).
 
-4. `bun run dev` → `http://localhost:8787`.
+3. `bun run dev` → `http://localhost:8787`.
 
-5. Sign in, open **Settings**, enable **Browser notifications**.
+4. Sign in, open **Settings**, enable **Browser notifications**.
 
 > **Important for local testing:** the Push API requires a **secure context**.
 > `http://localhost` is treated as a secure context by Chrome/Edge/Firefox (so
@@ -164,9 +170,8 @@ Settings → **Browser notifications**:
 
 - The switch is **per device**: it subscribes/unsubscribes only the current
   device. Other devices are unaffected — you can e.g. turn notifications off
-  on your desktop while keeping them on your phone. There is no global
-  on/off preference; a device receives notifications if and only if it holds
-  an active subscription.
+  on your desktop while keeping them on your phone. A device receives
+  notifications if and only if it holds an active subscription.
 - Turning it on runs the subscribe flow: register the service worker →
   request notification permission (only from this explicit click) → fetch the
   VAPID public key → create the browser `PushSubscription` → persist it
@@ -184,8 +189,7 @@ Settings → **Browser notifications**:
    `notifyNewEntry`.
 4. `notifyNewEntry`:
    - Checks VAPID is configured.
-   - Loads the user's **active** subscriptions; none ⇒ skip (notifications
-     are opt-in per device — there is no global on/off preference).
+   - Loads the user's **active** subscriptions; none ⇒ skip.
    - **Claims the idempotency row** with `INSERT … ON CONFLICT DO NOTHING`
      into `notification_deliveries`. If the (entry, type) row already exists,
      nothing is sent — this is what prevents duplicates across refreshes,

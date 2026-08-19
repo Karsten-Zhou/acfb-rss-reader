@@ -17,7 +17,7 @@ import type { EntryDetail, EntryListItem, Paginated } from "@/types";
  * - **One shared, per-entry queue** (`entryFlagsQueue.ts`) serializes sends
  *   per entry, coalesces to the latest desired flags, applies optimistic
  *   cache updates, and rolls back on failure. It also owns per-entry pending
- *   state, so no global `pendingAction` scalar exists anymore.
+ *   state.
  * - **Pinia** keeps UI/navigation state (`selectedEntryId`, view, filters).
  */
 

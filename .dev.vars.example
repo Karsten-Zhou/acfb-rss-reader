@@ -17,6 +17,9 @@ ALLOWED_GITHUB_USER_ID=your_numeric_github_user_id
 APP_ORIGIN=http://localhost:8787
 
 # --- Browser push notifications (optional) ---
+# `bun run setup` generates and fills these in automatically; below is how to
+# do it by hand.
+#
 # Generate a VAPID key pair ONCE (it must stay stable so existing
 # subscriptions remain valid across redeploys):
 #

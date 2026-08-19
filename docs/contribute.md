@@ -129,16 +129,31 @@ what it does and how to reproduce it by hand.
 
 ### What the setup script does
 
-1. `bunx wrangler login` — log in to Cloudflare.
-2. Creates the resources and writes their IDs into `wrangler.jsonc`:
-   - `bunx wrangler d1 create rss-reader-db` → `DB.database_id`
-   - `bunx wrangler kv namespace create KV_STORE` → `KV_STORE.id`
-3. Prompts for the OAuth Client ID / secret and GitHub username, looks up your
-   numeric GitHub user id, then stores secrets with `wrangler secret put`:
-   - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ALLOWED_GITHUB_USER_ID`
-   - `APP_ORIGIN` (your app's public URL)
-4. Applies migrations: `bunx wrangler d1 migrations apply rss-reader-db --remote`.
-5. Builds and deploys: `bun run deploy`.
+Re-running it is safe — existing resources are reused.
+
+1. `bunx wrangler login` — log in to Cloudflare; read the account id from
+   `wrangler whoami`.
+2. Determine the public URL before deploying: the worker name from
+   `wrangler.jsonc` and the account's workers.dev subdomain from the
+   Cloudflare API (`GET /accounts/:id/workers/subdomain`) →
+   `https://rss-reader.<subdomain>.workers.dev`.
+3. Create or reuse the resources via the Cloudflare API and write their IDs
+   into `wrangler.jsonc`:
+   - D1 database `rss-reader-db` → `DB.database_id`
+   - KV namespace `rss-reader-kv` → `KV_STORE.id` (a namespace still named
+     `KV_STORE` is renamed in place — the id and its data are kept)
+4. Prints the exact GitHub OAuth registration values (Homepage URL +
+   callback URL), prompts for Client ID / secret and GitHub username, and
+   looks up the numeric GitHub user id.
+5. Applies migrations (`wrangler d1 migrations apply … --remote`), builds and
+   deploys (`bun run deploy`).
+6. Stores secrets with `wrangler secret put`:
+   `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ALLOWED_GITHUB_USER_ID`,
+   `APP_ORIGIN`.
+7. Generates the Web Push VAPID key pair (`web-push generate-vapid-keys`),
+   stores `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` as
+   secrets and writes them into `.dev.vars` for local dev.
+8. Polls `GET /api/health` to verify the deployment.
 
 ### Environment variables
 

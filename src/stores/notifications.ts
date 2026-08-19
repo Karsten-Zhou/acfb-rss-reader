@@ -24,15 +24,15 @@ export interface PushCapability {
  * permission, service-worker registration, and server-side persistence.
  *
  * Notifications are purely per-device: the settings switch subscribes or
- * unsubscribes *this* device only. There is no global on/off preference —
- * a device receives new-article notifications if and only if it holds an
- * active subscription. Other devices are unaffected.
+ * unsubscribes *this* device only. A device receives new-article
+ * notifications if and only if it holds an active subscription; other devices
+ * are unaffected.
  *
  * Loading: every operation (subscribe/unsubscribe) may wait on a long
  * network roundtrip (permission prompt, VAPID fetch, D1 persistence), so each
  * exposes a `busy` state that disables the switch, and a per-operation
  * `loading` enum where the UI needs to distinguish. Failures are surfaced as
- * toasts (they were previously best-effort/silent).
+ * toasts.
  */
 export const useNotificationsStore = defineStore("notifications", () => {
 	const supported = ref<boolean>(false);
