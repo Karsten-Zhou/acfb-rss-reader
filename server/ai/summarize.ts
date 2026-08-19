@@ -1,6 +1,6 @@
 import { KV_SUMMARY_TTL_SECONDS, sha256Hex } from "../../shared/index.ts";
 import { DEFAULT_SUMMARY_MODEL, SUMMARY_MODELS } from "./models.ts";
-import { buildSummaryPrompt, SUMMARY_PROMPT_VERSION } from "./prompts.ts";
+import { buildSummaryPrompt } from "./prompts.ts";
 
 export type SummaryErrorCode =
 	| "DISABLED"
@@ -46,7 +46,7 @@ export function toPlainText(html: string): string {
 
 /** KV key for a generated summary. Includes content hash, model and language. */
 export function summaryCacheKey(contentHash: string, modelId: string, lang: string): string {
-	return `summary:${SUMMARY_PROMPT_VERSION}:${contentHash}:${modelId}:${lang}`;
+	return `summary:${contentHash}:${modelId}:${lang}`;
 }
 
 export async function getCachedSummary(

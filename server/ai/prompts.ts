@@ -1,11 +1,3 @@
-/**
- * Versioned summarization prompts. Bump `SUMMARY_PROMPT_VERSION` whenever the
- * prompt template changes — it is part of the cache key, so changing the
- * template transparently invalidates stale cached summaries.
- */
-
-export const SUMMARY_PROMPT_VERSION = "v2";
-
 const languageNames = new Intl.DisplayNames(["en"], { type: "language" });
 
 /**

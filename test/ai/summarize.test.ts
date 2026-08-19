@@ -14,8 +14,8 @@ test("toPlainText strips HTML", () => {
 	expect(toPlainText("<script>bad()</script>ok")).toBe("ok");
 });
 
-test("summaryCacheKey includes version, content hash, model and language", () => {
-	expect(summaryCacheKey("abc", "@cf/x/model", "en")).toBe("summary:v2:abc:@cf/x/model:en");
+test("summaryCacheKey includes content hash, model and language", () => {
+	expect(summaryCacheKey("abc", "@cf/x/model", "en")).toBe("summary:abc:@cf/x/model:en");
 	expect(summaryCacheKey("abc", "@cf/x/model", "en")).not.toBe(
 		summaryCacheKey("abc", "@cf/x/model", "de"),
 	);
