@@ -90,9 +90,7 @@ export const useSettingsStore = defineStore("settings", () => {
 	const loaded = ref(false);
 
 	/** Effective locale after resolving the "auto" preference. */
-	const locale = computed(() =>
-		language.value === "auto" ? resolveAutoLocale(navigator.languages) : language.value,
-	);
+	const locale = computed(() => (language.value === "auto" ? resolveAutoLocale() : language.value));
 
 	const dark = computed(
 		() => theme.value === "dark" || (theme.value === "system" && systemPrefersDark()),

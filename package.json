@@ -25,6 +25,7 @@
 	},
 	"dependencies": {
 		"@extractus/feed-extractor": "^8.0.0",
+		"@formatjs/intl-localematcher": "^0.8.13",
 		"@lucide/vue": "^1.31.0",
 		"@tanstack/vue-query": "^5.0.0",
 		"@vue/devtools-api": "^8.1.5",

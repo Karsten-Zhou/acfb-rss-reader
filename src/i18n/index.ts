@@ -1,3 +1,4 @@
+import { match } from "@formatjs/intl-localematcher";
 import de from "./locales/de.ts";
 import en from "./locales/en.ts";
 import zhCN from "./locales/zh-CN.ts";
@@ -14,23 +15,8 @@ export type LanguagePreference = (typeof LANGUAGE_PREFERENCES)[number];
  * `navigator.languages`). Uses `Intl.Locale` to parse/normalize BCP-47 tags:
  * exact tags win, then the base language, then English as a fallback.
  */
-export function resolveAutoLocale(preferred: readonly string[]): AppLocale {
-	for (const tag of preferred) {
-		let locale: Intl.Locale;
-		try {
-			locale = new Intl.Locale(tag);
-		} catch {
-			continue;
-		}
-		if ((SUPPORTED_LOCALES as readonly string[]).includes(locale.baseName)) {
-			return locale.baseName as AppLocale;
-		}
-		const byLanguage = SUPPORTED_LOCALES.find(
-			(supported) => new Intl.Locale(supported).language === locale.language,
-		);
-		if (byLanguage) return byLanguage;
-	}
-	return "en";
+export function resolveAutoLocale(): AppLocale {
+	return match(navigator.languages, SUPPORTED_LOCALES, "en") as AppLocale;
 }
 
 export const i18n = createI18n({
@@ -39,7 +25,7 @@ export const i18n = createI18n({
 	fallbackLocale: "en",
 	messages: {
 		en: en,
-		de,
+		de: de,
 		"zh-CN": zhCN,
 	},
 });

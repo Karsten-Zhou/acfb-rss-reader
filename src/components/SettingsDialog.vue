@@ -10,7 +10,7 @@ import {
 	DialogRoot,
 	DialogTitle,
 } from "reka-ui";
-import { LANGUAGE_PREFERENCES, type LanguagePreference } from "@/i18n";
+import { LANGUAGE_PREFERENCES, type LanguagePreference, resolveAutoLocale } from "@/i18n";
 import { APP_BUILD_TIME, APP_VERSION } from "@/lib/build-meta";
 import {
 	DEFAULT_SHORTCUTS,
@@ -96,10 +96,9 @@ function languageLabel(lang: LanguagePreference): string {
 	if (lang !== "auto") {
 		return new Intl.DisplayNames([lang], { type: "language" }).of(lang) ?? lang;
 	}
-
+	const autoLocale = resolveAutoLocale();
 	return t("settings.languageAuto", [
-		new Intl.DisplayNames([navigator.language], { type: "language" }).of(navigator.language) ??
-			navigator.language,
+		new Intl.DisplayNames([autoLocale], { type: "language" }).of(autoLocale) ?? autoLocale,
 	]);
 }
 

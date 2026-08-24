@@ -6,6 +6,7 @@
       "name": "cloudflare-based-rss-reader",
       "dependencies": {
         "@extractus/feed-extractor": "^8.0.0",
+        "@formatjs/intl-localematcher": "^0.8.13",
         "@lucide/vue": "^1.31.0",
         "@tanstack/vue-query": "^5.0.0",
         "@vue/devtools-api": "^8.1.5",
@@ -208,6 +209,10 @@
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "https://registry.npmmirror.com/@floating-ui/utils/-/utils-0.2.12.tgz", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
 
     "@floating-ui/vue": ["@floating-ui/vue@1.1.11", "https://registry.npmmirror.com/@floating-ui/vue/-/vue-1.1.11.tgz", { "dependencies": { "@floating-ui/dom": "^1.7.6", "@floating-ui/utils": "^0.2.11", "vue-demi": ">=0.13.0" } }, "sha512-HzHKCNVxnGS35r9fCHBc3+uCnjw9IWIlCPL683cGgM9Kgj2BiAl8x1mS7vtvP6F9S/e/q4O6MApwSHj8hNLGfw=="],
+
+    "@formatjs/fast-memoize": ["@formatjs/fast-memoize@3.1.7", "https://registry.npmmirror.com/@formatjs/fast-memoize/-/fast-memoize-3.1.7.tgz", {}, "sha512-zXfhLpvA6T7+efdt9JLbBwZ00tT7NsBMDVnDu8rpHeNNv8KfRZAMo2gkG0k9lK/Nzc//3kJ9pImsfuJxk3KhUA=="],
+
+    "@formatjs/intl-localematcher": ["@formatjs/intl-localematcher@0.8.13", "https://registry.npmmirror.com/@formatjs/intl-localematcher/-/intl-localematcher-0.8.13.tgz", { "dependencies": { "@formatjs/fast-memoize": "3.1.7" } }, "sha512-kHEAFOkeJSPNi7c5PaKaRjxcBrJwzzt81ifUu+8uve1EDW/VJl83KsxmqgqNZLzcFEhSliZGvx3+pk/RH0IOmg=="],
 
     "@img/colour": ["@img/colour@1.1.0", "https://registry.npmmirror.com/@img/colour/-/colour-1.1.0.tgz", {}, "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="],
 
