@@ -24,6 +24,7 @@ See **[Quick Start](docs/quick-start.md)** to deploy your own instance on Cloudf
 | [Architecture](docs/architecture.md) | System design, data model, and processing pipeline              |
 | [AGENTS.md](AGENTS.md)               | Guidance for AI coding agents working in this repository        |
 
-## Roadmap
+## My Other Projects
 
-- [ ] Mobile/desktop wrapper for the web app
+- [ACFB AI Studio](https://github.com/Karsten-Zhou/acfb-ai-studio)
+- [ACFB Email Client](https://github.com/Karsten-Zhou/acfb-email-client)
