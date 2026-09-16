@@ -1,9 +1,8 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "rss-reader",
+	"name": "acfb-rss-reader",
 	"main": "./server/index.ts",
-	"compatibility_date": "2026-08-14",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_date": "2026-09-16",
 	"assets": {
 		"not_found_handling": "single-page-application",
 		"run_worker_first": ["/api/*"]
@@ -11,8 +10,6 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "rss-reader-db",
-			"database_id": "921a9db9-d8f6-4976-8715-71fd28248885",
 			"migrations_dir": "./server/db/migrations",
 			"remote": false
 		}
@@ -20,7 +17,6 @@
 	"kv_namespaces": [
 		{
 			"binding": "KV_STORE",
-			"id": "b4cb2b7122dd4da1b7ef84580f276544",
 			"remote": false
 		}
 	],

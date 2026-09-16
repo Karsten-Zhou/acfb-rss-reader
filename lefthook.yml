@@ -6,7 +6,9 @@
 pre-commit:
   commands:
     lint-staged:
-      glob: "*.{ts,tsx,vue,js,jsx,json,md,css,html}"
+      # Every file extension Biome handles (incl. jsonc: wrangler.jsonc,
+      # tsconfig.*.json). Anything missing here slips through to pre-push lint.
+      glob: "*.{ts,tsx,js,jsx,mjs,cjs,vue,json,jsonc,css,html,md}"
       run: bunx biome check --write --no-errors-on-unmatched {staged_files}
       stage_fixed: true
 
