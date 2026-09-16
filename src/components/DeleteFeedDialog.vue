@@ -55,7 +55,7 @@ const { t } = useI18n();
 
         <div class="mt-6 flex justify-end gap-2">
           <UiButton variant="ghost" size="sm" :disabled="busy" @click="emit('update:open', false)">
-            {{ t("auth.cancel") }}
+            {{ t("feedEdit.cancel") }}
           </UiButton>
           <AsyncButton
             variant="destructive"

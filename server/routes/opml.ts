@@ -1,13 +1,12 @@
 import { Hono } from "hono";
 import { HttpError } from "../errors.ts";
 import { exportOpml, FeedError, importOpml } from "../feeds/index.ts";
-import { requireAuth } from "../middleware/auth.ts";
 import type { AppEnv } from "../types.ts";
 
 export const opmlRoutes = new Hono<AppEnv>();
 
 /** GET /api/opml/export — download subscriptions as OPML 2.0. */
-opmlRoutes.get("/export", requireAuth(), async (c) => {
+opmlRoutes.get("/export", async (c) => {
 	const xml = await exportOpml(c.get("db"));
 	return c.text(xml, 200, {
 		"Content-Type": "application/xml; charset=utf-8",
@@ -19,7 +18,7 @@ opmlRoutes.get("/export", requireAuth(), async (c) => {
  * POST /api/opml/import — import an OPML document. Creates folders + feed
  * rows, then triggers the refresh workflow to fetch and ingest the new feeds.
  */
-opmlRoutes.post("/import", requireAuth(), async (c) => {
+opmlRoutes.post("/import", async (c) => {
 	const xml = await c.req.text();
 	if (xml.trim().length === 0) {
 		throw new HttpError(400, "EMPTY_OPML", "No OPML content provided");

@@ -7,7 +7,7 @@ A **personal, self-hosted RSS reader** that runs entirely on Cloudflare's server
 ## Features
 
 - **Free and open source** — No ads, tracking, paywalls, or vendor lock-in. Available to users on Cloudflare's free tier.
-- **Privacy-focused** — All data is stored in your own Cloudflare accounts, with authentication through your own GitHub account.
+- **Privacy-focused** — All data is stored in your own Cloudflare account.
 - **Modern UX** — Responsive three-column layout, keyboard navigation, mobile-friendly interface, and multi-language support.
 - **AI summaries** — Optional per-article summaries powered by Workers AI. Disabled by default and can be enabled or disabled from Settings.
 

@@ -1,19 +1,9 @@
 import { relations } from "drizzle-orm";
 
-import { sessions, users } from "./auth.ts";
 import { entries, entryContents, entryTags, readStatus, starred, tags } from "./entries.ts";
 import { feedFolders, feeds } from "./feeds.ts";
 import { notificationDeliveries, pushSubscriptions } from "./notifications.ts";
 import { fetchLogs } from "./system.ts";
-
-export const usersRelations = relations(users, ({ many }) => ({
-	sessions: many(sessions),
-	pushSubscriptions: many(pushSubscriptions),
-}));
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-	user: one(users, { fields: [sessions.userId], references: [users.id] }),
-}));
 
 export const feedFoldersRelations = relations(feedFolders, ({ many }) => ({
 	feeds: many(feeds),
@@ -58,9 +48,7 @@ export const fetchLogsRelations = relations(fetchLogs, ({ one }) => ({
 	feed: one(feeds, { fields: [fetchLogs.feedId], references: [feeds.id] }),
 }));
 
-export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
-	user: one(users, { fields: [pushSubscriptions.userId], references: [users.id] }),
-}));
+export const pushSubscriptionsRelations = relations(pushSubscriptions, () => ({}));
 
 export const notificationDeliveriesRelations = relations(notificationDeliveries, ({ one }) => ({
 	entry: one(entries, { fields: [notificationDeliveries.entryId], references: [entries.id] }),

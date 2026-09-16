@@ -15,7 +15,4 @@ export const queryKeys = {
 	search: {
 		query: (q: string) => ["search", q] as const,
 	},
-	auth: {
-		me: ["auth", "me"] as const,
-	},
 };

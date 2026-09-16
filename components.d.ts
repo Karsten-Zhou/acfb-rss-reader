@@ -28,7 +28,6 @@ declare module 'vue' {
     ScrollArea: typeof import('./src/components/scroll-area/ScrollArea.vue')['default']
     ScrollBar: typeof import('./src/components/scroll-area/ScrollBar.vue')['default']
     SettingsDialog: typeof import('./src/components/SettingsDialog.vue')['default']
-    SignOutDialog: typeof import('./src/components/SignOutDialog.vue')['default']
     ToastHost: typeof import('./src/components/ToastHost.vue')['default']
     UiBadge: typeof import('./src/components/UiBadge.vue')['default']
     UiButton: typeof import('./src/components/UiButton.vue')['default']

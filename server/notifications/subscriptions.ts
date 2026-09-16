@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { type PushSubscriptionInput, pushSubscriptionSchema } from "../../shared/index.ts";
 import type { Database } from "../db/index.ts";
 import { pushSubscriptions } from "../db/index.ts";
@@ -10,7 +10,7 @@ function toExpiration(expirationTime: number | null | undefined): Date | null {
 }
 
 /**
- * Upsert a PushSubscription for the given user.
+ * Upsert a PushSubscription for the reader.
  *
  * The endpoint uniquely identifies a browser subscription, so re-subscribing
  * the same device is idempotent: it updates the existing row rather than
@@ -19,7 +19,6 @@ function toExpiration(expirationTime: number | null | undefined): Date | null {
  */
 export async function upsertPushSubscription(
 	db: Database,
-	userId: number,
 	input: PushSubscriptionInput,
 ): Promise<{ id: number }> {
 	const parsed = pushSubscriptionSchema.parse(input);
@@ -33,7 +32,6 @@ export async function upsertPushSubscription(
 		const [updated] = await db
 			.update(pushSubscriptions)
 			.set({
-				userId,
 				expirationTime: toExpiration(parsed.expirationTime),
 				p256dh: parsed.keys.p256dh,
 				auth: parsed.keys.auth,
@@ -51,7 +49,6 @@ export async function upsertPushSubscription(
 	const [created] = await db
 		.insert(pushSubscriptions)
 		.values({
-			userId,
 			endpoint: parsed.endpoint,
 			expirationTime: toExpiration(parsed.expirationTime),
 			p256dh: parsed.keys.p256dh,
@@ -61,10 +58,9 @@ export async function upsertPushSubscription(
 	return created!;
 }
 
-/** List a user's push subscriptions (redacted — no auth/keys). */
+/** List the registered push subscriptions (endpoint + status, no encryption keys). */
 export async function listPushSubscriptions(
 	db: Database,
-	userId: number,
 ): Promise<Array<{ id: number; endpoint: string; active: boolean; createdAt: Date }>> {
 	const rows = await db
 		.select({
@@ -74,39 +70,27 @@ export async function listPushSubscriptions(
 			createdAt: pushSubscriptions.createdAt,
 		})
 		.from(pushSubscriptions)
-		.where(eq(pushSubscriptions.userId, userId))
 		.orderBy(pushSubscriptions.createdAt);
 	return rows;
 }
 
-/**
- * Remove a push subscription, but only if it belongs to `userId`. Returns
- * the number of rows removed (0 if it wasn't the user's subscription).
- */
-export async function removePushSubscription(
-	db: Database,
-	userId: number,
-	id: number,
-): Promise<number> {
-	const result = await db
-		.delete(pushSubscriptions)
-		.where(and(eq(pushSubscriptions.id, id), eq(pushSubscriptions.userId, userId)))
-		.run();
+/** Remove a push subscription by id. Returns the number of rows removed. */
+export async function removePushSubscription(db: Database, id: number): Promise<number> {
+	const result = await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, id)).run();
 	return result.meta?.changes ?? 0;
 }
 
 /**
  * Remove a push subscription by endpoint (used when the browser says a
- * subscription changed/unsubscribed). Ownership is still enforced via userId.
+ * subscription changed/unsubscribed).
  */
 export async function removePushSubscriptionByEndpoint(
 	db: Database,
-	userId: number,
 	endpoint: string,
 ): Promise<number> {
 	const result = await db
 		.delete(pushSubscriptions)
-		.where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, userId)))
+		.where(eq(pushSubscriptions.endpoint, endpoint))
 		.run();
 	return result.meta?.changes ?? 0;
 }

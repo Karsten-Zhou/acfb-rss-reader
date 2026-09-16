@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { pushSubscriptionSchema } from "../../shared/index.ts";
 import { HttpError } from "../errors.ts";
-import { requireAuth } from "../middleware/auth.ts";
 import { cleanupInactiveSubscriptions } from "../notifications/index.ts";
 import {
 	listPushSubscriptions,
@@ -35,14 +34,13 @@ function parseOr400<T>(schema: z.ZodType<T>, body: unknown): T {
 /**
  * GET /api/push/capability — the browser-side capability/status surface:
  * whether Web Push is configured server-side, the VAPID public key, and the
- * user's current subscription list.
+ * currently registered subscriptions.
  */
-pushRoutes.get("/capability", requireAuth(), async (c) => {
+pushRoutes.get("/capability", async (c) => {
 	const db = c.get("db");
-	const user = c.get("user");
 	const vapid = getVapidConfig(c.env);
 
-	const subs = await listPushSubscriptions(db, user.id);
+	const subs = await listPushSubscriptions(db);
 
 	return c.json({
 		configured: vapid !== null,
@@ -53,11 +51,10 @@ pushRoutes.get("/capability", requireAuth(), async (c) => {
 
 /**
  * GET /api/push/key — the VAPID public key, required by
- * `pushManager.subscribe()`. Authentication is required so the key is only
- * served to signed-in users, but the key itself is public (it is not a
- * secret). Returns 409 when Web Push is not configured.
+ * `pushManager.subscribe()`. The key itself is public (it is not a secret).
+ * Returns 409 when Web Push is not configured.
  */
-pushRoutes.get("/key", requireAuth(), async (c) => {
+pushRoutes.get("/key", async (c) => {
 	const vapid = getVapidConfig(c.env);
 	if (!vapid) throw new HttpError(409, "PUSH_NOT_CONFIGURED", "Push is not configured");
 	return c.json({ publicKey: vapid.publicKey });
@@ -65,25 +62,19 @@ pushRoutes.get("/key", requireAuth(), async (c) => {
 
 /**
  * PUT /api/push/subscription — create or update the current device's
- * subscription. Identity is derived from the authenticated user server-side;
- * the client NEVER supplies a user id.
+ * subscription. The endpoint uniquely identifies the browser subscription.
  */
-pushRoutes.put("/subscription", requireAuth(), async (c) => {
+pushRoutes.put("/subscription", async (c) => {
 	const body = await c.req.json();
 	const input = parseOr400(pushSubscriptionSchema, body);
-	const user = c.get("user");
-	const { id } = await upsertPushSubscription(c.get("db"), user.id, input);
+	const { id } = await upsertPushSubscription(c.get("db"), input);
 	return c.json({ ok: true, id });
 });
 
-/**
- * DELETE /api/push/subscription/:id — remove a subscription, enforcing that
- * it belongs to the authenticated user.
- */
-pushRoutes.delete("/subscription/:id", requireAuth(), async (c) => {
+/** DELETE /api/push/subscription/:id — remove a subscription by id. */
+pushRoutes.delete("/subscription/:id", async (c) => {
 	const id = parseOr400(idSchema, c.req.param("id"));
-	const user = c.get("user");
-	const removed = await removePushSubscription(c.get("db"), user.id, id);
+	const removed = await removePushSubscription(c.get("db"), id);
 	if (removed === 0) throw new HttpError(404, "NOT_FOUND", "Subscription not found");
 	return c.json({ ok: true });
 });
@@ -92,10 +83,9 @@ pushRoutes.delete("/subscription/:id", requireAuth(), async (c) => {
  * POST /api/push/subscription/remove — remove by endpoint. Used when the
  * browser's subscription changed or was unsubscribed locally.
  */
-pushRoutes.post("/subscription/remove", requireAuth(), async (c) => {
+pushRoutes.post("/subscription/remove", async (c) => {
 	const { endpoint } = parseOr400(removeByEndpointSchema, await c.req.json());
-	const user = c.get("user");
-	await removePushSubscriptionByEndpoint(c.get("db"), user.id, endpoint);
+	await removePushSubscriptionByEndpoint(c.get("db"), endpoint);
 	return c.json({ ok: true });
 });
 
@@ -103,7 +93,7 @@ pushRoutes.post("/subscription/remove", requireAuth(), async (c) => {
  * POST /api/push/cleanup — remove deactivated (dead) subscriptions.
  * Housekeeping endpoint.
  */
-pushRoutes.post("/cleanup", requireAuth(), async (c) => {
+pushRoutes.post("/cleanup", async (c) => {
 	const removed = await cleanupInactiveSubscriptions(c.get("db"));
 	return c.json({ ok: true, removed });
 });

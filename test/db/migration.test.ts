@@ -3,10 +3,7 @@ import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { applyMigrations } from "../../server/db/testing/index.ts";
 
-const migrationPath = new URL(
-	"../../server/db/migrations/0000_ordinary_dexter_bennett.sql",
-	import.meta.url,
-);
+const migrationPath = new URL("../../server/db/migrations/0000_init.sql", import.meta.url);
 
 test("initial migration applies cleanly", () => {
 	const db = new Database(":memory:");
@@ -21,8 +18,6 @@ test("initial migration applies cleanly", () => {
 
 	expect(tables).toEqual(
 		expect.arrayContaining([
-			"users",
-			"sessions",
 			"feeds",
 			"feed_folders",
 			"entries",

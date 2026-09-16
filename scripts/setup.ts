@@ -8,13 +8,10 @@
  *      https://<worker name>.<account workers.dev subdomain>.workers.dev
  *   3. Create or reuse the D1 + KV resources and wire their IDs into
  *      wrangler.jsonc.
- *   4. Ask for the GitHub OAuth App credentials (the exact values for the
- *      OAuth registration form are printed with the URL from step 2).
- *   5. Apply database migrations, build and deploy.
- *   6. Store secrets (OAuth, APP_ORIGIN) and generate the Web Push VAPID
- *      key pair + VAPID_SUBJECT (also written to .dev.vars, so local dev
- *      uses the same keys).
- *   7. Verify the deployment with a /api/health check.
+ *   4. Apply database migrations, build and deploy.
+ *   5. Store secrets and generate the Web Push VAPID key pair + VAPID_SUBJECT
+ *      (also written to .dev.vars, so local dev uses the same keys).
+ *   6. Verify the deployment with a /api/health check.
  *
  * Run with:  bun run setup
  */
@@ -36,17 +33,9 @@ const D1_NAME = "rss-reader-db";
 const KV_NAME = "rss-reader-kv";
 
 // Secret names.
-const SECRET_GITHUB_CLIENT_ID = "GITHUB_CLIENT_ID";
-const SECRET_GITHUB_CLIENT_SECRET = "GITHUB_CLIENT_SECRET";
-const SECRET_ALLOWED_USER_ID = "ALLOWED_GITHUB_USER_ID";
-const SECRET_APP_ORIGIN = "APP_ORIGIN";
 const SECRET_VAPID_PUBLIC = "VAPID_PUBLIC_KEY";
 const SECRET_VAPID_PRIVATE = "VAPID_PRIVATE_KEY";
 const SECRET_VAPID_SUBJECT = "VAPID_SUBJECT";
-
-const GITHUB_DEVELOPER_SETTINGS = "https://github.com/settings/developers";
-const LOCAL_DEV_ORIGIN = "http://localhost:8787";
-const LOCAL_CALLBACK_URL = `${LOCAL_DEV_ORIGIN}/api/auth/callback`;
 
 // ---------------------------------------------------------------------------
 // Terminal helpers
@@ -435,8 +424,8 @@ function usage(): void {
 			"Usage: bun run setup",
 			"",
 			"Automates: Cloudflare login, workers.dev URL detection, D1 + KV setup,",
-			"GitHub OAuth secrets, Web Push (VAPID) key generation, migrations and",
-			"the first deploy. Re-running it is safe — existing resources are reused.",
+			"Web Push (VAPID) key generation, migrations and the first deploy.",
+			"Re-running it is safe — existing resources are reused.",
 			"",
 		].join("\n"),
 	);
@@ -501,19 +490,7 @@ async function main(): Promise<void> {
 	writeWrangler(WRANGLER_PATH, config);
 	console.log(`✓ Wired D1 (${shortId(d1.uuid)}) and KV (${shortId(kv.id)}) into ${WRANGLER_PATH}`);
 
-	// -- 4. GitHub OAuth App ---------------------------------------------------
-	console.log(`
-Now create your GitHub OAuth App (~1 minute):
-  1. Open  ${GITHUB_DEVELOPER_SETTINGS}
-  2. OAuth Apps → New OAuth App
-  3. Application name:            RSS Reader (anything you like)
-     Homepage URL:                ${defaultOrigin}
-     Authorization callback URL:  ${defaultOrigin}/api/auth/callback
-       (developing locally too? add ${LOCAL_CALLBACK_URL} as a second
-        callback URL — GitHub allows up to 10)
-  4. Register application, then copy the Client ID and generate + copy a Client Secret.
-`);
-
+	// -- 4. Migrations + deploy -------------------------------------------------
 	let existingSecrets: Array<{ name: string }> = [];
 	try {
 		existingSecrets = runJson<Array<{ name: string }>>("bunx wrangler secret list");
@@ -521,59 +498,18 @@ Now create your GitHub OAuth App (~1 minute):
 		// The Worker has not been deployed yet — no secrets can exist.
 	}
 	const hasSecret = (name: string) => existingSecrets.some((s) => s.name === name);
-	const KEEP = "__keep__";
-
-	let clientId: string;
-	let clientSecret: string;
-	if (hasSecret(SECRET_GITHUB_CLIENT_ID)) {
-		console.log("Existing GitHub OAuth secrets were found on the Worker.");
-		clientId = await askWithDefault("> Client ID (empty = keep existing):     ", KEEP);
-		clientSecret = await askWithDefault("> Client secret (empty = keep existing): ", KEEP);
-	} else {
-		clientId = await ask("> GitHub OAuth App  Client ID:     ");
-		clientSecret = await ask("> GitHub OAuth App  Client secret: ");
-	}
-
-	const githubUsername = await ask("> Your GitHub username: ");
-	const githubResponse = await fetch(
-		`https://api.github.com/users/${encodeURIComponent(githubUsername)}`,
-		{ headers: { Accept: "application/vnd.github+json" } },
-	).catch((error: unknown) => fail(`GitHub API request failed: ${String(error)}`));
-	const githubUser = (await githubResponse.json().catch(() => null)) as { id?: number } | null;
-	if (!githubResponse.ok || !githubUser?.id) {
-		fail("Could not look up your GitHub user id — check the username and network, then re-run.");
-	}
-	const userId = String(githubUser.id);
-	console.log(`✓ Found GitHub user id ${userId}`);
-
-	const originInput = await askWithDefault(
-		`\n> Public URL of your app [Enter = ${defaultOrigin}]: `,
-		defaultOrigin,
-	);
-	const appOrigin = originInput.replace(/\/+$/, "");
-	if (!appOrigin.startsWith("https://")) {
-		fail("The public URL must start with https:// (custom domains need HTTPS).");
-	}
 
 	// No more interactive questions below — release the readline handle so the
 	// secret prompts (which pipe values via stdin) don't clash with it.
 	readline.close();
 
-	// -- 5. Migrations + deploy -------------------------------------------------
 	console.log("\nApplying database migrations…");
 	run(`bunx wrangler d1 migrations apply ${d1.name} --remote`);
 
 	console.log("\nBuilding and deploying…");
 	run("bun run deploy");
 
-	// -- 6. Secrets -------------------------------------------------------------
-	console.log("\nStoring secrets on the Worker…");
-	if (clientId !== KEEP) setSecret(SECRET_GITHUB_CLIENT_ID, clientId);
-	if (clientSecret !== KEEP) setSecret(SECRET_GITHUB_CLIENT_SECRET, clientSecret);
-	setSecret(SECRET_ALLOWED_USER_ID, userId);
-	setSecret(SECRET_APP_ORIGIN, appOrigin);
-
-	// -- 7. Web Push (VAPID) ------------------------------------------------------
+	// -- 5. Web Push (VAPID) ------------------------------------------------------
 	if (hasSecret(SECRET_VAPID_PUBLIC) && hasSecret(SECRET_VAPID_PRIVATE)) {
 		console.log(
 			"\n✓ VAPID keys are already configured — leaving them untouched.\n" +
@@ -596,29 +532,26 @@ Now create your GitHub OAuth App (~1 minute):
 			VAPID_PUBLIC_KEY: keys.publicKey,
 			VAPID_PRIVATE_KEY: keys.privateKey,
 			VAPID_SUBJECT: subject,
-			...(devVarsExisted ? {} : { APP_ORIGIN: LOCAL_DEV_ORIGIN }),
 		});
 		console.log(
 			devVarsExisted
 				? "✓ Also wrote the VAPID keys into .dev.vars (local dev uses the same keys)."
-				: "✓ Created .dev.vars with the VAPID keys + a local APP_ORIGIN.",
+				: "✓ Created .dev.vars with the VAPID keys.",
 		);
 	}
 
-	// -- 8. Verify ------------------------------------------------------------------
-	await waitForHealth(appOrigin);
+	// -- 6. Verify ------------------------------------------------------------------
+	await waitForHealth(defaultOrigin);
 
 	console.log(`
-✓ Your app is live at ${appOrigin}
-Sign in with GitHub and you're done 🎉
+✓ Your app is live at ${defaultOrigin}
 
 Optional extras:
   · Browser notifications: Settings → Browser notifications —
     see docs/push-notifications.md
   · AI summaries: Settings → AI Summaries
 
-Local development: add ${LOCAL_CALLBACK_URL} to your GitHub OAuth App's
-callback URLs, then run: bun run dev`);
+Local development: bun run dev  → http://localhost:8787`);
 }
 
 await main();

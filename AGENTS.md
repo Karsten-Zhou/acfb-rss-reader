@@ -17,7 +17,7 @@ server/  # Cloudflare Worker (Hono API + refresh Workflow)
   feeds/     # Feed fetching, parsing, normalization, pipeline
   notifications/ # Web Push: VAPID, subscription management, delivery service
   routes/    # Hono API routes
-  middleware/# Hono middleware (context, auth)
+  middleware/# Hono middleware (request context)
   test/      # bun tests live at the repo-root `test/` instead
 shared/  # Framework-agnostic code used by both client and server
   compatibility/  # Site compatibility modules (Steam first) — CSS + detection
@@ -82,23 +82,20 @@ bun run db:studio      # drizzle studio
 
 1. **One Worker serves both API and SPA** via Workers Assets
    (`not_found_handling: single_page_application`). API lives under `/api/*`.
-   One deploy, same-origin cookies, no CORS.
-2. **D1** is the database. **KV** (`KV_STORE`) caches favicons, OAuth state,
-   and feed bodies. **Workflows** (`REFRESH_WORKFLOW`) run feed refreshes with
-   retries. **Cron Trigger** (`refresh`, every 30 min) schedules recurring work.
-3. **Auth**: GitHub OAuth, single allowed user (`ALLOWED_GITHUB_USER_ID`).
-   Session tokens stored hashed (SHA-256) in the `sessions` table; HttpOnly
-   cookie. No registration, no roles.
-4. **Feed parsing**: `@extractus/feed-extractor` (RSS/Atom/JSON Feed). Raw HTML
+   One deploy, same-origin, no CORS.
+2. **D1** is the database. **KV** (`KV_STORE`) caches favicons and feed bodies.
+   **Workflows** (`REFRESH_WORKFLOW`) run feed refreshes with retries. **Cron
+   Trigger** (`refresh`, every 30 min) schedules recurring work.
+3. **Feed parsing**: `@extractus/feed-extractor` (RSS/Atom/JSON Feed). Raw HTML
    is stored in `entry_contents` and sanitized with **DOMPurify at render time**
    in the browser. Avoid server-side DOM work.
-5. **Search**: SQLite **FTS5** virtual table over entries (Cloudflare-native).
-6. **Compatibility CSS** is the primary mechanism for site-specific rendering
+4. **Search**: SQLite **FTS5** virtual table over entries (Cloudflare-native).
+5. **Compatibility CSS** is the primary mechanism for site-specific rendering
    fixes; JS fixes are the exception. Each module contributes `detect.ts` +
    `styles.css`.
-7. **Business logic lives in `server/`** (API, feeds, db), never in UI
+6. **Business logic lives in `server/`** (API, feeds, db), never in UI
    components. Components are thin and composed.
-8. **Push notifications**: standard Web Push (`web-push` lib, VAPID),
+7. **Push notifications**: standard Web Push (`web-push` lib, VAPID),
    service worker at `public/sw.js` (root scope), D1 tables
    `push_subscriptions` (per device) + `notification_deliveries` (idempotency
    ledger keyed `(entry_id, notification_type)`). Only the existing
@@ -115,7 +112,7 @@ bun run db:studio      # drizzle studio
   retry, virtualization, etc.
 - **Date/time**: use **dayjs** — never hand-roll date math. The client imports
   the configured instance from `src/lib/dayjs.ts` (relativeTime plugin +
-  locale sync); the server imports `dayjs` directly for session/expiry math.
+  locale sync).
 - REST + Hono + Zod validation on every request body/query/param.
 - Keep commits runnable and deployable at every milestone.
 

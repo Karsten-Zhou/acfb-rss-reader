@@ -15,7 +15,6 @@ export default {
 		noFeeds: "Noch keine Feeds. Füge unten einen hinzu.",
 		addFeed: "Feed hinzufügen",
 		addFeedPlaceholder: "https://feed-url…",
-		signOut: "Abmelden",
 		close: "Schließen",
 		dragToReorder: "Zum Sortieren ziehen",
 		settings: "Einstellungen",
@@ -44,18 +43,6 @@ export default {
 		selectArticle: "Wähle einen Artikel zum Lesen aus.",
 		star: "Markieren",
 		unstar: "Nicht markieren",
-	},
-	login: {
-		subtitle: "Dein persönlicher Feed-Reader. Melde dich mit GitHub an, um fortzufahren.",
-		continue: "Mit GitHub fortfahren",
-	},
-	auth: {
-		signOutTitle: "Abmelden",
-		signOutConfirm:
-			"Möchtest du dich wirklich abmelden? Deine Sitzung auf diesem Gerät wird beendet.",
-		signOut: "Abmelden",
-		signOutError: "Abmeldung fehlgeschlagen. Bitte erneut versuchen.",
-		cancel: "Abbrechen",
 	},
 	feedEdit: {
 		addTitle: "Feed hinzufügen",

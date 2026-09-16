@@ -15,7 +15,6 @@ export default {
 		noFeeds: "No feeds yet. Add one below.",
 		addFeed: "Add feed",
 		addFeedPlaceholder: "https://feed-url…",
-		signOut: "Sign out",
 		close: "Close",
 		dragToReorder: "Drag to reorder",
 		settings: "Settings",
@@ -44,17 +43,6 @@ export default {
 		selectArticle: "Select an article to read it here.",
 		star: "Star",
 		unstar: "Unstar",
-	},
-	login: {
-		subtitle: "Your personal feed reader. Sign in with GitHub to continue.",
-		continue: "Continue with GitHub",
-	},
-	auth: {
-		signOutTitle: "Sign out",
-		signOutConfirm: "Are you sure you want to sign out? Your session on this device will be ended.",
-		signOut: "Sign out",
-		signOutError: "Could not sign out. Please try again.",
-		cancel: "Cancel",
 	},
 	feedEdit: {
 		addTitle: "Add feed",

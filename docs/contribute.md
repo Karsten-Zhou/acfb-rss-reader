@@ -26,7 +26,7 @@ server/        Cloudflare Worker (Hono API + refresh Workflow)
   db/          Drizzle schema, migrations, D1 client, FTS5 search
   feeds/       Feed fetching, parsing, normalization, pipeline
   routes/      Hono API routes
-  middleware/  Hono middleware (context, auth)
+  middleware/  Hono middleware (request context)
   ai/          Workers AI summaries
   workflows/   RefreshWorkflow (background feed refresh)
 shared/        Framework-agnostic code (schemas, utils, compatibility)
@@ -54,9 +54,8 @@ Browser (Vue SPA) ─── /api/* (same origin) ───► Cloudflare Worker
                                               Workflows ◄── Cron (every 30 min)
 ```
 
-- **One Worker** serves both the API (`/api/*`) and the built Vue SPA (Workers Assets, `single_page_application` not-found handling). One deploy, same-origin cookies, no CORS.
-- **D1** — database. **KV** — caches favicons, OAuth state, feed bodies. **Workflows** — feed refresh with retries. **Cron** — every 30 min.
-- **Auth** — GitHub OAuth, single allowed user (`ALLOWED_GITHUB_USER_ID`). Session tokens SHA-256-hashed in D1, HttpOnly cookie.
+- **One Worker** serves both the API (`/api/*`) and the built Vue SPA (Workers Assets, `single_page_application` not-found handling). One deploy, same-origin, no CORS.
+- **D1** — database. **KV** — caches favicons and feed bodies. **Workflows** — feed refresh with retries. **Cron** — every 30 min.
 - **Feed parsing** — `@extractus/feed-extractor` (RSS/Atom/JSON Feed). Raw HTML stored in `entry_contents`, sanitized with DOMPurify at render in the browser.
 - **Search** — SQLite FTS5 virtual table.
 
@@ -110,9 +109,6 @@ affect the real remote database and count toward Cloudflare's free-tier usage.
 
 > Requires the Cloudflare login from the quick start (`bunx wrangler login`).
 
-To be able to log in locally, add `http://localhost:8787/api/auth/callback`
-to your GitHub OAuth App's callback URLs (GitHub allows up to 10).
-
 |                 | Deployed                    | Local (`bun run dev`)        |
 | --------------- | --------------------------- | ---------------------------- |
 | URL             | `https://<you>.workers.dev` | `http://localhost:8787`      |
@@ -142,27 +138,17 @@ Re-running it is safe — existing resources are reused.
    - D1 database `rss-reader-db` → `DB.database_id`
    - KV namespace `rss-reader-kv` → `KV_STORE.id` (a namespace still named
      `KV_STORE` is renamed in place — the id and its data are kept)
-4. Prints the exact GitHub OAuth registration values (Homepage URL +
-   callback URL), prompts for Client ID / secret and GitHub username, and
-   looks up the numeric GitHub user id.
-5. Applies migrations (`wrangler d1 migrations apply … --remote`), builds and
+4. Applies migrations (`wrangler d1 migrations apply … --remote`), builds and
    deploys (`bun run deploy`).
-6. Stores secrets with `wrangler secret put`:
-   `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ALLOWED_GITHUB_USER_ID`,
-   `APP_ORIGIN`.
-7. Generates the Web Push VAPID key pair (`web-push generate-vapid-keys`),
+5. Generates the Web Push VAPID key pair (`web-push generate-vapid-keys`),
    stores `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` as
    secrets and writes them into `.dev.vars` for local dev.
-8. Polls `GET /api/health` to verify the deployment.
+6. Polls `GET /api/health` to verify the deployment.
 
 ### Environment variables
 
 | Variable                 | Kind    | Description                                              |
 | ------------------------ | ------- | -------------------------------------------------------- |
-| `GITHUB_CLIENT_ID`       | secret  | GitHub OAuth App client ID                               |
-| `GITHUB_CLIENT_SECRET`   | secret  | GitHub OAuth App client secret                           |
-| `ALLOWED_GITHUB_USER_ID` | secret  | Your numeric GitHub user ID                              |
-| `APP_ORIGIN`             | secret  | Your app's public URL (also set locally via `.dev.vars`) |
 | `VAPID_PUBLIC_KEY`       | secret  | Web Push VAPID public key (optional)                     |
 | `VAPID_PRIVATE_KEY`      | secret  | Web Push VAPID private key (server-only)                 |
 | `VAPID_SUBJECT`          | secret  | Web Push contact (`mailto:`/`https://`)                  |

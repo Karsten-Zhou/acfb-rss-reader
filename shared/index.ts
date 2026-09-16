@@ -3,7 +3,6 @@
  */
 
 export * from "./constants.ts";
-export * from "./schemas/auth.ts";
 export * from "./schemas/common.ts";
 export * from "./schemas/entry.ts";
 export * from "./schemas/feed.ts";

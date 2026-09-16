@@ -5,7 +5,6 @@ Deploy your personal RSS reader in about 10 minutes. One command does the work; 
 ## 1 Accounts
 
 - [Cloudflare](https://dash.cloudflare.com/sign-up) — sign up (or log in)
-- [GitHub](https://github.com/join) — sign up (you log in to the reader with this)
 
 ## 2 Install Git and Bun
 
@@ -28,21 +27,13 @@ bun run setup
 
 The script logs you into Cloudflare, works out your app's public URL
 (`https://rss-reader.<your-subdomain>.workers.dev`), creates the database and
-key-value store, and then asks for:
+key-value store, then applies the database schema, generates the Web Push
+(VAPID) keys for browser notifications, stores everything as Cloudflare
+secrets and deploys. When it finishes, it prints your app's URL.
 
-- the **Client ID** and **Client secret** of a GitHub OAuth App — right before
-  that it prints the exact **Homepage URL** and **Authorization callback URL**
-  to enter when you create the app at
-  <https://github.com/settings/developers> (**OAuth Apps → New OAuth App**),
-- your **GitHub username** (so that only you can log in).
+## 5 Open it
 
-It then stores everything as Cloudflare secrets, generates the Web Push
-(VAPID) keys for browser notifications, applies the database schema and
-deploys. When it finishes, it prints your app's URL.
-
-## 5 Log in
-
-Open your app's URL and **Sign in with GitHub**. Done.
+Open your app's URL and start adding feeds. Done.
 
 ---
 

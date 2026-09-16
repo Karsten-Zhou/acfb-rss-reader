@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { readFileSync } from "node:fs";
 
-import { createDb, feeds, notificationDeliveries, users } from "../../server/db/index.ts";
+import { createDb, feeds, notificationDeliveries } from "../../server/db/index.ts";
 import { applyMigrations, createD1Mock, createKvMock } from "../../server/db/testing/index.ts";
 import { upsertPushSubscription } from "../../server/notifications/subscriptions.ts";
 import type { Env } from "../../server/types.ts";
@@ -42,10 +42,6 @@ function makeEnv(): Env {
 		DB: null as never,
 		KV_STORE: createKvMock() as Env["KV_STORE"],
 		REFRESH_WORKFLOW: {} as Env["REFRESH_WORKFLOW"],
-		GITHUB_CLIENT_ID: "test",
-		GITHUB_CLIENT_SECRET: "test",
-		ALLOWED_GITHUB_USER_ID: "1",
-		APP_ORIGIN: "https://example.com",
 		ENVIRONMENT: "development",
 		VAPID_PUBLIC_KEY: VAPID_PUBLIC,
 		VAPID_PRIVATE_KEY: VAPID_PRIVATE,
@@ -74,12 +70,8 @@ describe("refresh -> notify integration", () => {
 		const { db } = makeDb();
 		const env = makeEnv();
 
-		// Seed a user + a subscription (per-device opt-in).
-		const [user] = await db
-			.insert(users)
-			.values({ githubId: 1, githubLogin: "testuser" })
-			.returning({ id: users.id });
-		await upsertPushSubscription(db, user!.id, SUB);
+		// Seed a subscription (per-device opt-in).
+		await upsertPushSubscription(db, SUB);
 
 		// Seed an existing feed.
 		const [feed] = await db
@@ -115,10 +107,6 @@ describe("refresh -> notify integration", () => {
 		const { db } = makeDb();
 		const env = makeEnv();
 
-		await db
-			.insert(users)
-			.values({ githubId: 1, githubLogin: "testuser" })
-			.returning({ id: users.id });
 		// No subscription — notifications are opt-in per device.
 
 		const [feed] = await db

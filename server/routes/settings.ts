@@ -5,7 +5,6 @@ import { SUMMARY_MODELS } from "../ai/models.ts";
 import { getAiSettings } from "../ai/settings.ts";
 import { settings } from "../db/index.ts";
 
-import { requireAuth } from "../middleware/auth.ts";
 import type { AppEnv } from "../types.ts";
 
 const settingsPatchSchema = z.record(z.string(), z.unknown());
@@ -13,7 +12,7 @@ const settingsPatchSchema = z.record(z.string(), z.unknown());
 export const settingsRoutes = new Hono<AppEnv>();
 
 /** GET /api/settings — all settings as a flat key/value map. */
-settingsRoutes.get("/", requireAuth(), async (c) => {
+settingsRoutes.get("/", async (c) => {
 	const rows = await c.get("db").select().from(settings).all();
 	const map: Record<string, unknown> = {};
 	for (const row of rows) {
@@ -27,7 +26,7 @@ settingsRoutes.get("/", requireAuth(), async (c) => {
 });
 
 /** GET /api/settings/ai — AI summary preferences + the available model list. */
-settingsRoutes.get("/ai", requireAuth(), async (c) => {
+settingsRoutes.get("/ai", async (c) => {
 	const ai = await getAiSettings(c.get("db"));
 	return c.json({
 		enabled: ai.enabled,
@@ -37,7 +36,7 @@ settingsRoutes.get("/ai", requireAuth(), async (c) => {
 });
 
 /** PUT /api/settings — upsert settings (values are JSON-encoded). */
-settingsRoutes.put("/", requireAuth(), async (c) => {
+settingsRoutes.put("/", async (c) => {
 	const body = settingsPatchSchema.parse(await c.req.json());
 	const db = c.get("db");
 

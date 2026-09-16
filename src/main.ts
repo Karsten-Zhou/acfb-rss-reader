@@ -15,7 +15,7 @@ app.use(router);
 app.use(VueQueryPlugin);
 
 // Apply persisted theme/locale before the first render, then hydrate from
-// the backend once the user is authenticated.
+// the backend.
 const settings = useSettingsStore();
 void settings.load();
 

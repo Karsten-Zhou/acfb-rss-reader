@@ -18,19 +18,18 @@ import {
 	reorderFeeds,
 	updateFeed,
 } from "../feeds/index.ts";
-import { requireAuth } from "../middleware/auth.ts";
 import type { AppEnv } from "../types.ts";
 
 export const feedRoutes = new Hono<AppEnv>();
 
 /** GET /api/feeds — all subscriptions with unread/total counts. */
-feedRoutes.get("/", requireAuth(), async (c) => {
+feedRoutes.get("/", async (c) => {
 	const result = await listFeeds(c.get("db"));
 	return c.json({ feeds: result });
 });
 
 /** POST /api/feeds — validate, subscribe, and ingest a feed. */
-feedRoutes.post("/", requireAuth(), async (c) => {
+feedRoutes.post("/", async (c) => {
 	const input = createFeedSchema.parse(await c.req.json());
 	try {
 		const feed = await createFeed(c.get("db"), c.env.KV_STORE, input);
@@ -42,14 +41,14 @@ feedRoutes.post("/", requireAuth(), async (c) => {
 });
 
 /** PUT /api/feeds/reorder — persist the sidebar order. */
-feedRoutes.put("/reorder", requireAuth(), async (c) => {
+feedRoutes.put("/reorder", async (c) => {
 	const { ids } = reorderFeedsSchema.parse(await c.req.json());
 	await reorderFeeds(c.get("db"), ids);
 	return c.json({ ok: true });
 });
 
 /** GET /api/feeds/:id — feed detail with counts. */
-feedRoutes.get("/:id", requireAuth(), async (c) => {
+feedRoutes.get("/:id", async (c) => {
 	const id = idSchema.parse(c.req.param("id"));
 	const feed = await getFeedDetail(c.get("db"), id);
 	if (!feed) throw new HttpError(404, "NOT_FOUND", "Feed not found");
@@ -57,7 +56,7 @@ feedRoutes.get("/:id", requireAuth(), async (c) => {
 });
 
 /** PATCH /api/feeds/:id — update title/folder. */
-feedRoutes.patch("/:id", requireAuth(), async (c) => {
+feedRoutes.patch("/:id", async (c) => {
 	const id = idSchema.parse(c.req.param("id"));
 	const input = updateFeedSchema.parse(await c.req.json());
 	try {
@@ -71,7 +70,7 @@ feedRoutes.patch("/:id", requireAuth(), async (c) => {
 });
 
 /** DELETE /api/feeds/:id — unsubscribe. */
-feedRoutes.delete("/:id", requireAuth(), async (c) => {
+feedRoutes.delete("/:id", async (c) => {
 	const id = idSchema.parse(c.req.param("id"));
 	const deleted = await deleteFeed(c.get("db"), id);
 	if (!deleted) throw new HttpError(404, "NOT_FOUND", "Feed not found");
@@ -79,7 +78,7 @@ feedRoutes.delete("/:id", requireAuth(), async (c) => {
 });
 
 /** POST /api/feeds/:id/refresh — refresh one feed now. */
-feedRoutes.post("/:id/refresh", requireAuth(), async (c) => {
+feedRoutes.post("/:id/refresh", async (c) => {
 	const db = c.get("db");
 	const id = idSchema.parse(c.req.param("id"));
 	const feed = await db.query.feeds.findFirst({ where: eq(feeds.id, id) });

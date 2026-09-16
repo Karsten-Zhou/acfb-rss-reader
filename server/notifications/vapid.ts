@@ -18,7 +18,7 @@ export function getVapidConfig(env: Env): VapidConfig | null {
 	return {
 		publicKey: env.VAPID_PUBLIC_KEY,
 		privateKey: env.VAPID_PRIVATE_KEY,
-		subject: env.VAPID_SUBJECT || `mailto:rss-reader@${new URL(env.APP_ORIGIN).hostname}`,
+		subject: env.VAPID_SUBJECT || "mailto:acfb-rss-reader@localhost",
 	};
 }
 

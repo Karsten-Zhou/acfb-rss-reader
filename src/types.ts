@@ -1,13 +1,5 @@
 /** Wire types mirroring the backend API responses. */
 
-export interface User {
-	id: number;
-	githubId: number;
-	githubLogin: string;
-	name: string | null;
-	avatarUrl: string | null;
-}
-
 export type FeedStatus = "ok" | "broken" | "paused";
 export type FeedType = "rss" | "atom" | "json";
 

@@ -31,7 +31,6 @@ import {
 } from "../db/index.ts";
 
 import { HttpError } from "../errors.ts";
-import { requireAuth } from "../middleware/auth.ts";
 import type { AppEnv } from "../types.ts";
 
 const entriesQuerySchema = z.object({
@@ -116,7 +115,7 @@ async function setEntriesFlags(db: Database, entryIds: number[], flags: EntryFla
 export const entryRoutes = new Hono<AppEnv>();
 
 /** GET /api/entries — paginated entry list with filters. */
-entryRoutes.get("/", requireAuth(), async (c) => {
+entryRoutes.get("/", async (c) => {
 	const db = c.get("db");
 	const query = entriesQuerySchema.parse(c.req.query());
 	const { limit } = query;
@@ -201,7 +200,7 @@ entryRoutes.get("/", requireAuth(), async (c) => {
 });
 
 /** GET /api/entries/:id — full entry with content and flags. */
-entryRoutes.get("/:id", requireAuth(), async (c) => {
+entryRoutes.get("/:id", async (c) => {
 	const db = c.get("db");
 	const id = idSchema.parse(c.req.param("id"));
 
@@ -242,7 +241,7 @@ entryRoutes.get("/:id", requireAuth(), async (c) => {
 });
 
 /** PATCH /api/entries/:id — update read/starred/archived flags. */
-entryRoutes.patch("/:id", requireAuth(), async (c) => {
+entryRoutes.patch("/:id", async (c) => {
 	const db = c.get("db");
 	const id = idSchema.parse(c.req.param("id"));
 	const flags = updateEntrySchema.parse(await c.req.json());
@@ -258,7 +257,7 @@ entryRoutes.patch("/:id", requireAuth(), async (c) => {
 });
 
 /** POST /api/entries/bulk — update flags on many entries at once. */
-entryRoutes.post("/bulk", requireAuth(), async (c) => {
+entryRoutes.post("/bulk", async (c) => {
 	const db = c.get("db");
 	const input = bulkUpdateEntriesSchema.parse(await c.req.json());
 
@@ -294,7 +293,7 @@ async function loadEntryContent(db: Database, id: number) {
 }
 
 /** GET /api/entries/:id/summary — cached AI summary, if any. */
-entryRoutes.get("/:id/summary", requireAuth(), async (c) => {
+entryRoutes.get("/:id/summary", async (c) => {
 	const id = idSchema.parse(c.req.param("id"));
 	const entry = await loadEntryContent(c.get("db"), id);
 	if (!entry) throw new HttpError(404, "NOT_FOUND", "Entry not found");
@@ -325,7 +324,7 @@ entryRoutes.get("/:id/summary", requireAuth(), async (c) => {
 });
 
 /** POST /api/entries/:id/summary — generate (or regenerate) an AI summary. */
-entryRoutes.post("/:id/summary", requireAuth(), async (c) => {
+entryRoutes.post("/:id/summary", async (c) => {
 	const id = idSchema.parse(c.req.param("id"));
 	const body = summaryRequestSchema.parse(await c.req.json().catch(() => ({})));
 	const entry = await loadEntryContent(c.get("db"), id);

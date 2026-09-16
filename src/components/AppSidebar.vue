@@ -2,7 +2,6 @@
 import {
 	Archive,
 	GripVertical,
-	LogOut,
 	Pencil,
 	Plus,
 	Radio,
@@ -27,7 +26,6 @@ const reader = useReaderStore();
 const queryClient = useQueryClient();
 
 const settingsOpen = ref(false);
-const signOutOpen = ref(false);
 
 const feedsQuery = useQuery({
 	queryKey: queryKeys.feeds.all,
@@ -388,22 +386,11 @@ function onFaviconError(url: string): void {
             <SettingsIcon class="size-4" />
           </UiButton>
         </UiTooltip>
-        <UiTooltip :content="t('sidebar.signOut')" side="top">
-          <UiButton
-            variant="ghost"
-            size="icon"
-            class="size-8"
-            @click="signOutOpen = true"
-          >
-            <LogOut class="size-4" />
-          </UiButton>
-        </UiTooltip>
       </div>
     </div>
   </aside>
 
   <SettingsDialog v-model:open="settingsOpen" />
-  <SignOutDialog v-model:open="signOutOpen" />
   <DeleteFeedDialog
     :open="deletingFeedId !== null"
     :feed-name="deletingFeed?.title ?? ''"

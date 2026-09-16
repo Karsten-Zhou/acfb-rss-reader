@@ -15,7 +15,6 @@ export default {
 		noFeeds: "还没有订阅源，在下方添加。",
 		addFeed: "添加订阅源",
 		addFeedPlaceholder: "https://feed-url…",
-		signOut: "退出登录",
 		close: "关闭",
 		dragToReorder: "拖动排序",
 		settings: "设置",
@@ -44,17 +43,6 @@ export default {
 		selectArticle: "选择一篇文章进行阅读。",
 		star: "星标",
 		unstar: "取消星标",
-	},
-	login: {
-		subtitle: "您的个人订阅阅读器，使用 GitHub 登录以继续。",
-		continue: "使用 GitHub 继续",
-	},
-	auth: {
-		signOutTitle: "退出登录",
-		signOutConfirm: "确定要退出登录吗？您在此设备上的会话将结束。",
-		signOut: "退出登录",
-		signOutError: "退出失败，请重试。",
-		cancel: "取消",
 	},
 	feedEdit: {
 		addTitle: "添加订阅源",

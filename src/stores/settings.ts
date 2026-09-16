@@ -157,7 +157,7 @@ export const useSettingsStore = defineStore("settings", () => {
 			localStorage.setItem(AI_ENABLED_KEY, String(ai.enabled));
 			localStorage.setItem(AI_MODEL_KEY, ai.model);
 		} catch {
-			// Not signed in or offline — keep the cached preference.
+			// Offline — keep the cached preference.
 		} finally {
 			loaded.value = true;
 		}
@@ -167,7 +167,7 @@ export const useSettingsStore = defineStore("settings", () => {
 		try {
 			await api.put<{ ok: boolean }>("/api/settings", patch);
 		} catch {
-			// Locally cached; backend sync is best-effort (e.g. on the login page).
+			// Locally cached; backend sync is best-effort.
 		}
 	}
 

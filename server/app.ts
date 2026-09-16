@@ -5,7 +5,6 @@ import { createDb } from "./db/index.ts";
 
 import { notFound, onError } from "./errors.ts";
 import { dbMiddleware } from "./middleware/context.ts";
-import { authRoutes } from "./routes/auth.ts";
 import { entryRoutes } from "./routes/entries.ts";
 import { faviconRoutes } from "./routes/favicon.ts";
 import { feedRoutes } from "./routes/feeds.ts";
@@ -31,7 +30,6 @@ export function createApp(env: Env) {
 	app.use("*", dbMiddleware(db));
 
 	app.route("/api/health", healthRoutes);
-	app.route("/api/auth", authRoutes);
 	app.route("/api/feeds", feedRoutes);
 	app.route("/api/folders", folderRoutes);
 	app.route("/api/entries", entryRoutes);

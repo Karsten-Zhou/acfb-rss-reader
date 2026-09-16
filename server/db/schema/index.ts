@@ -7,7 +7,6 @@
  * tries to recreate it as a normal table.
  */
 
-export * from "./auth.ts";
 export * from "./entries.ts";
 export * from "./feeds.ts";
 export * from "./notifications.ts";

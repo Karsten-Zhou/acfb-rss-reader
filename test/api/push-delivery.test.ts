@@ -2,12 +2,7 @@ import { Database } from "bun:sqlite";
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
-import {
-	createDb,
-	notificationDeliveries,
-	pushSubscriptions,
-	users,
-} from "../../server/db/index.ts";
+import { createDb, notificationDeliveries, pushSubscriptions } from "../../server/db/index.ts";
 import { applyMigrations, createD1Mock } from "../../server/db/testing/index.ts";
 
 const sent: Array<{ endpoint: string; payload: string }> = [];
@@ -48,10 +43,6 @@ type Env = {
 	DB: unknown;
 	KV_STORE: unknown;
 	REFRESH_WORKFLOW: unknown;
-	GITHUB_CLIENT_ID: string;
-	GITHUB_CLIENT_SECRET: string;
-	ALLOWED_GITHUB_USER_ID: string;
-	APP_ORIGIN: string;
 	ENVIRONMENT: string;
 	VAPID_PUBLIC_KEY: string;
 	VAPID_PRIVATE_KEY: string;
@@ -63,10 +54,6 @@ function makeEnv(privateKey = VAPID_PRIVATE): Env {
 		DB: null,
 		KV_STORE: {},
 		REFRESH_WORKFLOW: {},
-		GITHUB_CLIENT_ID: "test",
-		GITHUB_CLIENT_SECRET: "test",
-		ALLOWED_GITHUB_USER_ID: "1",
-		APP_ORIGIN: "https://example.com",
 		ENVIRONMENT: "development",
 		VAPID_PUBLIC_KEY: VAPID_PUBLIC,
 		VAPID_PRIVATE_KEY: privateKey,
@@ -99,17 +86,9 @@ const SUB_DEAD = {
 	keys: { p256dh: "p256-dead", auth: "auth-dead" },
 };
 
-async function seedUser(db: TestDb): Promise<number> {
-	const [user] = await db
-		.insert(users)
-		.values({ githubId: 1, githubLogin: "testuser", name: null, avatarUrl: null })
-		.returning({ id: users.id });
-	return user!.id;
-}
-
-async function addSub(db: TestDb, userId: number, sub: typeof SUB_A): Promise<number> {
+async function addSub(db: TestDb, sub: typeof SUB_A): Promise<number> {
 	const { upsertPushSubscription } = await import("../../server/notifications/subscriptions.ts");
-	const { id } = await upsertPushSubscription(db, userId, sub);
+	const { id } = await upsertPushSubscription(db, sub);
 	return id;
 }
 
@@ -154,9 +133,8 @@ describe("buildPayload", () => {
 describe("notifyNewEntry multi-subscription delivery", () => {
 	test("sends to all active subscriptions", async () => {
 		const { db } = makeDb();
-		const userId = await seedUser(db);
-		await addSub(db, userId, SUB_A);
-		await addSub(db, userId, SUB_B);
+		await addSub(db, SUB_A);
+		await addSub(db, SUB_B);
 
 		await notifyNewEntry(db, makeEnv() as never, notification(10));
 
@@ -174,9 +152,8 @@ describe("notifyNewEntry multi-subscription delivery", () => {
 
 	test("deactivates a dead endpoint but keeps delivering to the rest", async () => {
 		const { db } = makeDb();
-		const userId = await seedUser(db);
-		await addSub(db, userId, SUB_A);
-		await addSub(db, userId, SUB_DEAD);
+		await addSub(db, SUB_A);
+		await addSub(db, SUB_DEAD);
 
 		// SUB_DEAD reports 410 Gone from the push service.
 		results[SUB_DEAD.endpoint] = { statusCode: 410 };
@@ -199,10 +176,8 @@ describe("notifyNewEntry multi-subscription delivery", () => {
 
 	test("does not fail the whole operation when one endpoint errors generically", async () => {
 		const { db } = makeDb();
-		const userId = await seedUser(db);
-		await addSub(db, userId, SUB_A);
-		await addSub(db, userId, SUB_B);
-
+		await addSub(db, SUB_A);
+		await addSub(db, SUB_B);
 		results[SUB_B.endpoint] = { error: true, statusCode: 500 };
 
 		await notifyNewEntry(db, makeEnv() as never, notification(12));
@@ -223,8 +198,7 @@ describe("notifyNewEntry multi-subscription delivery", () => {
 describe("notifyNewEntry failure handling", () => {
 	test("deactivates a subscription only after repeated failures", async () => {
 		const { db } = makeDb();
-		const userId = await seedUser(db);
-		await addSub(db, userId, SUB_A);
+		await addSub(db, SUB_A);
 
 		results[SUB_A.endpoint] = { error: true, statusCode: 500 };
 
@@ -245,8 +219,7 @@ describe("notifyNewEntry failure handling", () => {
 describe("notifyNewEntry idempotency", () => {
 	test("does not send twice for the same entry even with VAPID configured", async () => {
 		const { db } = makeDb();
-		const userId = await seedUser(db);
-		await addSub(db, userId, SUB_A);
+		await addSub(db, SUB_A);
 
 		await notifyNewEntry(db, makeEnv() as never, notification(1));
 		const afterFirst = sent.filter((s) => s.endpoint === SUB_A.endpoint).length;
@@ -264,7 +237,6 @@ describe("notifyNewEntry idempotency", () => {
 
 	test("skips when no device is subscribed (per-device opt-in)", async () => {
 		const { db } = makeDb();
-		await seedUser(db);
 		// No subscription added — notifications are opt-in per device.
 
 		const ok = await notifyNewEntry(db, makeEnv() as never, notification(5));
@@ -277,9 +249,7 @@ describe("notifyNewEntry idempotency", () => {
 
 	test("skips gracefully when VAPID is not configured", async () => {
 		const { db } = makeDb();
-		const userId = await seedUser(db);
-		await addSub(db, userId, SUB_A);
-
+		await addSub(db, SUB_A);
 		const ok = await notifyNewEntry(db, makeEnv("") as never, notification(9));
 		expect(ok).toBe(false);
 		expect(sent.length).toBe(0);

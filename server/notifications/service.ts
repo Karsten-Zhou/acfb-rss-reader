@@ -1,7 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import webpush from "web-push";
 import type { PushNotificationPayload } from "../../shared/index.ts";
-import { type Database, notificationDeliveries, pushSubscriptions, users } from "../db/index.ts";
+import { type Database, notificationDeliveries, pushSubscriptions } from "../db/index.ts";
 import { logger } from "../logging.ts";
 import type { Env } from "../types.ts";
 
@@ -46,12 +46,6 @@ export function buildPayload(n: NewEntryNotification): PushNotificationPayload {
 		entryId: n.entryId,
 		feedId: n.feedId,
 	};
-}
-
-/** Id of the single authenticated user (this is a single-user app). */
-async function getUserId(db: Database): Promise<number | null> {
-	const user = await db.select({ id: users.id }).from(users).limit(1).get();
-	return user?.id ?? null;
 }
 
 /**
@@ -128,16 +122,10 @@ export async function notifyNewEntry(
 	}
 	configureWebPush(env);
 
-	const userId = await getUserId(db);
-	if (userId === null) return false;
-
 	// Per-device opt-in: only devices with an active subscription receive
-	// notifications, so fetch them first and bail out early when the user
-	// has not enabled notifications on any device.
-	const subs = await db
-		.select()
-		.from(pushSubscriptions)
-		.where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.active, true)));
+	// notifications, so fetch them first and bail out early when no device
+	// has enabled notifications.
+	const subs = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.active, true));
 	if (subs.length === 0) return false;
 
 	// Claim the idempotency row.

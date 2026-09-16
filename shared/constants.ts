@@ -2,18 +2,6 @@
  * Application-wide constants shared across packages.
  */
 
-/** Name of the session cookie. */
-export const SESSION_COOKIE = "rss_session";
-
-/** Session lifetime: 30 days. */
-export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-
-/** If a session is used within this window, its expiry is extended. */
-export const SESSION_SLIDING_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
-
-/** OAuth state parameter lifetime (10 minutes). */
-export const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
-
 /** Default and maximum page size for list endpoints. */
 export const PAGINATION_DEFAULT_LIMIT = 50;
 export const PAGINATION_MAX_LIMIT = 100;
@@ -51,7 +39,6 @@ export const FETCH_LOG_RETENTION = 50;
 /** KV cache TTLs (seconds). */
 export const KV_FAVICON_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 export const KV_FEED_BODY_TTL_SECONDS = 60 * 60 * 6; // 6 hours
-export const KV_OAUTH_STATE_TTL_SECONDS = 10 * 60; // 10 minutes
 
 /** Name of the service worker file (root-scoped, served as a static asset). */
 export const SERVICE_WORKER_PATH = "/sw.js";

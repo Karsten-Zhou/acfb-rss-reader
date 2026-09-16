@@ -1,22 +1,3 @@
-CREATE TABLE `sessions` (
-	`token_hash` text PRIMARY KEY NOT NULL,
-	`user_id` integer NOT NULL,
-	`created_at` integer NOT NULL,
-	`expires_at` integer NOT NULL,
-	`last_seen_at` integer NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-CREATE TABLE `users` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`github_id` integer NOT NULL,
-	`github_login` text NOT NULL,
-	`name` text,
-	`avatar_url` text,
-	`created_at` integer NOT NULL
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `users_github_id_unique` ON `users` (`github_id`);--> statement-breakpoint
 CREATE TABLE `entries` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`feed_id` integer NOT NULL,
@@ -88,6 +69,7 @@ CREATE TABLE `feeds` (
 	`type` text DEFAULT 'rss' NOT NULL,
 	`favicon_url` text,
 	`folder_id` integer,
+	`position` integer DEFAULT 0 NOT NULL,
 	`etag` text,
 	`last_modified` text,
 	`last_fetched_at` integer,
@@ -103,6 +85,34 @@ CREATE TABLE `feeds` (
 CREATE UNIQUE INDEX `feeds_url_unique` ON `feeds` (`url`);--> statement-breakpoint
 CREATE INDEX `feeds_folder_idx` ON `feeds` (`folder_id`);--> statement-breakpoint
 CREATE INDEX `feeds_status_idx` ON `feeds` (`status`);--> statement-breakpoint
+CREATE TABLE `notification_deliveries` (
+	`entry_id` integer NOT NULL,
+	`notification_type` text DEFAULT 'new-feed-entry' NOT NULL,
+	`status` text DEFAULT 'sending' NOT NULL,
+	`created_at` integer NOT NULL,
+	`delivered_at` integer,
+	`target_count` integer DEFAULT 0 NOT NULL,
+	PRIMARY KEY(`entry_id`, `notification_type`),
+	FOREIGN KEY (`entry_id`) REFERENCES `entries`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `notification_deliveries_type_idx` ON `notification_deliveries` (`notification_type`);--> statement-breakpoint
+CREATE TABLE `push_subscriptions` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`endpoint` text NOT NULL,
+	`expiration_time` integer,
+	`p256dh` text NOT NULL,
+	`auth` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	`last_delivered_at` integer,
+	`last_failure_at` integer,
+	`failure_count` integer DEFAULT 0 NOT NULL,
+	`active` integer DEFAULT true NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `push_subscriptions_endpoint_unique` ON `push_subscriptions` (`endpoint`);--> statement-breakpoint
+CREATE VIRTUAL TABLE `entries_fts` USING fts5(`entry_id` UNINDEXED, `title`, `content`, `author`, `feed_title`, `tags`, tokenize = 'porter unicode61');--> statement-breakpoint
 CREATE TABLE `fetch_logs` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`feed_id` integer NOT NULL,
@@ -133,5 +143,3 @@ CREATE TABLE `settings` (
 	`value` text NOT NULL,
 	`updated_at` integer NOT NULL
 );
---> statement-breakpoint
-CREATE VIRTUAL TABLE `entries_fts` USING fts5(`entry_id` UNINDEXED, `title`, `content`, `author`, `feed_title`, `tags`, tokenize = 'porter unicode61');
