@@ -14,7 +14,7 @@ terminal is enough — you'll run a few commands.
 ## 3 Clone and install
 
 ```sh
-git clone https://github.com/XiaoSong-CPE/cloudflare-based-rss-reader.git
+git clone https://github.com/Karsten-Zhou/acfb-rss-reader.git
 cd cloudflare-based-rss-reader
 bun install
 ```

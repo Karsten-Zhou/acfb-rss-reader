@@ -8,7 +8,7 @@ import {
 import { FeedError } from "./errors.ts";
 
 const USER_AGENT =
-	"Mozilla/5.0 (compatible; rss-reader/1.0; +https://github.com/XiaoSong-CPE/cloudflare-based-rss-reader)";
+	"Mozilla/5.0 (compatible; rss-reader/1.0; +https://github.com/Karsten-Zhou/acfb-rss-reader)";
 
 const ACCEPT =
 	"application/atom+xml, application/rss+xml, application/xml, text/xml, application/json, */*;q=0.8";

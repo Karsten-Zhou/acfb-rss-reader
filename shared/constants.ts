@@ -31,7 +31,7 @@ export const MAX_ENTRIES_PER_FETCH = 500;
 export const KV_SUMMARY_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 /** Public repository URL shown in the About screen. */
-export const APP_REPOSITORY_URL = "https://github.com/XiaoSong-CPE/cloudflare-based-rss-reader";
+export const APP_REPOSITORY_URL = "https://github.com/Karsten-Zhou/acfb-rss-reader";
 
 /** How many recent fetch logs we retain per feed before pruning. */
 export const FETCH_LOG_RETENTION = 50;
